@@ -1,2 +1,2 @@
-# MVP
-MVP - Sistema di Gestione di un Magazzino Distribuito
+# MVP: Sistema di Gestione di un Magazzino Distribuito
+
