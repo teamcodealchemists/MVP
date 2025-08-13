@@ -1,0 +1,12 @@
+services:
+  inventory:
+    build:
+      context: ./microservices/warehouse/inventory
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=development
+    volumes:
+      - ./microservices/warehouse/inventory/src:/usr/src/app/src
