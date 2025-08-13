@@ -1,4 +1,4 @@
-export class warehouseId {
+export class WarehouseId {
     constructor(
         private id: string,
     ) { }
