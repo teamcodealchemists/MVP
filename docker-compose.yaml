@@ -8,5 +8,26 @@ services:
     environment:
       - PORT=3000
       - NODE_ENV=development
+      - WAREHOUSE_ID=1
     volumes:
       - ./microservices/warehouse/inventory/src:/usr/src/app/src
+    networks:
+      - shared-warehouses
+    depends_on:
+      - nats
+
+  nats:
+     container_name: nats
+     image: nats:latest
+     ports:
+       - "4222:4222"
+     command:
+       - "--jetstream"
+       - "--debug"
+       - "--trace"
+     networks:
+       - shared-warehouses
+
+networks:
+  shared-warehouses:
+    driver: bridge
