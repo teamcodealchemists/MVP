@@ -28,4 +28,20 @@ export class Product {
     getMaxThres(): number {
         return this.maxThres;
     }
+
+    setName(newName: string): void {
+        this.name = newName;
+    }
+    setUnitPrice(newUnitPrice): void {
+        this.unitPrice = newUnitPrice;
+    }    
+    setQuantity(newQuantity): void {
+        this.quantity = newQuantity;
+    }
+    setMinThres(newMinThres): void {
+        this.minThres = newMinThres;
+    }
+    setMaxThres(newMaxThres): void {
+        this.maxThres = newMaxThres;
+    }
 }
