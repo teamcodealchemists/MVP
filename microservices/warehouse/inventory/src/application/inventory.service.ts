@@ -4,14 +4,15 @@ import { Product } from 'src/domain/product.entity';
 import { ProductId } from 'src/domain/productId.entity';
 import { InventoryRepository } from 'src/domain/inventory.repository';
 
-@Injectable()
-export class Inventory {
+export class InventoryService {
+    private readonly warehouseId: WarehouseId;
     constructor(
-        private warehouseId: WarehouseId,
-        @Inject('InventoryRepository') private readonly inventoryRepository: InventoryRepository,
+        @Inject('INVENTORYREPOSITORY') private readonly inventoryRepository: InventoryRepository,
             // Da valutare come iniettare correttamente, non è corretto mettere l'adapter nel repository,
             // ma non si può iniettare direttamente così la porta perché non funziona a runtime
-    ) {}
+    ) {
+        this.warehouseId = new WarehouseId(`${process.env.WAREHOUSE_ID}`);
+    }
 
 /*
     async addProduct(newProduct: Product): Promise<void> {
@@ -37,4 +38,8 @@ export class Inventory {
 
     }    
     */
+
+    async getHello(): Promise<string> {
+        return (await this.inventoryRepository.removeById(new ProductId("1"))).valueOf() ? "Hello" : "Goodbye";
+    }
 }

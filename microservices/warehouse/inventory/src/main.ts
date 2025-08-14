@@ -1,6 +1,6 @@
+import { InventoryModule } from './application/inventory.module';
 import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
-import { AppModule } from './app.module';
 import { Logger } from '@nestjs/common';
 
 import { OutboundResponseSerializer } from './interfaces/nats/natsMessagesFormatters/outbound-response.serializer';
@@ -9,7 +9,7 @@ import { InboundRequestDeserializer } from './interfaces/nats/natsMessagesFormat
 const logger = new Logger();
 
 async function bootstrap() {
-  const app = await NestFactory.createMicroservice<MicroserviceOptions>(AppModule, {
+  const app = await NestFactory.createMicroservice<MicroserviceOptions>(InventoryModule, {
     logger: logger,
     transport: Transport.NATS,
     options: {
