@@ -3,10 +3,7 @@ services:
     build:
       context: ./microservices/warehouse/inventory
       dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
     environment:
-      - PORT=3000
       - NODE_ENV=development
       - WAREHOUSE_ID=1
     volumes:
@@ -15,6 +12,20 @@ services:
       - shared-warehouses
     depends_on:
       - nats
+
+  orders:
+    build:
+      context: ./microservices/warehouse/orders
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=development
+      - WAREHOUSE_ID=1
+    volumes:
+      - ./microservices/warehouse/orders/src:/usr/src/app/src
+    networks:
+      - shared-warehouses
+    depends_on:
+      - nats    
 
   resgate:
     image: resgateio/resgate
