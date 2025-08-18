@@ -16,6 +16,32 @@ services:
     depends_on:
       - nats
 
+  resgate:
+    image: resgateio/resgate
+    container_name: resgate
+    ports:
+      - "8080:8080"
+    depends_on:
+      - nats
+    #volumes:
+    #  - ./microservizi/resgate/resgate-config.json:/app/config.json
+    command: 
+      - "-n"
+      - "nats://nats:4222"
+      - "-DV"
+    networks:
+      - shared-warehouses
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    networks:
+      - shared-warehouses
+    volumes:
+      - ./microservizi/mongo_db:/docker-entrypoint-initdb.d
+
   nats:
      container_name: nats
      image: nats:latest
