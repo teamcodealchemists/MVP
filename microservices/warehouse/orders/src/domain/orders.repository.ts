@@ -14,9 +14,9 @@ export interface OrdersRepository {
     addSellOrder(order: SellOrder): Promise<void>;
     addInternalOrder(order: InternalOrder): Promise<void>;
     removeById(id: OrderId): Promise<boolean>;
-    updateOrderState(id: OrderId, state: OrderState): Promise<void>;
+    updateOrderState(id: OrderId, state: OrderState): Promise<InternalOrder | SellOrder>;
     genUniqueId(): Promise<OrderId>;
-    updateReservedStock(id: OrderId, items: OrderItem[]): Promise<boolean>
+    updateReservedStock(id: OrderId, items: OrderItem[]): Promise<InternalOrder | SellOrder>
 }
 
 export const OrdersRepository = Symbol("ORDERSREPOSITORY");

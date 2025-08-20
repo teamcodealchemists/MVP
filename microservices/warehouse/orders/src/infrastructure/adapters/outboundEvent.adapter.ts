@@ -1,6 +1,7 @@
 import { MessagePattern } from '@nestjs/microservices';
 import { OrdersService } from 'src/application/orders.service';
 
+import { Order } from "src/domain/order.entity";
 import { Orders } from "src/domain/orders.entity";
 import { OrderItem } from "src/domain/orderItem.entity";
 import { OrderItemDetail } from "src/domain/orderItemDetail.entity";
@@ -22,7 +23,7 @@ async publishShipment(orderId: OrderId, items: OrderItem[]): Promise<void> {
 
 }
 
-async receiveShipment(orderId: OrderId, items: OrderItem[]): Promise<void> {
+async receiveShipment(orderId: OrderId, items: OrderItem[], destination: number): Promise<void> {
 
 }
 
@@ -30,11 +31,15 @@ async publishStockRepl(orderId: OrderId, items: OrderItem[]): Promise<void> {
 
 }
 
-async orderCancelled(orderId: OrderId): Promise<void> {
+async orderUpdated(order: Order): Promise<void> {
 
 }
 
-async orderCompleted(orderId: OrderId): Promise<void> {
+async orderCancelled(orderId: OrderId, warehouse: number): Promise<void> {
+
+}
+
+async orderCompleted(orderId: OrderId, warehouse: number): Promise<void> {
 
 }
 
@@ -42,8 +47,17 @@ async publishInternalOrder(internalOrder: InternalOrder): Promise<void> {
 
 }
 
+async publishInternalOrderCopy(internalOrder: InternalOrder, warehouse: number): Promise<void> {
+
+}
+
 async publishSellOrder(sellOrder: SellOrder): Promise<void> {
 
 }
+
+async publishSellOrderCopy(sellOrder: SellOrder, warehouse: number): Promise<void> {
+
+}
+
 
 }

@@ -36,7 +36,7 @@ export class OrdersRepositoryMongo implements OrdersRepository {
         // Implementation for removing an order by ID in MongoDB
     }
 
-    async updateOrderState(id: OrderId, state: OrderState): Promise<void> {
+    async updateOrderState(id: OrderId, state: OrderState): Promise<InternalOrder | SellOrder> {
         // Implementation for updating the state of an order by its ID  in MongoDB
     }
 
@@ -44,7 +44,7 @@ export class OrdersRepositoryMongo implements OrdersRepository {
         // Implementation for generating a unique ID for a new order to be created in MongoDB
     }
 
-    async updateReservedStock(id: OrderId, items: OrderItem[]): Promise<boolean> {
+    async updateReservedStock(id: OrderId, items: OrderItem[]): Promise<InternalOrder | SellOrder> {
         // Implementation for updating the quantityReserved of an Item for an order in MongoDB
     }
 }

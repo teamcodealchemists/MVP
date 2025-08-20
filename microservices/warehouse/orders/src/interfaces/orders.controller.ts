@@ -57,6 +57,10 @@ export class OrdersController {
 
   }
 
+  completeOrder(orderIdDTO: OrderIdDTO): void {
+
+  }
+
   getOrderState(orderIdDTO: OrderIdDTO): OrderStateDTO {
 
   }

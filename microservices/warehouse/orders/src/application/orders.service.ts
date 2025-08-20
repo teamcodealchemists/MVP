@@ -17,7 +17,7 @@ export class OrdersService {
         
     }
 
-    private async checkOrderExistence(id: OrderId): Promise<boolean>{
+    async checkOrderExistence(id: OrderId): Promise<boolean>{
 
     }
 
@@ -45,9 +45,27 @@ export class OrdersService {
 
     }
 
-    async checkReservedQuantity(itemdetail: OrderItemDetail): Promise<void> {
+    async checkReservedQuantityForSellOrder(sellOrder: SellOrder): Promise<void> {
 
     }
+
+    async checkReservedQuantityForInternalOrder(internalOrder: InternalOrder): Promise<void> {
+
+    }
+
+    async shipOrder(id: OrderId): Promise<void> {
+
+    }
+
+    async receiveOrder(id: OrderId): Promise<void> {
+
+
+    }
+
+    async completeOrder(id: OrderId): Promise<void> {
+
+    }
+
 
     async getHello(): Promise<string> {
         return (await this.ordersRepository.removeById(new ProductId("1"))).valueOf() ? "Hello" : "Goodbye";
