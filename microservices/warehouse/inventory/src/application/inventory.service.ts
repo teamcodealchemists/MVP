@@ -4,6 +4,7 @@ import { WarehouseId } from '../domain/warehouseId.entity';
 import { Product } from 'src/domain/product.entity';
 import { ProductId } from 'src/domain/productId.entity';
 import { InventoryRepository } from 'src/domain/inventory.repository';
+import {ProductQuantity} from 'src/domain/productQuantity.entity';
 
 @Injectable() // mark class as a provider
 export class InventoryService {
@@ -13,6 +14,15 @@ export class InventoryService {
     private readonly inventoryRepository: InventoryRepository,
   ) {
     this.warehouseId = new WarehouseId(`${process.env.WAREHOUSE_ID}`);
+  }
+
+
+  private async checkProductExistence(id: ProductId): Promise<boolean> {
+    return this.inventoryRepository.checkProductExistence(id);
+  }
+
+  private async checkProductThres(product: Product): Promise<boolean> {
+    return this.inventoryRepository.checkProductThres(product);
   }
 
   async addProduct(newProduct: Product): Promise<void> {
@@ -39,9 +49,14 @@ export class InventoryService {
     return await this.inventoryRepository.getAllProducts();
   }
 
-  async checkProductExistence(id: ProductId): Promise<boolean> {
-    return await this.inventoryRepository.checkProductExistence(id);
+
+  async getWarehouseId(): Promise<string> {
+    return this.warehouseId.getId();
   }
+
+  async checkProductAvailability(productQuantities: ProductQuantity[]): Promise<boolean> {
+        return this.inventoryRepository.checkProductAvailability(productQuantities);
+    }
 
   async getHello(): Promise<string> {
     return (await this.inventoryRepository.removeById(new ProductId('1')))
