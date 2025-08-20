@@ -8,17 +8,21 @@ import { OrderState } from "src/domain/orderState.enum";
 import { OrderId } from "src/domain/orderId.entity";
 import { InternalOrder } from "src/domain/internalOrder.entity";
 import { SellOrder } from "src/domain/sellOrder.entity";
-import { OrdersRepository } from 'src/infrastructure/adapters/mongodb/orders.repository.module';
+import { OrdersRepositoryMongo } from '../infrastructure/adapters/mongodb/orders.repository.impl';
 
 export class OrdersService {
     constructor(
-        @Inject('ORDERSREPOSITORY') private readonly ordersRepository: OrdersRepository,
+        private readonly ordersRepositoryMongo: OrdersRepositoryMongo,
     ) {
         
     }
 
     async checkOrderExistence(id: OrderId): Promise<boolean>{
-
+        const order = await this.ordersRepositoryMongo.getById(id);
+        if(!order) {
+            return Promise.resolve(false);
+        }
+        return Promise.resolve(true);   
     }
 
     async updateOrderState(id: OrderId, state: OrderState): Promise<void> {
@@ -66,8 +70,4 @@ export class OrdersService {
 
     }
 
-
-    async getHello(): Promise<string> {
-        return (await this.ordersRepository.removeById(new ProductId("1"))).valueOf() ? "Hello" : "Goodbye";
-    }
 }

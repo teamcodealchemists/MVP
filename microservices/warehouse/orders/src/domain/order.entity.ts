@@ -11,7 +11,7 @@ export abstract class Order {
         private warehouseDeparture: number,
     ) { }
 
-    getOrderId(): number {
+    getOrderId(): string {
     return this.orderId.getId();
     }
     getItemsDetail(): OrderItemDetail[] {

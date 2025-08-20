@@ -1,11 +1,15 @@
 export class OrderId {
     constructor(
-        private id: number,
+        private id: string,
     ) { 
         this.id = id;
     }
 
-    getId(): number {
+    getId(): string {
         return this.id;
+    }
+
+    getOrderType(): string {
+        return this.id.charAt(0);
     }
 }

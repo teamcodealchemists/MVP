@@ -4,5 +4,5 @@ export class OrderIdDTO {
     @IsNotEmpty()
     @IsInt()
     @Min(0)
-    id: number;
+    id: string;
 }

@@ -15,9 +15,13 @@ export class OrdersRepositoryMongo implements OrdersRepository {
 
     async getById(id: OrderId): Promise<InternalOrder | SellOrder> {
         // Implementation for getting an order by ID from MongoDB
+
+        return Promise.resolve(new InternalOrder(new OrderId("I-12345"), [], OrderState.PENDING, new Date(), 0, 1));
     }
 
-    async getState(id: OrderId): Promise<OrderState> {
+/*  async getState(id: OrderId): Promise<OrderState> {
+
+        
     }
 
     async getAllOrders(): Promise<Orders> {
@@ -47,4 +51,5 @@ export class OrdersRepositoryMongo implements OrdersRepository {
     async updateReservedStock(id: OrderId, items: OrderItem[]): Promise<InternalOrder | SellOrder> {
         // Implementation for updating the quantityReserved of an Item for an order in MongoDB
     }
+ */
 }

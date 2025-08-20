@@ -9,7 +9,7 @@ import { SellOrder } from "src/domain/sellOrder.entity";
 
 export interface OrdersRepository {
     getById(id: OrderId): Promise<InternalOrder | SellOrder>;
-    getState(id: OrderId): Promise<OrderState>;
+/*     getState(id: OrderId): Promise<OrderState>;
     getAllOrders(): Promise<Orders>;
     addSellOrder(order: SellOrder): Promise<void>;
     addInternalOrder(order: InternalOrder): Promise<void>;
@@ -17,6 +17,6 @@ export interface OrdersRepository {
     updateOrderState(id: OrderId, state: OrderState): Promise<InternalOrder | SellOrder>;
     genUniqueId(): Promise<OrderId>;
     updateReservedStock(id: OrderId, items: OrderItem[]): Promise<InternalOrder | SellOrder>
-}
+ */}
 
 export const OrdersRepository = Symbol("ORDERSREPOSITORY");

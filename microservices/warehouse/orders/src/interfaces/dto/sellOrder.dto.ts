@@ -6,7 +6,7 @@ import { OrderStateDTO } from "./orderState.dto";
 
 export class SellOrderDTO {
         @IsNotEmpty()
-        @IsInt()
+        @IsString()
         @Min(0)
         orderId: OrderIdDTO;
 
