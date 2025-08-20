@@ -6,6 +6,8 @@ import { InventoryRepository } from 'src/domain/inventory.repository';
 import { Product } from 'src/domain/product.entity';
 import { ProductId } from 'src/domain/productId.entity';
 import { ProductDocument } from './schemas/product.schema';
+import { ProductQuantity } from 'src/domain/productQuantity.entity';
+
 
 @Injectable()
 export class InventoryRepositoryMongo implements InventoryRepository {
@@ -129,25 +131,23 @@ export class InventoryRepositoryMongo implements InventoryRepository {
     }
   }
 
-  async checkProductAvailability(productQuantities: { productId: string; quantity: number }[]): Promise<boolean> {
-    try {
-      for (const pq of productQuantities) {
-        const productDoc = await this.productModel.findOne({ id: pq.productId }).exec();
-
-        if (!productDoc) {
-          console.log("Non ho trovato il prodotto");
-          return false;
-        }
-
-        if (productDoc.quantity < pq.quantity) {
-          console.log("Quantità non disponibile");
-          return false;
-        }
+async checkProductAvailability(productQuantities: ProductQuantity[]): Promise<boolean> {
+  try {
+    for (const pq of productQuantities) {
+      const productDoc = await this.productModel.findOne({ id: pq.getId() }).exec(); 
+      if (!productDoc) {
+        console.log("Non ho trovato il prodotto");
+        return false;
       }
-      return true;
-    } catch (error) {
-      console.error('Errore durante la verifica della disponibilità del prodotto:', error);
-      throw error;
+      if (productDoc.quantity < pq.getQuantity()) {
+        console.log("Quantità non disponibile");
+        return false;
+      }
     }
+    return true;
+  } catch (error) {
+    console.error('Errore durante la verifica disponibilità:', error);
+    throw error;
   }
+}
 }
