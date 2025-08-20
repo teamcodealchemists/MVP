@@ -1,6 +1,6 @@
 import { IsUUID, IsNumber, Min } from 'class-validator';
 
-export class BelowMinThresDto {
+export class belowMinThresDto {
   @IsUUID()
   id: string;
 
