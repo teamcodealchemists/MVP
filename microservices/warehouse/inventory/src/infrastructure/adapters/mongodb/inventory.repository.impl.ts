@@ -3,6 +3,8 @@ import { InventoryRepository } from "src/domain/inventory.repository";
 import { Product } from "src/domain/product.entity";
 import { ProductId } from "src/domain/productId.entity";
 import { Injectable } from "@nestjs/common";
+import {ProductQuantity} from 'src/domain/productQuantity.entity';
+
 
 @Injectable()
 export class InventoryRepositoryMongo implements InventoryRepository {
@@ -32,7 +34,14 @@ export class InventoryRepositoryMongo implements InventoryRepository {
     }
 
     async checkProductExistence(id: ProductId): Promise<boolean> {
-        // Implementation for checking if a product exists in MongoDB
         return Promise.resolve(true);
     }
+
+    async checkProductThres(product: Product): Promise<boolean> {
+    return Promise.resolve(true);
+  }
+
+   async checkProductAvailability(productQuantities: ProductQuantity[]): Promise<boolean> {
+          return Promise.resolve(false);
+      }
 }
