@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/9</span>
+                <span class='fraction'>9/9</span>
             </div>
         
             
@@ -37,16 +37,16 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/6</span>
+                <span class='fraction'>6/6</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/9</span>
+                <span class='fraction'>9/9</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -92,56 +92,56 @@
 <a name='L27'></a><a href='#L27'>27</a>
 <a name='L28'></a><a href='#L28'>28</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { OrderItem } from './orderItem.entity';
 &nbsp;
-<span class="cstat-no" title="statement not covered" >export class O</span>rderItemDetail {
-<span class="fstat-no" title="function not covered" >    constructor(</span>
-        private <span class="cstat-no" title="statement not covered" >item: OrderItem,</span>
-        private <span class="cstat-no" title="statement not covered" >quantityReserved: number,</span>
-        private <span class="cstat-no" title="statement not covered" >unitPrice: number,</span>
+export class OrderItemDetail {
+    constructor(
+        private item: OrderItem,
+        private quantityReserved: number,
+        private unitPrice: number,
     ) { }
 &nbsp;
-<span class="fstat-no" title="function not covered" >    getItem(</span>): OrderItem{
-<span class="cstat-no" title="statement not covered" >        return this.item;</span>
+    getItem(): OrderItem{
+        return this.item;
     }    
 &nbsp;
-<span class="fstat-no" title="function not covered" >    getQuantityReserved(</span>): number {
-<span class="cstat-no" title="statement not covered" >        return this.quantityReserved;</span>
+    getQuantityReserved(): number {
+        return this.quantityReserved;
     }
-<span class="fstat-no" title="function not covered" >    getUnitPrice(</span>): number {
-<span class="cstat-no" title="statement not covered" >        return this.unitPrice;</span>
+    getUnitPrice(): number {
+        return this.unitPrice;
     }    
 &nbsp;
-<span class="fstat-no" title="function not covered" >    setQuantityReserved(</span>newQuantityReserved): void {
-<span class="cstat-no" title="statement not covered" >        this.quantityReserved = newQuantityReserved;</span>
+    setQuantityReserved(newQuantityReserved): void {
+        this.quantityReserved = newQuantityReserved;
     }
-<span class="fstat-no" title="function not covered" >    setUnitPrice(</span>newUnitPrice): void {
-<span class="cstat-no" title="statement not covered" >        this.unitPrice = newUnitPrice;</span>
+    setUnitPrice(newUnitPrice): void {
+        this.unitPrice = newUnitPrice;
     }    
 }
 &nbsp;</pre></td></tr></table></pre>
@@ -151,7 +151,7 @@
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-20T13:28:56.726Z
+                at 2025-08-20T18:35:45.607Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

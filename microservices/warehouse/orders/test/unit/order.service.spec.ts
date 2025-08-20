@@ -19,16 +19,16 @@ const item = new OrderItem(itemId, 100);
 const detail = new OrderItemDetail(item, 20, 10);*/
 
 const mockOrdersRepository = {
-    getById: jest.fn().mockReturnValue(new InternalOrder(new OrderId("I-12345"), [], OrderState.PENDING, new Date(), 0, 1))
-    /*getState: jest.fn().mockReturnValue(OrderState.PENDING),
-    getAllOrders: jest.fn().mockReturnValue(new Orders([], [new OrderId("12345"), OrderState.PENDING, new Date(), 0, 1])),
+    getById: jest.fn(),//.mockReturnValue(new InternalOrder(new OrderId("I-12345"), [], OrderState.PENDING, new Date(), 0, 1))
+    /*
+    getState: jest.fn(),//.mockReturnValue(OrderState.PENDING),
+    getAllOrders: jest.fn(),//.mockReturnValue(new Orders([], [new OrderId("12345"), OrderState.PENDING, new Date(), 0, 1])),
     addSellOrder:jest.fn(),
     addInternalOrder: jest.fn(),
     removeById: jest.fn(),
     updateOrderState: jest.fn(),
     genUniqueId: jest.fn(),
-    updateReservedStock: jest.fn()
-
+    updateReservedStock: jest.fn(),
     getById(id: OrderId): Promise<InternalOrder | SellOrder>;
     getState(id: OrderId): Promise<OrderState>;
     getAllOrders(): Promise<Orders>;
@@ -42,33 +42,46 @@ const mockOrdersRepository = {
 
 
 describe("Test per Orders Service", () => {
-let repo: OrdersRepositoryMongo;
 let service: any;
 
     beforeEach( async () => {
+        jest.clearAllMocks();   //ripulisce lo stato dei mock tra un test e l’altro
         const moduleA = await Test.createTestingModule ({
-            providers: [OrdersService, {
-                provide: OrdersRepositoryMongo,
-                useValue: mockOrdersRepository,
+            providers: [
+                OrdersService,
+                {
+                    provide: OrdersRepositoryMongo,
+                    useValue: mockOrdersRepository,
                 }]
         }).compile();
         service = moduleA.get(OrdersService);
-        repo = moduleA.get(OrdersRepositoryMongo);
     })
 
 
     describe("Test per checkOrderExistence", () => {
 
-        it("Dovrebbe restituire false/true in base a se l'ordine esiste o meno", async () => {
+        /*it("Dovrebbe restituire false/true in base a se l'ordine esiste o meno", async () => {
             const id = new OrderId("I-012345");
             jest.spyOn(repo, "getById").mockResolvedValueOnce({} as any);
-/*             const result = await service.checkOrderExistence(id);
- */
+            //const result = await service.checkOrderExistence(id);
+
             await expect (service.checkOrderExistence(id)).resolves.toBe(false);
             expect(repo.getById).toHaveBeenCalledWith(id);
-/*             expect(result).toBe(true);
- */        });
+           //expect(result).toBe(true);
+        });*/
+        it("Dovrebbe restituire true quando l'ordine esiste", async () => {
+            const id = new OrderId('I-012345');
+            mockOrdersRepository.getById.mockResolvedValueOnce({} as any);  
+            await expect(service.checkOrderExistence(id)).resolves.toBe(true);
+            expect(mockOrdersRepository.getById).toHaveBeenCalledWith(id);
+        });
 
+        it("Dovrebbe restituire false quando l'ordine NON esiste", async () => {
+            const id = new OrderId('I-012346');
+            mockOrdersRepository.getById.mockResolvedValueOnce(null);             //simuli che db non c'è nessun codice con quell'ID quindi deve ritornare null
+            await expect(service.checkOrderExistence(id)).resolves.toBe(false);
+            expect(mockOrdersRepository.getById).toHaveBeenCalledWith(id);
+        });
     });
 });
 
