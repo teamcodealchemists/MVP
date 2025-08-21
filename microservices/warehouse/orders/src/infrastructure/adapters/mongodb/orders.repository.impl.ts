@@ -8,20 +8,23 @@ import { InternalOrder } from "src/domain/internalOrder.entity";
 import { SellOrder } from "src/domain/sellOrder.entity";
 
 import { Injectable } from "@nestjs/common";
+import { Order } from "src/domain/order.entity";
 
 @Injectable()
 export class OrdersRepositoryMongo implements OrdersRepository {
+
     // Implement the methods defined in the OrdersRepository interface
 
     async getById(id: OrderId): Promise<InternalOrder | SellOrder> {
-        // Implementation for getting an order by ID from MongoDB
 
         return Promise.resolve(new InternalOrder(new OrderId("I-12345"), [], OrderState.PENDING, new Date(), 0, 1));
     }
 
-/*  async getState(id: OrderId): Promise<OrderState> {
+    async getState(id: OrderId): Promise<OrderState> {
 
-        
+
+        // Mock
+        return OrderState.COMPLETED;
     }
 
     async getAllOrders(): Promise<Orders> {
@@ -46,10 +49,10 @@ export class OrdersRepositoryMongo implements OrdersRepository {
 
     async genUniqueId(): Promise<OrderId> {
         // Implementation for generating a unique ID for a new order to be created in MongoDB
+        
     }
 
     async updateReservedStock(id: OrderId, items: OrderItem[]): Promise<InternalOrder | SellOrder> {
         // Implementation for updating the quantityReserved of an Item for an order in MongoDB
     }
- */
 }

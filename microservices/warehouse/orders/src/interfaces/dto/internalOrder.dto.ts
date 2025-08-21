@@ -1,7 +1,7 @@
 import { IsNotEmpty, IsString, Min, IsInt, IsDate, IsArray } from 'class-validator';
 
 import { OrderIdDTO } from "./orderId.dto";
-import { OrderItemDTO } from "./orderItem.dto";
+import { OrderItemDetailDTO } from "./orderItemDetail.dto";
 import { OrderStateDTO } from "./orderState.dto";
 
 export class InternalOrderDTO {
@@ -12,7 +12,7 @@ export class InternalOrderDTO {
 
         @IsNotEmpty()
         @IsArray()
-        items: OrderItemDTO[];
+        items: OrderItemDetailDTO[];
 
         @IsNotEmpty()
         @IsString()

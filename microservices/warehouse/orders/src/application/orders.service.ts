@@ -27,27 +27,27 @@ export class OrdersService {
     }
 
     async updateOrderState(id: OrderId, state: OrderState): Promise<void> {
-
+        await this.ordersRepositoryMongo.updateOrderState(id, state);
     }
     
     async checkOrderState(id: OrderId): Promise<void> {
-
+        await this.ordersRepositoryMongo.getState(id);
     }
 
     async createSellOrder(order: SellOrder): Promise<void>{
-
+        await this.ordersRepositoryMongo.addSellOrder(order);
     }
 
     async createInternalOrder(order: InternalOrder): Promise<void>{
-
+        await this.ordersRepositoryMongo.addInternalOrder(order);
     }
 
     async cancelOrder(id: OrderId): Promise<void> {
-
+        await this.ordersRepositoryMongo.removeById(id);
     }
 
     async updateReservedStock(id: OrderId, items: OrderItem[]): Promise<void> {
-
+        const updatedOrder = await this.ordersRepositoryMongo.updateReservedStock(id, items);
     }
 
     async checkReservedQuantityForSellOrder(sellOrder: SellOrder): Promise<void> {
@@ -59,16 +59,15 @@ export class OrdersService {
     }
 
     async shipOrder(id: OrderId): Promise<void> {
-
+        await this.ordersRepositoryMongo.updateOrderState(id, OrderState.SHIPPED);
     }
 
     async receiveOrder(id: OrderId): Promise<void> {
-
-
+        await this.ordersRepositoryMongo.getById(id);    
     }
 
     async completeOrder(id: OrderId): Promise<void> {
-
+        await this.ordersRepositoryMongo.updateOrderState(id, OrderState.COMPLETED);
     }
 
 }
