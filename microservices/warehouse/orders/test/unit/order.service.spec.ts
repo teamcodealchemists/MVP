@@ -50,7 +50,7 @@ let service: any;
             providers: [
                 OrdersService,
                 {
-                    provide: OrdersRepositoryMongo,
+                    provide: 'ORDERS_REPOSITORY',//OrdersRepositoryMongo,
                     useValue: mockOrdersRepository,
                 }]
         }).compile();

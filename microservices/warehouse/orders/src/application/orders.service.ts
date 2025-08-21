@@ -12,7 +12,8 @@ import { OrdersRepositoryMongo } from '../infrastructure/adapters/mongodb/orders
 @Injectable()   
 export class OrdersService {
     constructor(
-        private readonly ordersRepositoryMongo: OrdersRepositoryMongo,
+    @Inject('ORDERS_REPOSITORY')
+    private readonly ordersRepositoryMongo: OrdersRepositoryMongo,
     ) {
         
     }
