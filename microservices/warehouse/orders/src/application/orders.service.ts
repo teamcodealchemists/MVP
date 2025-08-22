@@ -14,9 +14,7 @@ export class OrdersService {
     constructor(
     @Inject('ORDERS_REPOSITORY')
     private readonly ordersRepositoryMongo: OrdersRepositoryMongo,
-    ) {
-        
-    }
+    ) {}
 
     async checkOrderExistence(id: OrderId): Promise<boolean>{
         const order = await this.ordersRepositoryMongo.getById(id);
@@ -47,7 +45,7 @@ export class OrdersService {
     }
 
     async updateReservedStock(id: OrderId, items: OrderItem[]): Promise<void> {
-        const updatedOrder = await this.ordersRepositoryMongo.updateReservedStock(id, items);
+        await this.ordersRepositoryMongo.updateReservedStock(id, items);
     }
 
     async checkReservedQuantityForSellOrder(sellOrder: SellOrder): Promise<void> {

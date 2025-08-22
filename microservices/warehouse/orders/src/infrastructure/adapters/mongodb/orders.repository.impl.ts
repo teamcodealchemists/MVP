@@ -24,54 +24,147 @@ export class OrdersRepositoryMongo implements OrdersRepository {
     private readonly mapper: DataMapper
   ) {}
   
-    // Implement the methods defined in the OrdersRepository interface
-
     async getById(id: OrderId): Promise<InternalOrder | SellOrder> {
-        const internal = await this.internalOrderModel.findOne({ "orderId.id": id.getId() }).lean();
-        const sell = await this.sellOrderModel.findOne({ "orderId.id": id.getId() }).lean();
-        
-        if (internal) return this.mapper.internalOrderToDomain(internal as any);
-        if (sell) return this.mapper.sellOrderToDomain(sell as any);
+        try {
+            const internalDoc = await this.internalOrderModel.findOne({ "orderId.id": id.getId() }).lean().exec();
+            if (internalDoc) return await this.mapper.internalOrderToDomain(internalDoc as any);
 
-        throw new Error(`Non è stato trovato l'ordine con ID ${id.getId()}`);
+            const sellDoc = await this.sellOrderModel.findOne({ "orderId.id": id.getId() }).lean().exec();
+            if (sellDoc) return await this.mapper.sellOrderToDomain(sellDoc as any);
+
+            throw new Error(`Ordine con ID ${id.getId()} non trovato`);
+        } catch (error) {
+            console.error("Errore durante la ricerca dell'ordine per ID:", error);
+            throw error;
+        }
     }
 
     async getState(id: OrderId): Promise<OrderState> {
-        const internal = await this.internalOrderModel.findOne({ "orderId.id": id.getId() }, { orderState: 1 }).lean();
-        const sell = await this.sellOrderModel.findOne({ "orderId.id": id.getId() }, { orderState: 1 }).lean();
-        
-        if (internal) return internal.orderState as OrderState;
-        if (sell) return sell.orderState as OrderState;
+        try {
+            const internalDoc = await this.internalOrderModel.findOne({ "orderId.id": id.getId() }, { orderState: 1 }).lean().exec();
+            if (internalDoc) return internalDoc.orderState as OrderState;
 
-        throw new Error(`State for order ID ${id.getId()} not found`);    
+            const sellDoc = await this.sellOrderModel.findOne({ "orderId.id": id.getId() }, { orderState: 1 }).lean().exec();
+            if (sellDoc) return sellDoc.orderState as OrderState;
+
+            throw new Error(`Stato per ordine ID ${id.getId()} non trovato`);
+        } catch (error) {
+            console.error("Errore durante la ricerca dello stato dell'ordine:", error);
+            throw error;
+        }
     }
 
     async getAllOrders(): Promise<Orders> {
-        // Implementation for getting all orders from MongoDB
+        try {
+            const internalDocs = await this.internalOrderModel.find().lean().exec();
+            const sellDocs = await this.sellOrderModel.find().lean().exec();
+
+            const internalOrders = await Promise.all(internalDocs.map(doc => this.mapper.internalOrderToDomain(doc as any)));
+            const sellOrders = await Promise.all(sellDocs.map(doc => this.mapper.sellOrderToDomain(doc as any)));
+
+            return new Orders(sellOrders, internalOrders);
+        } catch (error) {
+            console.error("Errore durante il recupero di tutti gli ordini:", error);
+            throw error;
+        }
     }
 
     async addSellOrder(order: SellOrder): Promise<void> {
-        // Implementation for getting all sell orders from MongoDB
+        try {
+            const dto = await this.mapper.sellOrderToDTO(order);
+            const newSellOrder = new this.sellOrderModel(dto);
+            await newSellOrder.save();
+        } catch (error) {
+            console.error("Errore durante l'aggiunta del SellOrder:", error);
+            throw error;
+        }
     }
 
     async addInternalOrder(order: InternalOrder): Promise<void> {
-        // Implementation for getting all internal orders from MongoDB
+        try {
+            const dto = await this.mapper.internalOrderToDTO(order);
+            const newInternalOrder = new this.internalOrderModel(dto);
+            await newInternalOrder.save();
+        } catch (error) {
+            console.error("Errore durante l'aggiunta dell'InternalOrder:", error);
+            throw error;
+        }
     }
 
     async removeById(id: OrderId): Promise<boolean> {
-        // Implementation for removing an order by ID in MongoDB
+        try {
+            const resInternal = await this.internalOrderModel.deleteOne({ "orderId.id": id.getId() }).exec();
+            if (resInternal.deletedCount > 0) return true;
+
+            const resSell = await this.sellOrderModel.deleteOne({ "orderId.id": id.getId() }).exec();
+            return resSell.deletedCount > 0;
+        } catch (error) {
+            console.error("Errore durante la rimozione dell'ordine:", error);
+            throw error;
+        }
     }
 
     async updateOrderState(id: OrderId, state: OrderState): Promise<InternalOrder | SellOrder> {
-        // Implementation for updating the state of an order by its ID  in MongoDB
+        try {
+            const internalDoc = await this.internalOrderModel.findOneAndUpdate(
+                { "orderId.id": id.getId() },
+                { orderState: state },
+                { new: true }
+            ).lean().exec();
+
+            if (internalDoc) return await this.mapper.internalOrderToDomain(internalDoc as any);
+
+            const sellDoc = await this.sellOrderModel.findOneAndUpdate(
+                { "orderId.id": id.getId() },
+                { orderState: state },
+                { new: true }
+            ).lean().exec();
+        
+            if (sellDoc) return await this.mapper.sellOrderToDomain(sellDoc as any);
+
+            throw new Error(`Impossibile aggiornare lo stato: ordine con ID ${id.getId()} non trovato`);
+        } catch (error) {
+            console.error("Errore durante l'aggiornamento dello stato dell'ordine:", error);
+            throw error;
+        }
     }
 
     async genUniqueId(): Promise<OrderId> {
-        // Implementation for generating a unique ID for a new order to be created in MongoDB
-        
-    }
+        try {
+            const uniqueId = `ORD-${Date.now()}`;
+            return new OrderId(uniqueId);
+        } catch (error) {
+            console.error("Errore durante la generazione dell'ID univoco:", error);
+            throw error;
+        }
+  }
 
     async updateReservedStock(id: OrderId, items: OrderItem[]): Promise<InternalOrder | SellOrder> {
-        // Implementation for updating the quantityReserved of an Item for an order in MongoDB
+        try {
+            const updateItems = items.map(i => ({
+                item: { itemId: { id: i.getItemId() }, quantity: i.getQuantity() },
+                quantityReserved: i.getQuantity(), 
+                unitPrice: 0 
+            }));
+
+            const internalDoc = await this.internalOrderModel.findOneAndUpdate(
+                { "orderId.id": id.getId() },
+                { $set: { items: updateItems } },
+                { new: true }
+            ).lean().exec();
+            if (internalDoc) return await this.mapper.internalOrderToDomain(internalDoc as any);
+
+            const sellDoc = await this.sellOrderModel.findOneAndUpdate(
+                { "orderId.id": id.getId() },
+                { $set: { items: updateItems } },
+                { new: true }
+            ).lean().exec();
+            if (sellDoc) return await this.mapper.sellOrderToDomain(sellDoc as any);
+
+            throw new Error(`Impossibile aggiornare la riserva: ordine con ID ${id.getId()} non trovato`);
+        } catch (error) {
+        console.error("Errore durante l'aggiornamento della quantità riservata:", error);
+        throw error;
+        }
     }
 }
