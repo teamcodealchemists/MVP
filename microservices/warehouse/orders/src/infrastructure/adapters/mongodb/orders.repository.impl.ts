@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";import { Order } from "src/domain/order.entity";
 
 import { DataMapper } from "src/interfaces/data.mapper";
@@ -9,6 +9,7 @@ import { OrderItemDetailModel } from "./model/orderItemDetail.model";
 import { OrdersRepository } from "src/domain/orders.repository";
 import { Orders } from "src/domain/orders.entity";
 import { OrderItem } from "src/domain/orderItem.entity";
+import { OrderItemDetail } from "src/domain/orderItemDetail.entity";
 import { OrderState } from "src/domain/orderState.enum";
 
 import { OrderId } from "src/domain/orderId.entity";
@@ -115,7 +116,7 @@ export class OrdersRepositoryMongo implements OrdersRepository {
 
         // Se l'ordine è stato aggiornato correttamente, restituisci true
         return updatedOrder.getOrderState() === OrderState.CANCELED;
-        
+
     }
 
     async updateOrderState(id: OrderId, state: OrderState): Promise<InternalOrder | SellOrder> {
@@ -181,4 +182,49 @@ export class OrdersRepositoryMongo implements OrdersRepository {
         throw error;
         }
     }
+
+    async checkReservedQuantityForSellOrder(sellOrder: SellOrder): Promise<void> {
+        try {
+            const stringId = sellOrder.getOrderId();
+            const orderId = new OrderId(stringId);
+            const order = await this.getById(orderId);
+
+            if (!order || !(order instanceof SellOrder)) {
+            throw new NotFoundException('SellOrder non trovato');
+            }
+
+            const items = order.getItemsDetail();
+            items.forEach((itemDetail: OrderItemDetail) => {
+            const reservedQty = itemDetail.getQuantityReserved();
+            console.log(`Item: ${itemDetail.getItem().getItemId()}, Reserved: ${reservedQty}`);
+            // Eventuale logica di validazione
+            });
+        } catch (error) {
+            console.error(`Errore in checkReservedQuantityForSellOrder: ${error.message}`);
+            throw error; 
+        }    
+    }
+
+    async checkReservedQuantityForInternalOrder(internalOrder: InternalOrder): Promise<void>{
+        try {
+            const stringId = internalOrder.getOrderId();
+            const orderId = new OrderId(stringId);
+            const order = await this.getById(orderId);
+
+            if (!order || !(order instanceof InternalOrder)) {
+            throw new NotFoundException('InternalOrder non trovato');
+            }
+
+            const items = order.getItemsDetail();
+            items.forEach((itemDetail: OrderItemDetail) => {
+            const reservedQty = itemDetail.getQuantityReserved();
+            console.log(`Item: ${itemDetail.getItem().getItemId()}, Reserved: ${reservedQty}`);
+            // Eventuale logica di validazione
+            });
+        } catch (error) {
+            console.error(`Errore in checkReservedQuantityForInternalOrder: ${error.message}`);
+            throw error;
+        }
+    }
+
 }

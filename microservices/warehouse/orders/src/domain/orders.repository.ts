@@ -17,6 +17,8 @@ export interface OrdersRepository {
     updateOrderState(id: OrderId, state: OrderState): Promise<InternalOrder | SellOrder>;
     genUniqueId(): Promise<OrderId>;
     updateReservedStock(id: OrderId, items: OrderItem[]): Promise<InternalOrder | SellOrder>
+    checkReservedQuantityForSellOrder(sellOrder: SellOrder): Promise<void>;
+    checkReservedQuantityForInternalOrder(internalOrder: InternalOrder): Promise<void>;
  }
 
 export const OrdersRepository = Symbol("ORDERSREPOSITORY");

@@ -49,37 +49,11 @@ export class OrdersService {
     }
 
     async checkReservedQuantityForSellOrder(sellOrder: SellOrder): Promise<void> {
-        const stringId = sellOrder.getOrderId();
-        const orderId = new OrderId(stringId);
-        const order = await this.ordersRepositoryMongo.getById(orderId);
-
-        if (!order || !(order instanceof SellOrder)) {
-            throw new NotFoundException('SellOrder non trovato');
-        }
-
-        const items = order.getItemsDetail();
-        items.forEach((itemDetail: OrderItemDetail) => {
-            const reservedQty = itemDetail.getQuantityReserved();
-            console.log(`Item: ${itemDetail.getItem().getItemId()}, Reserved: ${reservedQty}`);
-            // Eventuale logica di validazione
-        });
+        await this.ordersRepositoryMongo.checkReservedQuantityForSellOrder(sellOrder);
     }
 
     async checkReservedQuantityForInternalOrder(internalOrder: InternalOrder): Promise<void> {
-        const stringId = internalOrder.getOrderId();
-        const orderId = new OrderId(stringId);
-        const order = await this.ordersRepositoryMongo.getById(orderId);
-
-        if (!order || !(order instanceof InternalOrder)) {
-            throw new NotFoundException('InternalOrder non trovato');
-        }
-
-        const items = order.getItemsDetail();
-        items.forEach((itemDetail: OrderItemDetail) => {
-            const reservedQty = itemDetail.getQuantityReserved();
-            console.log(`Item: ${itemDetail.getItem().getItemId()}, Reserved: ${reservedQty}`);
-            // Eventuale logica di validazione
-        });
+        await this.ordersRepositoryMongo.checkReservedQuantityForInternalOrder(internalOrder);
     }
 
     async shipOrder(id: OrderId): Promise<void> {
