@@ -36,6 +36,7 @@ export class OrdersController {
   } */
 
   @MessagePattern('call.orders.${process.env.ORDER_ID}.stockReserved')
+  // Metodo per aggiornare il n° di quantità di prodotto riservata dal magazzino.
   async stockReserved(orderQuantityDTO: OrderQuantityDTO): Promise<void> {
     const orderId = await this.dataMapper.orderIdToDomain(orderQuantityDTO.id);
   
@@ -60,29 +61,36 @@ export class OrdersController {
     await this.ordersService.createInternalOrder(internalOrderDomain);
   }
 
-/* TODO: Metodi dello ShipmentEventListener
+  // Metodi dello ShipmentEventListener
   @MessagePattern('call.orders.${process.env.ORDER_ID}.waitingForStock')  
+  // Metodo per comunicare al magazzino di partenza che il magazzino di destinazione 
+  // ha inserito l’ordine e sta attendendo che la merce venga inviata.
   async waitingForStock(orderIdDTO: OrderIdDTO) : Promise<void> {
-    const orderId = await this.dataMapper.orderIdToDomain(orderIdDTO);
-    await this.ordersService.updateOrderState(orderId, OrderState.PENDING);
+    const orderId = new OrderId(orderIdDTO.id);
+    await this.ordersService.updateOrderState(orderId, OrderState.PROCESSING);
   }
 
   @MessagePattern('call.orders.${process.env.ORDER_ID}.stockShipped')  
+  // Metodo per comunicare a ordini che il magazzino ha spedito la merce.
   async stockShipped(orderIdDTO: OrderIdDTO) : Promise<void> {
-    await this.ordersService.updateOrderState(orderId, OrderState.PENDING);
-
+    const orderId = new OrderId(orderIdDTO.id);
+    await this.ordersService.shipOrder(orderId);
   }
 
   @MessagePattern('call.orders.${process.env.ORDER_ID}.stockReceived') 
+  // Metodo per comunicare a ordini che il magazzino di destinazione ha ricevuto la merce
   async stockReceived(orderIdDTO: OrderIdDTO): Promise<void> {
-
+    const orderId = new OrderId(orderIdDTO.id);
+    await this.ordersService.receiveOrder(orderId);
   }
 
   @MessagePattern('call.orders.${process.env.ORDER_ID}.replenishmentReceived') 
+  // Metodo per comunicare al servizio di ordini che il riassortimento è stato completato.
   async replenishmentReceived(orderIdDTO: OrderIdDTO): Promise<void> {
-
+    const orderId = new OrderId(orderIdDTO.id);
+    await this.ordersService.completeOrder(orderId);
   }
- */
+
 
   @MessagePattern('call.orders.${process.env.ORDER_ID}.updateOrderState') 
   async updateOrderState(orderIdDTO: OrderIdDTO, orderStateDTO: OrderStateDTO): Promise<void> {

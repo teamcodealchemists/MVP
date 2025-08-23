@@ -87,8 +87,9 @@ export class OrdersService {
     }
 
     async receiveOrder(id: OrderId): Promise<void> {
-        await this.ordersRepositoryMongo.getById(id);    
-    }
+/*         await this.ordersRepositoryMongo.getById(id);     */    
+          // Comunica direttamente con Outbound?
+}
 
     async completeOrder(id: OrderId): Promise<void> {
         await this.ordersRepositoryMongo.updateOrderState(id, OrderState.COMPLETED);

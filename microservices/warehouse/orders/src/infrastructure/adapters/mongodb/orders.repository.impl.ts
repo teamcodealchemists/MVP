@@ -92,6 +92,7 @@ export class OrdersRepositoryMongo implements OrdersRepository {
     }
 
     async removeById(id: OrderId): Promise<boolean> {
+      /* Rimozione
         try {
             const resInternal = await this.internalOrderModel.deleteOne({ "orderId.id": id.getId() }).exec();
             if (resInternal.deletedCount > 0) return true;
@@ -101,7 +102,20 @@ export class OrdersRepositoryMongo implements OrdersRepository {
         } catch (error) {
             console.error("Errore durante la rimozione dell'ordine:", error);
             throw error;
+        } 
+            
+        Cancellazione */
+        const currentState = await this.getState(id);
+
+        if (currentState === OrderState.CANCELED) {
+            return false; // E' gia in stato "CANCELED"
         }
+
+        const updatedOrder = await this.updateOrderState(id, OrderState.CANCELED);
+
+        // Se l'ordine è stato aggiornato correttamente, restituisci true
+        return updatedOrder.getOrderState() === OrderState.CANCELED;
+        
     }
 
     async updateOrderState(id: OrderId, state: OrderState): Promise<InternalOrder | SellOrder> {
