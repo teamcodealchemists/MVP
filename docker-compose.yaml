@@ -20,12 +20,14 @@ services:
     environment:
       - NODE_ENV=development
       - WAREHOUSE_ID=1
+      - MONGODB_URI=mongodb://mongo:27017/orders
     volumes:
       - ./microservices/warehouse/orders/src:/usr/src/app/src
     networks:
       - shared-warehouses
     depends_on:
-      - nats    
+      - nats
+      - mongo    
 
   resgate:
     image: resgateio/resgate
@@ -51,7 +53,7 @@ services:
     networks:
       - shared-warehouses
     volumes:
-      - ./microservizi/mongo_db:/docker-entrypoint-initdb.d
+      - ./microservices/mongodb:/docker-entrypoint-initdb.d
 
   nats:
      container_name: nats
