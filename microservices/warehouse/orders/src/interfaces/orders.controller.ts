@@ -62,7 +62,7 @@ export class OrdersController {
   }
 
   // Metodi dello ShipmentEventListener
-  @MessagePattern('call.orders.${process.env.ORDER_ID}.waitingForStock')  
+  @MessagePattern('call.warehouse.*.waitingForStock')  
   // Metodo per comunicare al magazzino di partenza che il magazzino di destinazione 
   // ha inserito l’ordine e sta attendendo che la merce venga inviata.
   async waitingForStock(orderIdDTO: OrderIdDTO) : Promise<void> {
@@ -70,21 +70,21 @@ export class OrdersController {
     await this.ordersService.updateOrderState(orderId, OrderState.PROCESSING);
   }
 
-  @MessagePattern('call.orders.${process.env.ORDER_ID}.stockShipped')  
+  @MessagePattern('call.warehouse.*.stockShipped')  
   // Metodo per comunicare a ordini che il magazzino ha spedito la merce.
   async stockShipped(orderIdDTO: OrderIdDTO) : Promise<void> {
     const orderId = new OrderId(orderIdDTO.id);
     await this.ordersService.shipOrder(orderId);
   }
 
-  @MessagePattern('call.orders.${process.env.ORDER_ID}.stockReceived') 
+  @MessagePattern('call.warehouse.*.stockReceived') 
   // Metodo per comunicare a ordini che il magazzino di destinazione ha ricevuto la merce
   async stockReceived(orderIdDTO: OrderIdDTO): Promise<void> {
     const orderId = new OrderId(orderIdDTO.id);
     await this.ordersService.receiveOrder(orderId);
   }
 
-  @MessagePattern('call.orders.${process.env.ORDER_ID}.replenishmentReceived') 
+  @MessagePattern('call.warehouse.*.replenishmentReceived') 
   // Metodo per comunicare al servizio di ordini che il riassortimento è stato completato.
   async replenishmentReceived(orderIdDTO: OrderIdDTO): Promise<void> {
     const orderId = new OrderId(orderIdDTO.id);
@@ -92,7 +92,7 @@ export class OrdersController {
   }
 
 
-  @MessagePattern('call.orders.${process.env.ORDER_ID}.updateOrderState') 
+  @MessagePattern('call.warehouse.*.updateOrderState') 
   async updateOrderState(orderIdDTO: OrderIdDTO, orderStateDTO: OrderStateDTO): Promise<void> {
     const orderId = await this.dataMapper.orderIdToDomain(orderIdDTO);
     const orderState = await this.dataMapper.orderStateToDomain(orderStateDTO);
@@ -100,21 +100,21 @@ export class OrdersController {
     await this.ordersService.updateOrderState(orderId, orderState);
   }
 
-  @MessagePattern('call.orders.${process.env.ORDER_ID}.cancelOrder') 
+  @MessagePattern('call.warehouse.*.cancelOrder') 
   async cancelOrder(orderIdDTO: OrderIdDTO): Promise<void> {
     const orderId = await this.dataMapper.orderIdToDomain(orderIdDTO);
 
     await this.ordersService.cancelOrder(orderId);
   }
 
-  @MessagePattern('call.orders.${process.env.ORDER_ID}.completeOrder')
+  @MessagePattern('call.warehouse.*.completeOrder')
   async completeOrder(orderIdDTO: OrderIdDTO): Promise<void> {
     const orderId = await this.dataMapper.orderIdToDomain(orderIdDTO);
 
     await this.ordersService.completeOrder(orderId);
   }
 
-  @MessagePattern('get.orders.${process.env.ORDER_ID}.getOrderState') 
+  @MessagePattern('get.warehouse.*.getOrderState') 
   async getOrderState(orderIdDTO: OrderIdDTO): Promise<OrderStateDTO> {
     const orderId = await this.dataMapper.orderIdToDomain(orderIdDTO);
     const receivedState = await this.ordersRepositoryMongo.getState(orderId);
@@ -122,7 +122,7 @@ export class OrdersController {
     return await this.dataMapper.orderStateToDTO(receivedState);
   }
 
-  @MessagePattern('get.orders.${process.env.ORDER_ID}.getOrder')
+  @MessagePattern('get.warehouse.*.getOrder')
   async getOrder(orderIdDTO: OrderIdDTO): Promise<InternalOrderDTO | SellOrderDTO> {
     const orderId = await this.dataMapper.orderIdToDomain(orderIdDTO);
     const orderDomain = await this.ordersRepositoryMongo.getById(orderId);    
@@ -140,7 +140,7 @@ export class OrdersController {
       );  
   }
 
-  @MessagePattern('get.orders.${process.env.ORDER_ID}.getAllOrders') 
+  @MessagePattern('get.warehouse.*.getAllOrders') 
   async getAllOrders(): Promise<OrdersDTO> {
     try {
       const ordersDomain: Orders = await this.ordersRepositoryMongo.getAllOrders();

@@ -58,15 +58,20 @@ export class OrdersService {
 
     async shipOrder(id: OrderId): Promise<void> {
         await this.ordersRepositoryMongo.updateOrderState(id, OrderState.SHIPPED);
+
+        console.log(`Order n° ${id} shipped!`);
     }
 
     async receiveOrder(id: OrderId): Promise<void> {
-/*         await this.ordersRepositoryMongo.getById(id);     */    
+/*         await this.ordersRepositoryMongo.getById(id);        
           // Comunica direttamente con Outbound?
-}
+
+        console.log(`Order n° ${id} received!`); */
+    }
 
     async completeOrder(id: OrderId): Promise<void> {
         await this.ordersRepositoryMongo.updateOrderState(id, OrderState.COMPLETED);
+        console.log(`Replenishment order n° ${id} completed!`);
     }
 
 }
