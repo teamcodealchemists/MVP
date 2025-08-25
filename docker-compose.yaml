@@ -1,4 +1,8 @@
 services:
+
+#==========================================================================#
+#                         Warehouse Microservices                          #
+#==========================================================================#
   inventory:
     build:
       context: ./microservices/warehouse/inventory
@@ -28,6 +32,34 @@ services:
       - shared-warehouses
     depends_on:
       - nats    
+
+#==========================================================================#
+#                         Cloud Microservices                              #
+#==========================================================================#
+
+
+#==========================================================================#
+#                 Centralized System Microservices                         #
+#==========================================================================#
+
+  authentication:
+    build:
+      context: ./microservices/centralized/authentication
+      dockerfile: Dockerfile
+    environment:
+      - MONGO_DB=mongodb://mongo:27017/authentication
+    volumes:
+      - ./microservices/centralized/authentication/src:/usr/src/app/src
+    networks:
+      - shared-warehouses
+    depends_on:
+      - nats
+      - mongodb
+      - resgate
+
+#==========================================================================#
+#                         Infrastructure Microservices                     #
+#==========================================================================#
 
   resgate:
     image: resgateio/resgate
