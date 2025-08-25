@@ -3,10 +3,7 @@ services:
     build:
       context: ./microservices/warehouse/inventory
       dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
     environment:
-      - PORT=3000
       - NODE_ENV=development
       - WAREHOUSE_ID=1
       - MONGO_URI=mongodb://mongodb:27017/inventory_db 
@@ -17,6 +14,20 @@ services:
     depends_on:
       - nats
       - mongodb
+
+  orders:
+    build:
+      context: ./microservices/warehouse/orders
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=development
+      - WAREHOUSE_ID=1
+    volumes:
+      - ./microservices/warehouse/orders/src:/usr/src/app/src
+    networks:
+      - shared-warehouses
+    depends_on:
+      - nats    
 
   resgate:
     image: resgateio/resgate
