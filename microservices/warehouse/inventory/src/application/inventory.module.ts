@@ -6,6 +6,8 @@ import { CommandHandler } from 'src/interfaces/commandHandler.controller';
 import { InventoryRepositoryMongo } from 'src/infrastructure/adapters/mongodb/inventory.repository.impl';
 import { OutboundEventAdapter } from 'src/infrastructure/adapters/outbound-event.adapter';
 import { InboundEventListener } from 'src/infrastructure/adapters/inbound-event.listener';
+import { ProductAddQuantityUseCase } from 'src/domain/use-cases/product-add-quantity.usecase';
+import { OrderRequestUseCase } from 'src/domain/use-cases/order-request.usecase';
 
 @Module({
   imports: [
@@ -14,10 +16,12 @@ import { InboundEventListener } from 'src/infrastructure/adapters/inbound-event.
     InventoryRepositoryModule,
   ],
   controllers: [CommandHandler],
-  providers: [
+  providers: [ 
     InventoryService,
     OutboundEventAdapter,
     InboundEventListener,
+     ProductAddQuantityUseCase,  
+    OrderRequestUseCase,
     {
       provide: 'INVENTORYREPOSITORY',
       useClass: InventoryRepositoryMongo,

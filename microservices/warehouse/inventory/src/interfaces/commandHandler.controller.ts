@@ -54,8 +54,8 @@ async handleRemoveStock(payload: any): Promise<boolean> {
   return this.inventoryService.removeProduct(productId);
 
   }
-
-
+ 
+ 
 
    @MessagePattern(`api.warehouse.${process.env.WAREHOUSE_ID}.editStock`)
   async handleEditStock(payload: any): Promise<void> {

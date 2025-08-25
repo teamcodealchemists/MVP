@@ -15,6 +15,8 @@ const commandHandler_controller_1 = require("../interfaces/commandHandler.contro
 const inventory_repository_impl_1 = require("../infrastructure/adapters/mongodb/inventory.repository.impl");
 const outbound_event_adapter_1 = require("../infrastructure/adapters/outbound-event.adapter");
 const inbound_event_listener_1 = require("../infrastructure/adapters/inbound-event.listener");
+const product_add_quantity_usecase_1 = require("../domain/use-cases/product-add-quantity.usecase");
+const order_request_usecase_1 = require("../domain/use-cases/order-request.usecase");
 let InventoryModule = class InventoryModule {
 };
 exports.InventoryModule = InventoryModule;
@@ -29,6 +31,8 @@ exports.InventoryModule = InventoryModule = __decorate([
             inventory_service_1.InventoryService,
             outbound_event_adapter_1.OutboundEventAdapter,
             inbound_event_listener_1.InboundEventListener,
+            product_add_quantity_usecase_1.ProductAddQuantityUseCase,
+            order_request_usecase_1.OrderRequestUseCase,
             {
                 provide: 'INVENTORYREPOSITORY',
                 useClass: inventory_repository_impl_1.InventoryRepositoryMongo,
