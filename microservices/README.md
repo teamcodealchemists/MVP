@@ -15,6 +15,7 @@
 - Aggiungere su docker compose:
     ```yaml
     nome_del_microservizio:
+        container_name: nome_del_microservizio
         build:
             context: ./microservices/area_del_microservizio/nome_del_microservizio
             dockerfile: Dockerfile
@@ -30,8 +31,8 @@
             - resgate
      ```
   - Potrebbero esserci variazioni in base al tipo di Microservizio che create
-- Aggiungere il Dockerfile all'interno della cartella del nome_del_microservizio
-  - Basta copiarlo da altri microservizi, è sempre uguale, nel caso di modifiche meglio aggiornarli tutti.
+- Aggiungere il Dockerfile e il .dockerignore all'interno della cartella del nome_del_microservizio
+  - Basta copiarli da altri microservizi, sono sempre uguali, nel caso di modifiche meglio aggiornarli tutti in tutti i servizi.
 - Aggiungere al file `tsconfig.json`, questa sezione alla fine:
   ```json
   ...
@@ -52,6 +53,7 @@
   ```
   - Questo serve per abilitare il live reload durante lo sviluppo.
 - Eseguire i seguenti comandi nel microservizio in base ad i moduli che si andranno ad usare, fare riferimento alla [documentazione ufficiale di NestJS](https://docs.nestjs.com/):
+  - ```npm i --save class-validator class-transformer```
   - ```npm i --save @nestjs/microservices```
   - ```npm i --save nats```
   - ```npm install --save mongoose```

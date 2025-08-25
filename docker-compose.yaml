@@ -41,6 +41,7 @@ services:
 #==========================================================================#
 
   authentication:
+    container_name: authentication
     build:
       context: ./microservices/centralized/authentication
       dockerfile: Dockerfile

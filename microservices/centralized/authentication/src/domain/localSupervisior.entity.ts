@@ -1,0 +1,26 @@
+import { User } from "./user.entity";
+import { UserId } from "./userId.entity";
+import { WarehouseId } from "./warehouseId.entity";
+import { Authentication } from "./authentication.entity";
+import { Role } from "./role.entity";
+
+export class LocalSupervisor extends User {
+    private readonly warehouseAssigned: WarehouseId[];
+
+    constructor(
+        id: UserId,
+        name: String,
+        surname: String,
+        phone: String,
+        authentication: Authentication,
+        role: Role,
+        warehouseAssigned: WarehouseId[]
+    ) {
+        super(id, name, surname, phone, authentication, role);
+        this.warehouseAssigned = warehouseAssigned;
+    }
+
+    getWarehouses(): WarehouseId[] {
+        return this.warehouseAssigned;
+    }
+}
