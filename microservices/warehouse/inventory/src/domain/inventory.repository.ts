@@ -10,9 +10,6 @@ export interface InventoryRepository {
     addProduct(product: Product): Promise<void>;
     removeById(id: ProductId): Promise<boolean>;
     updateProduct(editedProduct: Product): Promise<void>;
-    checkProductExistence(id: ProductId): Promise<boolean>
-    checkProductAvailability(productQuantities: ProductQuantity[]): Promise<boolean>;
-    checkProductThres(product: Product): Promise<boolean>;
 }
 
 export const InventoryRepository = Symbol("INVENTORYREPOSITORY");

@@ -9,12 +9,14 @@ services:
       - PORT=3000
       - NODE_ENV=development
       - WAREHOUSE_ID=1
+      - MONGO_URI=mongodb://mongodb:27017/inventory_db 
     volumes:
       - ./microservices/warehouse/inventory/src:/usr/src/app/src
     networks:
       - shared-warehouses
     depends_on:
       - nats
+      - mongodb
 
   resgate:
     image: resgateio/resgate

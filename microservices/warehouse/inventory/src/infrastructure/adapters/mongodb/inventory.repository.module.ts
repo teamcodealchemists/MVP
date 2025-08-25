@@ -1,16 +1,21 @@
 import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
 import { InventoryRepositoryMongo } from './inventory.repository.impl';
-import { InventoryRepository } from 'src/domain/inventory.repository';
+import { ProductSchema } from './schemas/product.schema';
 
 @Module({
-  imports: [],
-  controllers: [],
+  imports: [
+    MongooseModule.forFeature([{ name: 'Product', schema: ProductSchema }]),
+  ],
   providers: [
     {
-      provide: "INVENTORYREPOSITORY",
+      provide: 'INVENTORYREPOSITORY',
       useClass: InventoryRepositoryMongo,
     },
   ],
-  exports: ["INVENTORYREPOSITORY"],
+  exports: [
+    'INVENTORYREPOSITORY',
+    MongooseModule, 
+  ],
 })
 export class InventoryRepositoryModule {}
