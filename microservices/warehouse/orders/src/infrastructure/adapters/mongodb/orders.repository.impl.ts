@@ -1,7 +1,7 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
-import { InjectModel } from "@nestjs/mongoose";import { Order } from "src/domain/order.entity";
+import { Injectable, Inject, NotFoundException } from "@nestjs/common";
+import { InjectModel } from "@nestjs/mongoose";
 
-import { DataMapper } from "src/interfaces/data.mapper";
+import { DataMapper } from "src/application/data.mapper";
 import { InternalOrderModel } from "./model/internalOrder.model";
 import { SellOrderModel } from "./model/sellOrder.model";
 import { OrderItemDetailModel } from "./model/orderItemDetail.model";
@@ -22,6 +22,7 @@ export class OrdersRepositoryMongo implements OrdersRepository {
     @InjectModel("InternalOrder") private readonly internalOrderModel: InternalOrderModel,
     @InjectModel("SellOrder") private readonly sellOrderModel: SellOrderModel,
     @InjectModel("OrderItemDetail") private readonly orderItemDetailModel: OrderItemDetailModel,
+    @Inject(DataMapper)
     private readonly mapper: DataMapper
   ) {}
   
@@ -42,11 +43,19 @@ export class OrdersRepositoryMongo implements OrdersRepository {
 
     async getState(id: OrderId): Promise<OrderState> {
         try {
+            console.log('Cercando stato per ordine:', id.getId());
+            
             const internalDoc = await this.internalOrderModel.findOne({ "orderId.id": id.getId() }, { orderState: 1 }).lean().exec();
-            if (internalDoc) return internalDoc.orderState as OrderState;
+            if (internalDoc) {
+            console.log('Trovato internal order:', internalDoc.orderState);
+            return internalDoc.orderState as OrderState;
+            }
 
             const sellDoc = await this.sellOrderModel.findOne({ "orderId.id": id.getId() }, { orderState: 1 }).lean().exec();
-            if (sellDoc) return sellDoc.orderState as OrderState;
+            if (sellDoc) {
+            console.log('Trovato sell order:', sellDoc.orderState);
+            return sellDoc.orderState as OrderState;
+            }
 
             throw new Error(`Stato per ordine ID ${id.getId()} non trovato`);
         } catch (error) {

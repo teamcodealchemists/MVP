@@ -3,10 +3,9 @@ import { Document } from 'mongoose';
 
 import { OrderItem } from '../../../../domain/orderItem.entity'
 
-export type OrderItemDetailDocument = OrderItemDetailSchema & Document;
 
 @Schema()
-export class OrderItemDetailSchema {
+export class OrderItemDetail {
   @Prop({ required: true})
   items: OrderItem[];
 
@@ -17,4 +16,5 @@ export class OrderItemDetailSchema {
   unitPrice: number;
 }
 
-export const OrderItemDetailSchemaFactory = SchemaFactory.createForClass(OrderItemDetailSchema);
+export type OrderItemDetailDocument = OrderItemDetail & Document;
+export const OrderItemDetailSchema = SchemaFactory.createForClass(OrderItemDetail);

@@ -8,7 +8,7 @@ export class NatsService implements OnModuleInit, OnModuleDestroy {
 
   async onModuleInit() {
     this.nc = await connect({
-      servers: process.env.NATS_URL || 'nats://localhost:4222'
+      servers: process.env.NATS_URL || 'nats://nats:4222'
     });
   }
 

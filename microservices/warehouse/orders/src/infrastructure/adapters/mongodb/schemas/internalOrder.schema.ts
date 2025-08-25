@@ -5,10 +5,8 @@ import { OrderId } from '../../../../domain/orderId.entity'
 import { OrderItemDetail } from '../../../../domain/orderItemDetail.entity'
 import { OrderState } from '../../../../domain/orderState.enum'
 
-export type InternalOrderDocument = InternalOrderSchema & Document;
-
 @Schema()
-export class InternalOrderSchema {
+export class InternalOrder {
   @Prop({ required: true, unique: true })
   orderId: OrderId;
 
@@ -28,4 +26,5 @@ export class InternalOrderSchema {
   warehouseDestination: number;
 }
 
-export const InternalOrderSchemaFactory = SchemaFactory.createForClass(InternalOrderSchema);
+export type InternalOrderDocument = InternalOrder & Document;
+export const InternalOrderSchema = SchemaFactory.createForClass(InternalOrder);

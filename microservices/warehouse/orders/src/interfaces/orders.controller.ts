@@ -1,9 +1,8 @@
-import { Controller } from '@nestjs/common';
-import { MessagePattern } from '@nestjs/microservices';
+import { Controller, Inject } from '@nestjs/common';
+import { MessagePattern, Payload } from '@nestjs/microservices';
 import { OrdersService } from 'src/application/orders.service';
-import { DataMapper } from './data.mapper';
-import { OrdersRepositoryMongo } from '../infrastructure/adapters/mongodb/orders.repository.impl';
-
+import { DataMapper } from '../application/data.mapper';
+import { OrdersRepository } from '../domain/orders.repository';
 
 import { Orders } from "src/domain/orders.entity";
 import { OrderItem } from "src/domain/orderItem.entity";
@@ -27,7 +26,8 @@ export class OrdersController {
   constructor(
     private readonly ordersService: OrdersService,
     private readonly dataMapper: DataMapper,
-    private readonly ordersRepositoryMongo: OrdersRepositoryMongo
+    @Inject('ORDERSREPOSITORY')
+    private readonly ordersRepository: OrdersRepository
   ) {}
 
 /*   @MessagePattern(`call.orders.${process.env.ORDER_ID}.----`)
@@ -115,17 +115,25 @@ export class OrdersController {
   }
 
   @MessagePattern('get.warehouse.*.getOrderState') 
-  async getOrderState(orderIdDTO: OrderIdDTO): Promise<OrderStateDTO> {
-    const orderId = await this.dataMapper.orderIdToDomain(orderIdDTO);
-    const receivedState = await this.ordersRepositoryMongo.getState(orderId);
-    
-    return await this.dataMapper.orderStateToDTO(receivedState);
+  async getOrderState(@Payload() orderIdDTO: OrderIdDTO): Promise<OrderStateDTO> {
+    try {
+        const orderId = await this.dataMapper.orderIdToDomain(orderIdDTO);
+        const receivedState = await this.ordersRepository.getState(orderId);
+        console.log('Stato trovato:', receivedState);
+
+        const response = await this.dataMapper.orderStateToDTO(receivedState);
+        console.log('Invio risposta:', response);
+        return response;
+      } catch (error) {
+        console.error('Errore in getOrderState:', error);
+        throw error; 
+      }  
   }
 
   @MessagePattern('get.warehouse.*.getOrder')
   async getOrder(orderIdDTO: OrderIdDTO): Promise<InternalOrderDTO | SellOrderDTO> {
     const orderId = await this.dataMapper.orderIdToDomain(orderIdDTO);
-    const orderDomain = await this.ordersRepositoryMongo.getById(orderId);    
+    const orderDomain = await this.ordersRepository.getById(orderId);    
 
     if (orderDomain instanceof InternalOrder) {
         return this.dataMapper.internalOrderToDTO(orderDomain);
@@ -143,7 +151,7 @@ export class OrdersController {
   @MessagePattern('get.warehouse.*.getAllOrders') 
   async getAllOrders(): Promise<OrdersDTO> {
     try {
-      const ordersDomain: Orders = await this.ordersRepositoryMongo.getAllOrders();
+      const ordersDomain: Orders = await this.ordersRepository.getAllOrders();
       const ordersDTO: OrdersDTO = await this.dataMapper.ordersToDTO(ordersDomain);
       return ordersDTO;
     } catch (error) {

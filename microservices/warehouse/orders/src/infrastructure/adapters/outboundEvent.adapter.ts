@@ -4,7 +4,7 @@ import { connect, NatsConnection, JSONCodec } from 'nats';
 import { NatsService } from '../../interfaces/nats/nats.service';
 
 import { OrdersService } from 'src/application/orders.service';
-import { DataMapper } from '../../interfaces/data.mapper';
+import { DataMapper } from '../../application/data.mapper';
 
 import { Order } from "src/domain/order.entity";
 import { Orders } from "src/domain/orders.entity";
