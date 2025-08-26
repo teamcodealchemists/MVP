@@ -84,7 +84,8 @@
       "text",
       "clover"
     ],
-    "coverageDirectory": "../coverage",
+    "coverageDirectory": "../../../coverage/warehouse/inventory",
+    
     "testEnvironment": "node",
     "moduleNameMapper": {
       "^src/(.*)$": "<rootDir>/src/$1"
