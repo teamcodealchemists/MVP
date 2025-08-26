@@ -2,8 +2,8 @@ import {WarehouseId} from './warehouseId.entity';
 
 export class WarehouseState {
     constructor(
-        private state: string,
         private warehouseId: WarehouseId,
+        private state: string,
     ) { 
     }
 

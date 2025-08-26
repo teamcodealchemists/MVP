@@ -57,6 +57,21 @@ services:
       - mongodb
       - resgate
 
+  routing:
+    build:
+      context: ./microservices/centralized/routing
+      dockerfile: Dockerfile
+    environment:
+      - MONGO_DB=mongodb://mongo:27017/routing
+    volumes:
+      - ./microservices/centralized/routing/src:/usr/src/app/src
+    networks:
+      - shared-warehouses
+    depends_on:
+      - nats
+      - mongodb
+      - resgate
+
 #==========================================================================#
 #                         Infrastructure Microservices                     #
 #==========================================================================#

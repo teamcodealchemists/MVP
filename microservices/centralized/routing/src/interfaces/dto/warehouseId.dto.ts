@@ -4,5 +4,5 @@ export class WarehouseIdDTO {
     @IsNotEmpty()
     @IsInt()
     @Min(0)
-    id: number;
+    warehouseId: number;
 }
