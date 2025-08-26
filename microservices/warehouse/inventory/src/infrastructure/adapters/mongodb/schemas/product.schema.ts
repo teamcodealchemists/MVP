@@ -1,10 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
-export type ProductDocument = ProductSchema & Document;
+export type ProductDocument = Product & Document;
 
 @Schema()
-export class ProductSchema {
+export class Product {
   @Prop({ required: true, unique: true })
   id: string;
 
@@ -24,4 +24,4 @@ export class ProductSchema {
   maxThres: number;
 }
 
-export const ProductSchemaFactory = SchemaFactory.createForClass(ProductSchema);
+export const ProductSchema = SchemaFactory.createForClass(Product);

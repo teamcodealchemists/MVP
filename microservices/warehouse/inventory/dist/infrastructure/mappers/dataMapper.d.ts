@@ -1,0 +1,23 @@
+import { productDto } from '../../interfaces/http/dto/product.dto';
+import { productIdDto } from '../../interfaces/http/dto/productId.dto';
+import { inventoryDto } from '../../interfaces/http/dto/inventory.dto';
+import { Product } from '../../domain/product.entity';
+import { ProductId } from '../../domain/productId.entity';
+import { Inventory } from '../../domain/inventory.entity';
+import { WarehouseId } from '../../domain/warehouseId.entity';
+import { warehouseIdDto } from '../../interfaces/http/dto/warehouseId.dto';
+import { belowMinThresDto } from '../../interfaces/http/dto/belowMinThres.dto';
+import { aboveMaxThresDto } from '../../interfaces/http/dto/aboveMaxThres.dto';
+import { productQuantityDto } from '../../interfaces/http/dto/productQuantity.dto';
+export declare const DataMapper: {
+    toDomainProductId(productIdDTO: productIdDto): ProductId;
+    toDomainProduct(productDTO: productDto): Product;
+    toDomainInventory(inventoryDTO: inventoryDto): Inventory;
+    toDtoProduct(product: Product): productDto;
+    toDTOProductId(productId: ProductId): productIdDto;
+    toDtoInventory(inventory: Inventory): inventoryDto;
+    toDTO(warehouseId: WarehouseId): warehouseIdDto;
+    toBelowMinDTO(product: Product): belowMinThresDto;
+    toAboveMaxDTO(product: Product): aboveMaxThresDto;
+    toDTOProductQuantity(productId: ProductId, quantity: number): productQuantityDto;
+};

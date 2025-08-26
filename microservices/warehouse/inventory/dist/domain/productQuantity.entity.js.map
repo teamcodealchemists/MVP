@@ -1,0 +1,1 @@
+{"version":3,"file":"productQuantity.entity.js","sourceRoot":"","sources":["../../src/domain/productQuantity.entity.ts"],"names":[],"mappings":";;;AAEA,MAAa,eAAe;IAEZ;IACA;IAFZ,YACY,EAAa,EACb,QAAgB;QADhB,OAAE,GAAF,EAAE,CAAW;QACb,aAAQ,GAAR,QAAQ,CAAQ;IACxB,CAAC;IAEL,KAAK;QACD,OAAO,IAAI,CAAC,EAAE,CAAC;IACnB,CAAC;IACD,WAAW;QACP,OAAO,IAAI,CAAC,QAAQ,CAAC;IACzB,CAAC;CACJ;AAZD,0CAYC"}

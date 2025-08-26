@@ -27,7 +27,13 @@
     "@nestjs/microservices": "^11.1.6",
     "@nestjs/mongoose": "^11.0.3",
     "@nestjs/platform-express": "^11.0.1",
+<<<<<<< HEAD
     "mongoose": "^8.18.0",
+=======
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.2",
+    "mongoose": "^8.17.2",
+>>>>>>> 20dab685a9f9e4ad8826e21b99247df5639b2c8b
     "nats": "^2.29.3",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
