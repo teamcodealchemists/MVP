@@ -4,21 +4,19 @@ import { Role } from './role.entity';
 
 export abstract class User {
     private readonly id: UserId;
-    private readonly name: String;
-    private readonly surname: String;
-    private readonly phone: String;
+    private readonly name: string;
+    private readonly surname: string;
+    private readonly phone: string;
     private authentication: Authentication;
     private readonly role: Role;
 
     constructor(
-        id: UserId,
-        name: String,
-        surname: String,
-        phone: String,
+        name: string,
+        surname: string,
+        phone: string,
         authentication: Authentication,
         role: Role
     ) {
-        this.id = id;
         this.name = name;
         this.surname = surname;
         this.phone = phone;
@@ -26,19 +24,15 @@ export abstract class User {
         this.role = role;
     }
 
-    getId(): UserId {
-        return this.id;
-    }
-
-    getName(): String {
+    getName(): string {
         return this.name;
     }
 
-    getSurname(): String {
+    getSurname(): string {
         return this.surname;
     }
 
-    getPhone(): String {
+    getPhone(): string {
         return this.phone;
     }
 

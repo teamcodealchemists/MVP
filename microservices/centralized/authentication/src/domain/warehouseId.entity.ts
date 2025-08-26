@@ -1,11 +1,11 @@
 export class WarehouseId {
-    private readonly warehouseId: string;
+    private readonly warehouseId: number;
 
-    constructor(warehouseId: string) {
+    constructor(warehouseId: number) {
         this.warehouseId = warehouseId;
     }
 
-    getId(): string {
+    getId(): number {
         return this.warehouseId;
     }
 }

@@ -7,17 +7,16 @@ import { UserId } from "./userId.entity";
 
 export class GlobalSupervisor extends User {
     constructor(
-        id: UserId,
-        name: String,
-        surname: String,
-        phone: String,
+        name: string,
+        surname: string,
+        phone: string,
         authentication: Authentication,
         role: Role
     ) {
-        super(id, name, surname, phone, authentication, role);
+        super(name, surname, phone, authentication, role);
     }
 
-    registerLocalSupervisor(id: UserId, name: String, surname: String, phone: String, authentication: Authentication, warehouses: WarehouseId[]) {
-        return new LocalSupervisor(id, name, surname, phone, authentication, Role.LOCAL, warehouses);
+    registerLocalSupervisor(name: string, surname: string, phone: string, authentication: Authentication, warehouses: WarehouseId[]) {
+        return new LocalSupervisor(name, surname, phone, authentication, Role.LOCAL, warehouses);
     }
 }

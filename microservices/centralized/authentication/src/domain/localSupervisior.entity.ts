@@ -8,15 +8,14 @@ export class LocalSupervisor extends User {
     private readonly warehouseAssigned: WarehouseId[];
 
     constructor(
-        id: UserId,
-        name: String,
-        surname: String,
-        phone: String,
+        name: string,
+        surname: string,
+        phone: string,
         authentication: Authentication,
         role: Role,
         warehouseAssigned: WarehouseId[]
     ) {
-        super(id, name, surname, phone, authentication, role);
+        super(name, surname, phone, authentication, role);
         this.warehouseAssigned = warehouseAssigned;
     }
 

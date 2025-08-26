@@ -73,6 +73,8 @@ services:
       - "-n"
       - "nats://nats:4222"
       - "-DV"
+      - "--headauth"
+      - "auth.jwtHeader"
     networks:
       - shared-warehouses
 
