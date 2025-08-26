@@ -17,17 +17,12 @@ import { OrdersDTO } from "src/interfaces/dto/orders.dto";
 import { OrderQuantityDTO } from "src/interfaces/dto/orderQuantity.dto";
 import { ItemIdDTO } from "src/interfaces/dto/itemId.dto";
 
-/*
-import { OrdersController } from "./orders.controller";
-import { OutboundEventAdapter } from "src/infrastructure/adapters/outboundEvent.adapter";
-*/
 
 export class DataMapper {
-    /*constructor(private readonly ordersController: OrdersController, 
-                private readonly outboundEventAdapter: OutboundEventAdapter) {} */
-
 // DTO ===> DOMAIN
 async internalOrderToDomain(dto: InternalOrderDTO): Promise<InternalOrder> {
+   console.log('Document from DB:', dto);
+   console.log('Document orderState:', dto.orderState); 
     return new InternalOrder(
         await this.orderIdToDomain(dto.orderId),
         await Promise.all(dto.items.map(i => this.orderItemDetailToDomain(i))),
@@ -61,7 +56,12 @@ async orderIdToDomain(dto: OrderIdDTO): Promise<OrderId> {
 }
 
 async orderStateToDomain(dto: OrderStateDTO): Promise<OrderState> {
-    return dto.orderState as OrderState;
+  const state = dto.orderState;
+  
+  if (!Object.values(OrderState).includes(state as OrderState)) {
+    throw new Error(`Stato ordine non valido: ${state}. Stati validi: ${Object.values(OrderState).join(', ')}`);
+  }
+  return state as OrderState;
 }
 
 async orderItemDetailToDomain(dto: OrderItemDetailDTO): Promise<OrderItemDetail> {

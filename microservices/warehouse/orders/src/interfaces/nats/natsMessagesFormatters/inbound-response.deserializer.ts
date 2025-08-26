@@ -6,34 +6,35 @@ export class InboundRequestDeserializer implements ConsumerDeserializer {
   private readonly logger = new Logger('InboundRequestDeserializer');
 
   deserialize(value: any, options?: Record<string, any>): IncomingRequest {
-    this.logger.verbose(`<<-- Raw value:`, value);
-    this.logger.verbose(`<<-- Options: ${JSON.stringify(options)}`);
+    this.logger.verbose(`<<-- Valore "grezzo":`, value);
 
     let data: any = value;
     
-    // ✅ CONVERTI BUFFER IN STRINGA SOLO SE NON È VUOTO
-    if (Buffer.isBuffer(value) && value.length > 0) {
-      data = value.toString('utf8');
-      this.logger.verbose(`🔧 Buffer converted: "${data}"`);
-    } else if (Buffer.isBuffer(value) && value.length === 0) {
-      // ✅ SE IL BUFFER È VUOTO, IMPOSTA undefined
+    // Gestione buffer vuoto (come "")
+    if (Buffer.isBuffer(value) && value.length === 0) {
       data = undefined;
-      this.logger.verbose('🔧 Empty buffer, setting undefined');
+      this.logger.verbose('Buffer vuoto, dato impostato a "undefined"');
     }
-
-    // ✅ PARSING JSON SOLO SE C'È QUALCOSA
-    try {
-      if (typeof data === 'string' && data.trim() !== '') {
-        data = JSON.parse(data);
-        this.logger.verbose(`🔧 JSON parsed: ${JSON.stringify(data)}`);
+    // Gestione buffer con contenuto
+    else if (Buffer.isBuffer(value)) {
+      data = value.toString('utf8');
+      this.logger.verbose(`Buffer convertito: "${data}"`);
+      
+      // Parsa JSON solo se non è una stringa vuota
+      try {
+        if (data.trim() !== '') {
+          data = JSON.parse(data);
+          this.logger.verbose(`JSON parsato: ${JSON.stringify(data)}`);
+        }
+      } catch (error) {
+        // Se non è JSON valido, mantieni come stringa
+        this.logger.verbose('Mantengo il valore come stringa non-JSON');
       }
-    } catch (error) {
-      this.logger.verbose('ℹ️ Keeping as non-JSON value');
     }
 
     return {
       pattern: options?.channel,
-      data: data,  // ✅ SARÀ undefined PER PAYLOAD VUOTI
+      data: data,
       id: uuidv4(),
     };
   }

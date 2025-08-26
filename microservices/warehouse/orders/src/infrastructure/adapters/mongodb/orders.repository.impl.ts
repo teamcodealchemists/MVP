@@ -13,6 +13,7 @@ import { OrderItemDetail } from "src/domain/orderItemDetail.entity";
 import { OrderState } from "src/domain/orderState.enum";
 
 import { OrderId } from "src/domain/orderId.entity";
+import { ItemId } from "src/domain/itemId.entity";
 import { InternalOrder } from "src/domain/internalOrder.entity";
 import { SellOrder } from "src/domain/sellOrder.entity";
 
@@ -42,22 +43,18 @@ export class OrdersRepositoryMongo implements OrdersRepository {
     }
 
     async getState(id: OrderId): Promise<OrderState> {
-        try {
-            console.log('Cercando stato per ordine:', id.getId());
-            
+        try {        
             const internalDoc = await this.internalOrderModel.findOne({ "orderId.id": id.getId() }, { orderState: 1 }).lean().exec();
             if (internalDoc) {
-            console.log('Trovato internal order:', internalDoc.orderState);
             return internalDoc.orderState as OrderState;
             }
 
             const sellDoc = await this.sellOrderModel.findOne({ "orderId.id": id.getId() }, { orderState: 1 }).lean().exec();
             if (sellDoc) {
-            console.log('Trovato sell order:', sellDoc.orderState);
             return sellDoc.orderState as OrderState;
             }
 
-            throw new Error(`Stato per ordine ID ${id.getId()} non trovato`);
+            throw new Error(`Stato per l'ordine ${id.getId()} non trovato`);
         } catch (error) {
             console.error("Errore durante la ricerca dello stato dell'ordine:", error);
             throw error;
@@ -130,22 +127,57 @@ export class OrdersRepositoryMongo implements OrdersRepository {
 
     async updateOrderState(id: OrderId, state: OrderState): Promise<InternalOrder | SellOrder> {
         try {
+            // Cerca un InternalOrder con quell'Id. Se c'è, aggiorna Mongo e returna l'ordine in forma domain.
             const internalDoc = await this.internalOrderModel.findOneAndUpdate(
                 { "orderId.id": id.getId() },
                 { orderState: state },
                 { new: true }
-            ).lean().exec();
+            ).lean().exec() as any;
 
-            if (internalDoc) return await this.mapper.internalOrderToDomain(internalDoc as any);
-
+            if (internalDoc) {
+            return new InternalOrder(
+                    new OrderId(internalDoc.orderId.id),
+                    internalDoc.items.map(item => 
+                        new OrderItemDetail(
+                                new OrderItem(
+                                    new ItemId(item.item.id),
+                                    item.item.quantity), 
+                            item.quantityReserved,
+                            item.unitPrice
+                        )
+                    ),
+                    internalDoc.orderState as OrderState, 
+                    new Date(internalDoc.creationDate),
+                    internalDoc.warehouseDeparture,
+                    internalDoc.warehouseDestination
+                );
+            }                    
+            // Cerca un SellOrder con quell'Id. Se c'è, aggiorna Mongo e returna l'ordine in forma domain.
             const sellDoc = await this.sellOrderModel.findOneAndUpdate(
                 { "orderId.id": id.getId() },
                 { orderState: state },
                 { new: true }
-            ).lean().exec();
+            ).lean().exec() as any;
         
-            if (sellDoc) return await this.mapper.sellOrderToDomain(sellDoc as any);
-
+            if (sellDoc) {
+                return new SellOrder(
+                    new OrderId(sellDoc.orderId.id),
+                    sellDoc.items.map(item => 
+                        new OrderItemDetail(
+                                new OrderItem(
+                                    new ItemId(item.item.id),
+                                    item.item.quantity), 
+                            item.quantityReserved,
+                            item.unitPrice
+                        )
+                    ),
+                    sellDoc.orderState as OrderState, 
+                    new Date(sellDoc.creationDate),
+                    sellDoc.warehouseDeparture,
+                    sellDoc.destinationAddress
+                );
+            }
+            // Fallback
             throw new Error(`Impossibile aggiornare lo stato: ordine con ID ${id.getId()} non trovato`);
         } catch (error) {
             console.error("Errore durante l'aggiornamento dello stato dell'ordine:", error);

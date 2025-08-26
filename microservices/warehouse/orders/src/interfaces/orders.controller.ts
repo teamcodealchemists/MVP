@@ -1,5 +1,5 @@
 import { Controller, Inject } from '@nestjs/common';
-import { MessagePattern, Payload } from '@nestjs/microservices';
+import { MessagePattern, Payload, Ctx } from '@nestjs/microservices';
 import { OrdersService } from 'src/application/orders.service';
 import { DataMapper } from '../application/data.mapper';
 import { OrdersRepository } from '../domain/orders.repository';
@@ -30,12 +30,7 @@ export class OrdersController {
     private readonly ordersRepository: OrdersRepository
   ) {}
 
-/*   @MessagePattern(`call.orders.${process.env.ORDER_ID}.----`)
-  getHello(): Promise<string> {
-    return this.ordersService.getHello();
-  } */
-
-  @MessagePattern('call.orders.${process.env.ORDER_ID}.stockReserved')
+  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.stock.reserved`)
   // Metodo per aggiornare il n° di quantità di prodotto riservata dal magazzino.
   async stockReserved(orderQuantityDTO: OrderQuantityDTO): Promise<void> {
     const orderId = await this.dataMapper.orderIdToDomain(orderQuantityDTO.id);
@@ -49,20 +44,19 @@ export class OrdersController {
     await this.ordersService.updateReservedStock(orderId, orderItems); 
   }
 
-  @MessagePattern('call.orders.${process.env.ORDER_ID}.addSellOrder')
+  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.sell.new`)
   async addSellOrder(sellOrderDTO: SellOrderDTO): Promise<void>  {
     const sellOrderDomain = await this.dataMapper.sellOrderToDomain(sellOrderDTO);
     await this.ordersService.createSellOrder(sellOrderDomain);
   }
 
-  @MessagePattern('call.orders.${process.env.ORDER_ID}.addInternalOrder')
+  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.internal.new`)
   async addInternalOrder(internalOrderDTO: InternalOrderDTO): Promise<void> {
     const internalOrderDomain = await this.dataMapper.internalOrderToDomain(internalOrderDTO);
     await this.ordersService.createInternalOrder(internalOrderDomain);
   }
 
-  // Metodi dello ShipmentEventListener
-  @MessagePattern('call.warehouse.*.waitingForStock')  
+  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.waiting.stock`)  
   // Metodo per comunicare al magazzino di partenza che il magazzino di destinazione 
   // ha inserito l’ordine e sta attendendo che la merce venga inviata.
   async waitingForStock(orderIdDTO: OrderIdDTO) : Promise<void> {
@@ -70,21 +64,21 @@ export class OrdersController {
     await this.ordersService.updateOrderState(orderId, OrderState.PROCESSING);
   }
 
-  @MessagePattern('call.warehouse.*.stockShipped')  
+  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.stock.shipped`)  
   // Metodo per comunicare a ordini che il magazzino ha spedito la merce.
   async stockShipped(orderIdDTO: OrderIdDTO) : Promise<void> {
     const orderId = new OrderId(orderIdDTO.id);
     await this.ordersService.shipOrder(orderId);
   }
 
-  @MessagePattern('call.warehouse.*.stockReceived') 
+  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.stock.received`) 
   // Metodo per comunicare a ordini che il magazzino di destinazione ha ricevuto la merce
   async stockReceived(orderIdDTO: OrderIdDTO): Promise<void> {
     const orderId = new OrderId(orderIdDTO.id);
     await this.ordersService.receiveOrder(orderId);
   }
 
-  @MessagePattern('call.warehouse.*.replenishmentReceived') 
+  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.replenishment.received`) 
   // Metodo per comunicare al servizio di ordini che il riassortimento è stato completato.
   async replenishmentReceived(orderIdDTO: OrderIdDTO): Promise<void> {
     const orderId = new OrderId(orderIdDTO.id);
@@ -92,119 +86,73 @@ export class OrdersController {
   }
 
 
-  @MessagePattern('call.warehouse.*.updateOrderState') 
-  async updateOrderState(@Payload() payload: any): Promise<void> {
-    console.log('🎯 UPDATEORDERSTATE CONTROLLER CALLED');
-    console.log('📨 Payload:', payload);
-    console.log('📨 Type of payload:', typeof payload);
-    
+  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.*.state.update.*`) 
+  async updateOrderState(@Ctx() context: any): Promise<void> {  
     try {
-      // ✅ GESTISCI IL PAYLOAD COMPLESSO
-      let orderId: string;
-      let orderState: string;
+      // ESTRAZIONE TOKEN DAL SUBJECT
+      const tokens = context.getSubject().split('.');
 
-      if (typeof payload === 'object' && payload !== null) {
-        // Se arriva come oggetto { orderId: "I1001", orderState: "PROCESSING" }
-        orderId = payload.orderId || payload.id;
-        orderState = payload.orderState || payload.state;
-      } else if (typeof payload === 'string') {
-        // Se arriva come stringa, potresti dover parsare un formato specifico
-        // Esempio: "I1001:PROCESSING" 
-        const parts = payload.split(':');
-        if (parts.length === 2) {
-          orderId = parts[0];
-          orderState = parts[1];
-        } else {
-          throw new Error('Formato payload non valido');
-        }
-      } else {
-        throw new Error('Formato payload non valido');
-      }
+      const orderIdStr = tokens[4]; // Token 5 (es. I1001)
+      const orderStateStr = tokens[7]; // Token 8 (es. PROCESSING)
+      
+      // VALIDAZIONE DEL DTO ed ESECUZIONE UPDATE
+      let orderId: string = orderIdStr;
+      let orderState: string = orderStateStr;
 
-      console.log('🔍 Order ID:', orderId);
-      console.log('🔍 Order State:', orderState);
-
-      // ✅ CONVERTI IN DTO
       const orderIdDTO: OrderIdDTO = { id: orderId };
       const orderStateDTO: OrderStateDTO = { orderState: orderState };
-
+      
       const orderIdDomain = await this.dataMapper.orderIdToDomain(orderIdDTO);
       const orderStateDomain = await this.dataMapper.orderStateToDomain(orderStateDTO);
-
+    
       await this.ordersService.updateOrderState(orderIdDomain, orderStateDomain);
       
-      console.log('✅ Order state updated successfully');
+      console.log(`Lo stato dell'ordine con ID ${orderId} è stato aggiornato con successo a ${orderState}`);
       
     } catch (error) {
-      console.error('❌ Error in updateOrderState:', error);
-      throw error; // O gestisci l'errore diversamente
+      console.error('Errore in updateOrderState:', error);
+      throw error;
     }  
   }
 
-  @MessagePattern('call.warehouse.*.cancelOrder') 
+  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.*.cancel`) 
   async cancelOrder(orderIdDTO: OrderIdDTO): Promise<void> {
     const orderId = await this.dataMapper.orderIdToDomain(orderIdDTO);
 
     await this.ordersService.cancelOrder(orderId);
   }
 
-  @MessagePattern('call.warehouse.*.completeOrder')
+  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.*.complete`)
   async completeOrder(orderIdDTO: OrderIdDTO): Promise<void> {
     const orderId = await this.dataMapper.orderIdToDomain(orderIdDTO);
 
     await this.ordersService.completeOrder(orderId);
   }
 
-  @MessagePattern('get.warehouse.*.getOrderState') 
-  async getOrderState(@Payload() payload: any): Promise<OrderStateDTO> {
-    console.log('🎯 GETORDERSTATE CONTROLLER CALLED');
-    console.log('📨 Payload:', payload);
-    console.log('📨 Type of payload:', typeof payload);
-    
+  @MessagePattern(`get.warehouse.${process.env.WAREHOUSE_ID}.order.*.state`) 
+  async getOrderState(@Ctx() context: any): Promise<OrderStateDTO> {
     try {
-      // ✅ GESTISCI SIA STRINGHE CHE OGGETTI
-      let orderId: string;
-      
-      if (typeof payload === 'string') {
-        // Se arriva come stringa "I1001"
-        orderId = payload;
-      } else if (payload && typeof payload.id === 'string') {
-        // Se arriva come oggetto { id: "I1001" }
-        orderId = payload.id;
-      } else {
-        throw new Error('Formato payload non valido');
-      }
-      
-      console.log('🔍 Order ID extracted:', orderId);
-      
-      // ✅ CONVERTI IN OrderIdDTO
+      // ESTRAZIONE TOKEN DAL SUBJECT
+      const tokens = context.getSubject().split('.');
+      const orderIdStr = tokens[tokens.length - 2]; // ID = Penultimo token
+            
+      // VALIDAZIONE DEL DTO ed ESECUZIONE GET
+      let orderId: string = orderIdStr;
       const orderIdDTO: OrderIdDTO = { id: orderId };
       const orderIdDomain = await this.dataMapper.orderIdToDomain(orderIdDTO);
-      
+    
       const receivedState = await this.ordersRepository.getState(orderIdDomain);
       const response = await this.dataMapper.orderStateToDTO(receivedState);
       
-      console.log('📤 Response:', response);
       return response;
       
     } catch (error) {
-      console.error('❌ Error:', error);
+      console.error('Errore nel get dello stato dell\'ordine:', error);
       return { orderState: 'ERROR' };
     }  
-}
-
-  @MessagePattern('test.ping')
-  async testPing(@Payload() payload: any): Promise<string> {
-    console.log('🎯 PING called with payload:', payload);
-    
-    // ✅ RESTITUISCI SEMPRE QUALCOSA DI NON VUOTO
-    const response = 'pong';
-    console.log('📤 Returning:', response);
-    
-    return response;
   }
 
-  @MessagePattern('get.warehouse.*.getOrder')
+  @MessagePattern(`get.warehouse.${process.env.WAREHOUSE_ID}.order.*`)
   async getOrder(orderIdDTO: OrderIdDTO): Promise<InternalOrderDTO | SellOrderDTO> {
     const orderId = await this.dataMapper.orderIdToDomain(orderIdDTO);
     const orderDomain = await this.ordersRepository.getById(orderId);    
@@ -218,18 +166,18 @@ export class OrdersController {
       }
 
       throw new Error(
-        `Tipo di ordine non riconosciuto per l'ID Ordine: ${orderId}`
+        `Tipo di ordine non riconosciuto per l'ordine: ${orderId}`
       );  
   }
 
-  @MessagePattern('get.warehouse.*.getAllOrders') 
+  @MessagePattern(`get.warehouse.${process.env.WAREHOUSE_ID}.order.all`) 
   async getAllOrders(): Promise<OrdersDTO> {
     try {
       const ordersDomain: Orders = await this.ordersRepository.getAllOrders();
       const ordersDTO: OrdersDTO = await this.dataMapper.ordersToDTO(ordersDomain);
       return ordersDTO;
     } catch (error) {
-      console.error('Errore durante il recupero di tutti gli ordini:', error);
+      console.error('Errore nel recupero di tutti gli ordini:', error);
       throw error;
     }
   } 
