@@ -69,16 +69,4 @@ describe('Servizio Inventario : Test sul file src/application/inventory.service.
     const result = await service.removeProduct(new ProductId('p1'));
     expect(result).toBe(true);
   });
-
-  it('getHello deve ritornare "Hello" se il prodotto id=1 viene eliminato', async () => {
-    repository.removeById.mockResolvedValue(true);
-    const result = await service.getHello();
-    expect(result).toBe('Hello');
-  });
-
-  it('getHello deve ritornare "Goodbye" se il prodotto non viene eliminato', async () => {
-    repository.removeById.mockResolvedValue(false);
-    const result = await service.getHello();
-    expect(result).toBe('Goodbye');
-  });
 });

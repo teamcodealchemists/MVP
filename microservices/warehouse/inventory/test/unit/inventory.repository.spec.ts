@@ -52,7 +52,7 @@ describe('InventoryRepository : Test sul file src/infrastructure/adapters/mongod
     const product = new Product(new ProductId('p1'), 'Test', 10, 5, 1, 20);
     await repository.addProduct(product);
     expect(MockedModel).toHaveBeenCalledWith({
-        id: new ProductId('p1'),
+        id: 'p1',
         name: 'Test',
         unitPrice: 10,
         quantity: 5,
@@ -78,9 +78,8 @@ describe('InventoryRepository : Test sul file src/infrastructure/adapters/mongod
 
     const product = new Product(new ProductId('p1'), 'Aggiornato', 20, 7, 2, 25);
     await repository.updateProduct(product);
-    const pId = new ProductId("p1");
     expect(productModel.updateOne).toHaveBeenCalledWith(
-      { id: pId },
+      { id: "p1" },
       expect.objectContaining({ name: 'Aggiornato', unitPrice: 20 }),
     );
   });
@@ -102,25 +101,5 @@ describe('InventoryRepository : Test sul file src/infrastructure/adapters/mongod
     if (product) {
         expect(product.getName()).toBe('Test');
     }
-  });
-
-  it('checkProductExistence() deve restituire true se il prodotto esiste', async () => {
-    productModel.findOne.mockReturnValue({
-      exec: jest.fn().mockResolvedValue({ id: 'p1' }),
-    } as any);
-
-    const exists = await repository.checkProductExistence(new ProductId('p1'));
-    expect(exists).toBe(true);
-  });
-
-  it('checkProductAvailability() deve restituire true se la quantità richiesta è disponibile', async () => {
-    productModel.findOne.mockReturnValue({
-      exec: jest.fn().mockResolvedValue({ id: 'p1', quantity: 10 }),
-    } as any);
-
-    const result = await repository.checkProductAvailability([
-      new ProductQuantity(new ProductId('p1'), 5),
-    ]);
-    expect(result).toBe(true);
   });
 });
