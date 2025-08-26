@@ -25,7 +25,9 @@
     "@nestjs/common": "^11.0.1",
     "@nestjs/core": "^11.0.1",
     "@nestjs/microservices": "^11.1.6",
+    "@nestjs/mongoose": "^11.0.3",
     "@nestjs/platform-express": "^11.0.1",
+    "mongoose": "^8.18.0",
     "nats": "^2.29.3",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
@@ -41,6 +43,7 @@
     "@swc/core": "^1.10.7",
     "@types/express": "^5.0.0",
     "@types/jest": "^29.5.14",
+    "@types/mongoose": "^5.11.96",
     "@types/node": "^22.10.7",
     "@types/supertest": "^6.0.2",
     "eslint": "^9.18.0",
@@ -72,7 +75,13 @@
     "collectCoverageFrom": [
       "**/*.(t|j)s"
     ],
-    "coverageReporters": ["json", "json-summary", "lcov", "text", "clover"],
+    "coverageReporters": [
+      "json",
+      "json-summary",
+      "lcov",
+      "text",
+      "clover"
+    ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node",
     "moduleNameMapper": {
