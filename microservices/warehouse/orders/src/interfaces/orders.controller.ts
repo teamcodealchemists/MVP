@@ -93,11 +93,52 @@ export class OrdersController {
 
 
   @MessagePattern('call.warehouse.*.updateOrderState') 
-  async updateOrderState(orderIdDTO: OrderIdDTO, orderStateDTO: OrderStateDTO): Promise<void> {
-    const orderId = await this.dataMapper.orderIdToDomain(orderIdDTO);
-    const orderState = await this.dataMapper.orderStateToDomain(orderStateDTO);
+  async updateOrderState(@Payload() payload: any): Promise<void> {
+    console.log('🎯 UPDATEORDERSTATE CONTROLLER CALLED');
+    console.log('📨 Payload:', payload);
+    console.log('📨 Type of payload:', typeof payload);
+    
+    try {
+      // ✅ GESTISCI IL PAYLOAD COMPLESSO
+      let orderId: string;
+      let orderState: string;
 
-    await this.ordersService.updateOrderState(orderId, orderState);
+      if (typeof payload === 'object' && payload !== null) {
+        // Se arriva come oggetto { orderId: "I1001", orderState: "PROCESSING" }
+        orderId = payload.orderId || payload.id;
+        orderState = payload.orderState || payload.state;
+      } else if (typeof payload === 'string') {
+        // Se arriva come stringa, potresti dover parsare un formato specifico
+        // Esempio: "I1001:PROCESSING" 
+        const parts = payload.split(':');
+        if (parts.length === 2) {
+          orderId = parts[0];
+          orderState = parts[1];
+        } else {
+          throw new Error('Formato payload non valido');
+        }
+      } else {
+        throw new Error('Formato payload non valido');
+      }
+
+      console.log('🔍 Order ID:', orderId);
+      console.log('🔍 Order State:', orderState);
+
+      // ✅ CONVERTI IN DTO
+      const orderIdDTO: OrderIdDTO = { id: orderId };
+      const orderStateDTO: OrderStateDTO = { orderState: orderState };
+
+      const orderIdDomain = await this.dataMapper.orderIdToDomain(orderIdDTO);
+      const orderStateDomain = await this.dataMapper.orderStateToDomain(orderStateDTO);
+
+      await this.ordersService.updateOrderState(orderIdDomain, orderStateDomain);
+      
+      console.log('✅ Order state updated successfully');
+      
+    } catch (error) {
+      console.error('❌ Error in updateOrderState:', error);
+      throw error; // O gestisci l'errore diversamente
+    }  
   }
 
   @MessagePattern('call.warehouse.*.cancelOrder') 
@@ -115,19 +156,52 @@ export class OrdersController {
   }
 
   @MessagePattern('get.warehouse.*.getOrderState') 
-  async getOrderState(@Payload() orderIdDTO: OrderIdDTO): Promise<OrderStateDTO> {
+  async getOrderState(@Payload() payload: any): Promise<OrderStateDTO> {
+    console.log('🎯 GETORDERSTATE CONTROLLER CALLED');
+    console.log('📨 Payload:', payload);
+    console.log('📨 Type of payload:', typeof payload);
+    
     try {
-        const orderId = await this.dataMapper.orderIdToDomain(orderIdDTO);
-        const receivedState = await this.ordersRepository.getState(orderId);
-        console.log('Stato trovato:', receivedState);
+      // ✅ GESTISCI SIA STRINGHE CHE OGGETTI
+      let orderId: string;
+      
+      if (typeof payload === 'string') {
+        // Se arriva come stringa "I1001"
+        orderId = payload;
+      } else if (payload && typeof payload.id === 'string') {
+        // Se arriva come oggetto { id: "I1001" }
+        orderId = payload.id;
+      } else {
+        throw new Error('Formato payload non valido');
+      }
+      
+      console.log('🔍 Order ID extracted:', orderId);
+      
+      // ✅ CONVERTI IN OrderIdDTO
+      const orderIdDTO: OrderIdDTO = { id: orderId };
+      const orderIdDomain = await this.dataMapper.orderIdToDomain(orderIdDTO);
+      
+      const receivedState = await this.ordersRepository.getState(orderIdDomain);
+      const response = await this.dataMapper.orderStateToDTO(receivedState);
+      
+      console.log('📤 Response:', response);
+      return response;
+      
+    } catch (error) {
+      console.error('❌ Error:', error);
+      return { orderState: 'ERROR' };
+    }  
+}
 
-        const response = await this.dataMapper.orderStateToDTO(receivedState);
-        console.log('Invio risposta:', response);
-        return response;
-      } catch (error) {
-        console.error('Errore in getOrderState:', error);
-        throw error; 
-      }  
+  @MessagePattern('test.ping')
+  async testPing(@Payload() payload: any): Promise<string> {
+    console.log('🎯 PING called with payload:', payload);
+    
+    // ✅ RESTITUISCI SEMPRE QUALCOSA DI NON VUOTO
+    const response = 'pong';
+    console.log('📤 Returning:', response);
+    
+    return response;
   }
 
   @MessagePattern('get.warehouse.*.getOrder')

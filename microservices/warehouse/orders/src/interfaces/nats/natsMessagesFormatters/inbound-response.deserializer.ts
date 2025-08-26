@@ -1,22 +1,39 @@
 import { Logger } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
-import { ConsumerDeserializer } from '@nestjs/microservices';
+import { ConsumerDeserializer, IncomingRequest } from '@nestjs/microservices';
 
-export class InboundRequestDeserializer
-  implements ConsumerDeserializer {
+export class InboundRequestDeserializer implements ConsumerDeserializer {
   private readonly logger = new Logger('InboundRequestDeserializer');
-  deserialize(value: any, options?: Record<string, any>) {
-    this.logger.verbose(
-      `<<-- deserializing inbound request message:\n${value}
-      \n\twith options: ${JSON.stringify(options)}`,
-    );
-    /**
-     * Here, we merely wrap our inbound message payload in the standard Nest
-     * message structure.
-     */
+
+  deserialize(value: any, options?: Record<string, any>): IncomingRequest {
+    this.logger.verbose(`<<-- Raw value:`, value);
+    this.logger.verbose(`<<-- Options: ${JSON.stringify(options)}`);
+
+    let data: any = value;
+    
+    // ✅ CONVERTI BUFFER IN STRINGA SOLO SE NON È VUOTO
+    if (Buffer.isBuffer(value) && value.length > 0) {
+      data = value.toString('utf8');
+      this.logger.verbose(`🔧 Buffer converted: "${data}"`);
+    } else if (Buffer.isBuffer(value) && value.length === 0) {
+      // ✅ SE IL BUFFER È VUOTO, IMPOSTA undefined
+      data = undefined;
+      this.logger.verbose('🔧 Empty buffer, setting undefined');
+    }
+
+    // ✅ PARSING JSON SOLO SE C'È QUALCOSA
+    try {
+      if (typeof data === 'string' && data.trim() !== '') {
+        data = JSON.parse(data);
+        this.logger.verbose(`🔧 JSON parsed: ${JSON.stringify(data)}`);
+      }
+    } catch (error) {
+      this.logger.verbose('ℹ️ Keeping as non-JSON value');
+    }
+
     return {
-      pattern: undefined,
-      data: value,
+      pattern: options?.channel,
+      data: data,  // ✅ SARÀ undefined PER PAYLOAD VUOTI
       id: uuidv4(),
     };
   }

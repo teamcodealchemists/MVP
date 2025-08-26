@@ -7,16 +7,15 @@ import { InboundRequestDeserializer } from './interfaces/nats/natsMessagesFormat
 
 
 async function bootstrap() {
-  const app = await NestFactory.createMicroservice<MicroserviceOptions>(OrdersModule, {
+  const app = await NestFactory.createMicroservice(OrdersModule, {
     transport: Transport.NATS,
     options: {
-      servers: ['nats://nats:4222'], // Nome del container NATS
+      servers: ['nats://nats:4222'],
       deserializer: new InboundRequestDeserializer(),
-      serializer: new OutboundResponseSerializer(),
-      queue: 'orders-queue',
-      parser: 'json',
+      //serializer: new OutboundResponseSerializer(),
     },
   });
   await app.listen();
+  console.log('Microservice is listening');
 }
 bootstrap();
