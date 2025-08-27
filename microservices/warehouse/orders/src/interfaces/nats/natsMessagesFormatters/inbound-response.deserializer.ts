@@ -6,19 +6,19 @@ export class InboundRequestDeserializer implements ConsumerDeserializer {
   private readonly logger = new Logger('InboundRequestDeserializer');
 
   deserialize(value: any, options?: Record<string, any>): IncomingRequest {
-    this.logger.verbose(`<<-- Valore "grezzo":`, value);
+    this.logger.verbose(`<<-- Payload:`, value);
 
     let data: any = value;
     
-    // Gestione buffer vuoto (come "")
+    // Gestione buffer (aka payload) vuoto (come "")
     if (Buffer.isBuffer(value) && value.length === 0) {
       data = undefined;
-      this.logger.verbose('Buffer vuoto, dato impostato a "undefined"');
+      this.logger.verbose('Payload vuoto, impostato a "undefined"');
     }
-    // Gestione buffer con contenuto
+    // Gestione buffer (aka payload) con contenuto
     else if (Buffer.isBuffer(value)) {
       data = value.toString('utf8');
-      this.logger.verbose(`Buffer convertito: "${data}"`);
+      this.logger.verbose(`Payload convertito: "${data}"`);
       
       // Parsa JSON solo se non è una stringa vuota
       try {

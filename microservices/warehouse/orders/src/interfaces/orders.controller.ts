@@ -46,14 +46,22 @@ export class OrdersController {
 
   @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.sell.new`)
   async addSellOrder(sellOrderDTO: SellOrderDTO): Promise<void>  {
+    console.log('Ricevuto un SellOrderDTO:', sellOrderDTO);
+    
     const sellOrderDomain = await this.dataMapper.sellOrderToDomain(sellOrderDTO);
     await this.ordersService.createSellOrder(sellOrderDomain);
+    
+    console.log('SellOrder creato con successo!');  
   }
 
   @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.internal.new`)
   async addInternalOrder(internalOrderDTO: InternalOrderDTO): Promise<void> {
+    console.log('Ricevuto un InternalOrderDTO:', internalOrderDTO);
+    
     const internalOrderDomain = await this.dataMapper.internalOrderToDomain(internalOrderDTO);
     await this.ordersService.createInternalOrder(internalOrderDomain);
+    
+    console.log('InternalOrder creato con successo!');  
   }
 
   @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.waiting.stock`)  
@@ -153,16 +161,28 @@ export class OrdersController {
   }
 
   @MessagePattern(`get.warehouse.${process.env.WAREHOUSE_ID}.order.*`)
-  async getOrder(orderIdDTO: OrderIdDTO): Promise<InternalOrderDTO | SellOrderDTO> {
-    const orderId = await this.dataMapper.orderIdToDomain(orderIdDTO);
-    const orderDomain = await this.ordersRepository.getById(orderId);    
+  async getOrder(@Ctx() context: any): Promise<InternalOrderDTO | SellOrderDTO> {
+    // ESTRAZIONE SUBJECT
+    const orderIdStr = context.getSubject().split('.').pop();
 
-    if (orderDomain instanceof InternalOrder) {
-        return this.dataMapper.internalOrderToDTO(orderDomain);
+    // VALIDAZIONE DEL DTO ed ESECUZIONE GET
+    let orderId: string = orderIdStr;
+    const orderIdDTO: OrderIdDTO = { id: orderId };
+    const orderIdDomain = await this.dataMapper.orderIdToDomain(orderIdDTO);
+    console.log("Valore orderId: ", orderIdDomain);
+    
+    const receivedOrder = await this.ordersRepository.getById(orderIdDomain);
+    console.log("Valore orderDomain: ", receivedOrder);
+
+    if (receivedOrder instanceof InternalOrder) {
+          console.log("Valore INTERNAL!");
+
+        return this.dataMapper.internalOrderToDTO(receivedOrder);
       }
 
-      if (orderDomain instanceof SellOrder) {
-        return this.dataMapper.sellOrderToDTO(orderDomain);
+      if (receivedOrder instanceof SellOrder) {
+        console.log("Valore SELL! ");
+        return this.dataMapper.sellOrderToDTO(receivedOrder);
       }
 
       throw new Error(
