@@ -19,29 +19,35 @@ import { ItemIdDTO } from "src/interfaces/dto/itemId.dto";
 
 
 export class DataMapper {
+
 // DTO ===> DOMAIN
+
 async internalOrderToDomain(dto: InternalOrderDTO): Promise<InternalOrder> {
-   console.log('Document from DB:', dto);
-   console.log('Document orderState:', dto.orderState); 
-    return new InternalOrder(
-        await this.orderIdToDomain(dto.orderId),
-        await Promise.all(dto.items.map(i => this.orderItemDetailToDomain(i))),
-        await this.orderStateToDomain(dto.orderState),
-        dto.creationDate,
-        dto.warehouseDeparture,
-        dto.warehouseDestination
-    );
+  // Validazione: Non si può partire e arrivare allo stesso magazzino
+  if (dto.warehouseDeparture === dto.warehouseDestination) {
+    throw new Error(`Il magazzino di partenza (${dto.warehouseDeparture}) non può essere uguale alla destinazione`);
+  }
+
+  return new InternalOrder(
+    await this.orderIdToDomain(dto.orderId), 
+    await Promise.all(dto.items.map(i => this.orderItemDetailToDomain(i))), 
+    await this.orderStateToDomain(dto.orderState),
+    dto.creationDate,
+    dto.warehouseDeparture,
+    dto.warehouseDestination
+  );
 }
 
 async sellOrderToDomain(dto: SellOrderDTO): Promise<SellOrder> {
-    return new SellOrder(
-        await this.orderIdToDomain(dto.orderId),
-        await Promise.all(dto.items.map(i => this.orderItemDetailToDomain(i))),
-        await this.orderStateToDomain(dto.orderState),
-        dto.creationDate,
-        dto.warehouseDeparture,
-        dto.destinationAddress
-    );        
+  // TODO: Verifica che l'indirizzo "destinationAddress" sia nel formato giusto
+  return new SellOrder(
+    await this.orderIdToDomain(dto.orderId),
+    await Promise.all(dto.items.map(i => this.orderItemDetailToDomain(i))),
+    await this.orderStateToDomain(dto.orderState),
+    dto.creationDate,
+    dto.warehouseDeparture,
+    dto.destinationAddress
+  );        
 }
 
 async orderItemToDomain(dto: OrderItemDTO): Promise<OrderItem> {
@@ -52,7 +58,14 @@ async orderItemToDomain(dto: OrderItemDTO): Promise<OrderItem> {
 }
 
 async orderIdToDomain(dto: OrderIdDTO): Promise<OrderId> {
-     return new OrderId(dto.id);
+  const id = dto.id;
+  
+  const orderIdRegex = /^[SI]\d+$/;
+  
+  if (!orderIdRegex.test(id)) {
+    throw new Error(`Formato OrderId non valido: ${id}. Si accettano solo i formati del tipo S1234 o I5678`);
+  }
+  return new OrderId(id);
 }
 
 async orderStateToDomain(dto: OrderStateDTO): Promise<OrderState> {
@@ -65,11 +78,16 @@ async orderStateToDomain(dto: OrderStateDTO): Promise<OrderState> {
 }
 
 async orderItemDetailToDomain(dto: OrderItemDetailDTO): Promise<OrderItemDetail> {
-    return new OrderItemDetail(
-            await this.orderItemToDomain(dto.item),
-            dto.quantityReserved,
-            dto.unitPrice
-    );
+  // quantityReserved NON può esser maggiore della quantity totale ordinata
+  if (dto.quantityReserved > dto.item.quantity) {
+    throw new Error(`Quantità riservata (${dto.quantityReserved}) maggiore della quantità ordinata (${dto.item.quantity})`);
+  }
+
+  return new OrderItemDetail(
+    await this.orderItemToDomain(dto.item),
+    dto.quantityReserved,
+    dto.unitPrice
+  );
 }
 
 // DOMAIN ===> DTO
