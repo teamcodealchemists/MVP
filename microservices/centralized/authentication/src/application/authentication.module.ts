@@ -1,11 +1,32 @@
+// NestJS core modules
 import { Module } from '@nestjs/common';
+import { JwtModule } from '@nestjs/jwt';
+
+// Services
 import { AuthService } from './authentication.service';
+
+// Controllers (INBOUND)
 import { AuthController } from 'src/interfaces/auth.controller';
+import { AccessControlController } from 'src/interfaces/accessControl.controller';
+import { JwtController } from 'src/interfaces/jwt.controller';
+
+// Infrastructure & Adapters
 import { InboundPortsAdapter } from 'src/infrastructure/portAdapters/indboundPortsAdapter';
+import { OutboundPortsAdapter } from 'src/infrastructure/portAdapters/outboundPortsAdapter';
+import { NatsClientModule } from 'src/interfaces/nats/natsClientModule/natsClient.module';
+
+// Event Handlers (OUTBOUND)
+import { AuthEventHandler } from 'src/interfaces/authEvent.handler';
 
 @Module({
-  imports: [],
-  controllers: [AuthController],
-  providers: [AuthService, InboundPortsAdapter],
+  imports: [
+    JwtModule.register({
+      secret: process.env.JWT_SECRET,
+      signOptions: { expiresIn: '1h' }, // Corrisponde a Max-Age=3600
+    }),
+    NatsClientModule
+  ],
+  controllers: [AuthController, JwtController, AccessControlController],
+  providers: [AuthService, InboundPortsAdapter, AuthEventHandler, OutboundPortsAdapter],
 })
 export class AuthModule {}

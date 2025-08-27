@@ -6,22 +6,22 @@ import { InboundPortsAdapter } from 'src/infrastructure/portAdapters/indboundPor
 
 //DTOs
 import { AuthenticationDTO } from './dto/authentication.dto';
-import { JsonResponseDTO } from './dto/jsonResponse.dto';
 
-    
+
 @Controller()
-@Injectable()
 export class AuthController {
     constructor(
         private readonly inboundPortsAdapter: InboundPortsAdapter
-    ) {}
+    ) { }
 
     @MessagePattern('call.auth.login')
-    async login(@Payload() authenticationDto: AuthenticationDTO) {
-        return (await this.inboundPortsAdapter.login(authenticationDto)).response;
+    async login(@Payload('params') authenticationDTO: AuthenticationDTO): Promise<string> {
+        console.log('AuthController - login called with DTO:', authenticationDTO);
+        return await this.inboundPortsAdapter.login(authenticationDTO);
+        //return Promise.resolve(JSON.stringify({ result: 'Login successful' }));
     }
 
-    @MessagePattern('call.auth.ping')
+    @MessagePattern('call.authTest.ping')
     async ping(): Promise<boolean> {
         return await this.inboundPortsAdapter.ping();
     }

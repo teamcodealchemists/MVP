@@ -47,6 +47,7 @@ services:
       dockerfile: Dockerfile
     environment:
       - MONGO_DB=mongodb://mongo:27017/authentication
+      - JWT_SECRET=IREALLYLOVEM31!!!!!!!!!!!!!!!!!!
     volumes:
       - ./microservices/centralized/authentication/src:/usr/src/app/src
     networks:

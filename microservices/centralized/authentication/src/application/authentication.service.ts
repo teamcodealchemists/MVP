@@ -1,17 +1,19 @@
 import { Authentication } from 'src/domain/authentication.entity';
 import { Injectable, Logger } from '@nestjs/common';
-import { JsonResponseDTO } from 'src/interfaces/dto/jsonResponse.dto';
 import { JwtService } from '@nestjs/jwt';
+import { OutboundPortsAdapter } from 'src/infrastructure/portAdapters/outboundPortsAdapter';
 
-
-
+const Cookie_Age = 1*3600;
 
 @Injectable()
 export class AuthService {
-    constructor(){}
+    constructor(
+        private readonly jwtService: JwtService,
+        private readonly outboundPortsAdapter: OutboundPortsAdapter
+    ) {}
     private readonly logger = new Logger(AuthService.name);
 
-    public async login(authentication: Authentication) {
+    public async login(authentication: Authentication) : Promise<string> {
         this.logger.log(`User ${authentication.getEmail()} logging in with ${authentication.getPassword()}.`);
 
         //TODO: Implement login logic here
@@ -21,33 +23,85 @@ export class AuthService {
             const JWT = this.generateJWT(authentication);
             this.logger.log(`Generated JWT token for user ${authentication.getEmail()}: ${JWT}`);
 
-            const response = new JsonResponseDTO();
-            response.response = {
-            result: {
-                token: JWT
-            }
-            };
-            return Promise.resolve(response);
-
+            // Set JWT as a cookie (example for NestJS with response object)
+            // Here, just returning the token as before, since setting cookies should be handled in the controller layer.
+            return Promise.resolve(JSON.stringify({
+                result: 'Login successful',
+                meta: {
+                    header: {
+                        "Set-token": [`${JWT}`]
+                    }
+                }
+            }));
         } catch (error) {
             this.logger.error(`Failed to generate JWT token for user ${authentication.getEmail()}: ${error.message}`);
-            const response = new JsonResponseDTO();
-            response.response = {
+            return Promise.resolve(JSON.stringify({
             error: {
                 code: "system.accessDenied",
                 message: error.message
             }
-            };
-            return Promise.resolve(response);
+            }));
         }
+    }
+
+    public async logout(): Promise<string> {
+        //TODO: Implement logout logic here
+        return Promise.resolve('User logged out successfully');
     }
 
     public async ping(): Promise<boolean> {
         return Promise.resolve(true);
     }
 
-    private generateJWT(authentication: Authentication) {
-        //TODO: Implement JWT generation logic here
-        return 'generated-jwt-token';
+    public async authenticate(jwt: string, cid: string): Promise<string> {
+        try {
+            if (!jwt) {
+                this.logger.warn('No JWT provided');
+                return Promise.resolve(JSON.stringify({
+                    error: {
+                        code: "system.accessDenied",
+                        message: "No JWT provided"
+                    }
+                }));
+            }
+            else {
+                const decoded = this.jwtService.verify(jwt);
+                if(decoded) {
+                    this.logger.debug(`JWT verified successfully: ${JSON.stringify(decoded)}`);
+
+                    // Call the emit function to notify RESGATE of the token
+                    await this.outboundPortsAdapter.emitAccessToken(jwt, cid);
+
+                    return Promise.resolve(JSON.stringify({
+                        result: null
+                    }));
+                    
+                }
+                else {
+                    this.logger.warn('JWT verification failed');
+                    return Promise.resolve(JSON.stringify({
+                        error: {
+                            code: "system.loginFailed",
+                            message: "JWT verification failed"
+                        }
+                    }));
+                }
+            }
+        } catch (error) {
+            this.logger.error(`JWT verification failed: ${error.message}`);
+            return Promise.resolve(JSON.stringify({
+                error: {
+                    code: "system.loginFailed",
+                    message: error.message
+                }
+            }));
+        }
+    }
+
+    private generateJWT(authentication: Authentication): string {
+        const payload = { sub: authentication.getEmail(), isGlobal: true };
+        this.logger.log(`Generating JWT for subject: ${payload.sub}`);
+        this.logger.log(`Using JWT secret: ${process.env.JWT_SECRET}`);
+        return this.jwtService.sign(payload);
     }
 }
