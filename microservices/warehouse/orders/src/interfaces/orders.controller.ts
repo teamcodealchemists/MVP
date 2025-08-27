@@ -124,17 +124,41 @@ export class OrdersController {
   }
 
   @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.*.cancel`) 
-  async cancelOrder(orderIdDTO: OrderIdDTO): Promise<void> {
-    const orderId = await this.dataMapper.orderIdToDomain(orderIdDTO);
-
-    await this.ordersService.cancelOrder(orderId);
+  async cancelOrder(@Ctx() context: any): Promise<void> {  
+      try {
+          const tokens = context.getSubject().split('.');
+          const orderIdStr = tokens[4]; // Token 5 (es. I1001)
+          
+          // Chiama updateOrderState con stato CANCELED
+          const fakeContext = {
+              getSubject: () => `call.warehouse.${process.env.WAREHOUSE_ID}.order.${orderIdStr}.state.update.CANCELED`
+          };
+          
+          return await this.updateOrderState(fakeContext);
+          
+      } catch (error) {
+          console.error('Errore in cancelOrder:', error);
+          throw error;
+      }  
   }
-
+  
   @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.*.complete`)
-  async completeOrder(orderIdDTO: OrderIdDTO): Promise<void> {
-    const orderId = await this.dataMapper.orderIdToDomain(orderIdDTO);
-
-    await this.ordersService.completeOrder(orderId);
+  async completeOrder(@Ctx() context: any): Promise<void> {
+      try {
+          const tokens = context.getSubject().split('.');
+          const orderIdStr = tokens[4]; // Token 5 (es. I1001)
+          
+          // Chiama updateOrderState con stato CANCELED
+          const fakeContext = {
+              getSubject: () => `call.warehouse.${process.env.WAREHOUSE_ID}.order.${orderIdStr}.state.update.COMPLETED`
+          };
+          
+          return await this.updateOrderState(fakeContext);
+          
+      } catch (error) {
+          console.error('Errore in completeOrder:', error);
+          throw error;
+      }  
   }
 
   @MessagePattern(`get.warehouse.${process.env.WAREHOUSE_ID}.order.*.state`) 
