@@ -14,4 +14,8 @@ export class WarehouseState {
     getId(): WarehouseId {
         return this.warehouseId;
     }
+
+    setState(newState: string): void {
+        this.state = newState;
+    }
 }

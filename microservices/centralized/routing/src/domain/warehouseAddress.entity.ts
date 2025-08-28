@@ -20,4 +20,12 @@ export class WarehouseAddress {
         return this.warehouseState.getId();
     }
 
+    setState(newState: string): void {
+        this.warehouseState.setState(newState);
+    }
+
+    setAddress(newAddress: string): void {
+        this.address = newAddress;
+    }
+
 }

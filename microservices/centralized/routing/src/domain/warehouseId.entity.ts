@@ -7,4 +7,9 @@ export class WarehouseId {
     getId(): number {
         return this.id;
     }
+
+    equals(other: WarehouseId): boolean {
+    // Assuming there is an 'id' property to compare
+    return this.id === other.id;
+  }
 }
