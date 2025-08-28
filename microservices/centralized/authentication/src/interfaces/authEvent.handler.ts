@@ -1,15 +1,19 @@
-import { Inject, Injectable } from "@nestjs/common";
+import { Inject, Injectable, OnModuleInit } from "@nestjs/common";
 import { ClientProxy } from '@nestjs/microservices';
 
 @Injectable()
-export class AuthEventHandler {
+export class AuthEventHandler implements OnModuleInit {
     constructor(@Inject('NATS_SERVICE') private readonly natsClient: ClientProxy,) { }
 
-    async emitAccessToken(token: string, cid: string): Promise<void> {
+    async onModuleInit() {
+        await this.natsClient.connect(); // 🔑 forza la connessione prima di usare emit/send
+    }
+
+    emitAccessToken(token: string, cid: string): void {
         this.natsClient.emit(
             `conn.${cid}.token`,
-            JSON.stringify(token)
+            token
         );
-        return Promise.resolve();
+        return;
     }
 }

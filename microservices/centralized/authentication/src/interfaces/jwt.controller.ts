@@ -4,6 +4,7 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 import { Logger } from '@nestjs/common';
 import { JwtDTO } from 'src/interfaces/dto/jwt.dto';
 import { CidDTO } from 'src/interfaces/dto/cid.dto';
+import { validate, validateOrReject } from 'class-validator';
 
 const logger = new Logger('JwtController');
 
@@ -11,10 +12,10 @@ const logger = new Logger('JwtController');
 export class JwtController {
     constructor(
         private readonly inboundPortsAdapter: InboundPortsAdapter
-    ) {}
+    ) { }
 
     @MessagePattern('auth.auth.jwtHeader')
-    async getJwtFromHeader(@Payload('header') header: any, @Payload('cid') cid: any): Promise<string | null> {
+    getJwtFromHeader(@Payload('header') header: any, @Payload('cid') cid: any): string | null {
 
         logger.log(`Received cid: ${JSON.stringify(cid)}`);
 
@@ -24,17 +25,28 @@ export class JwtController {
         // Extract Bearer token from the Authorization header
         let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
 
-        
+
 
         logger.log(`Extracted JWT: ${token}`);
-
-        token=''
 
         const jwtDto = new JwtDTO();
         jwtDto.jwt = token;
 
         const cidDTO = new CidDTO();
         cidDTO.cid = cid;
+
+        try {
+            validateOrReject(jwtDto);
+            validateOrReject(cidDTO);
+        } catch (error) {
+            logger.error('Validation failed:', error);
+            return JSON.stringify({
+                error: {
+                    code: "system.accessDenied",
+                    message: "ERRORE"
+                }
+            });
+        }
 
         return this.inboundPortsAdapter.authenticate(jwtDto, cidDTO);
     }

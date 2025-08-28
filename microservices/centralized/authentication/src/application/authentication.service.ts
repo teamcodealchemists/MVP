@@ -49,52 +49,57 @@ export class AuthService {
         return Promise.resolve('User logged out successfully');
     }
 
-    public async ping(): Promise<boolean> {
-        return Promise.resolve(true);
+    public async ping(): Promise<string> {
+        return Promise.resolve(JSON.stringify({ result: 'pong' }));
     }
 
-    public async authenticate(jwt: string, cid: string): Promise<string> {
+    public authenticate(jwt: string, cid: string): string {
         try {
             if (!jwt) {
                 this.logger.warn('No JWT provided');
-                return Promise.resolve(JSON.stringify({
+                return JSON.stringify({
                     error: {
                         code: "system.accessDenied",
                         message: "No JWT provided"
                     }
-                }));
+                });
             }
             else {
                 const decoded = this.jwtService.verify(jwt);
                 if(decoded) {
+
+                    //TODO: Fare altri controlli
+
                     this.logger.debug(`JWT verified successfully: ${JSON.stringify(decoded)}`);
 
-                    // Call the emit function to notify RESGATE of the token
-                    await this.outboundPortsAdapter.emitAccessToken(jwt, cid);
+                    const token = {token : decoded};
 
-                    return Promise.resolve(JSON.stringify({
+                    // Call the emit function to notify RESGATE of the token
+                    this.outboundPortsAdapter.emitAccessToken(JSON.stringify(token), cid);
+
+                    return JSON.stringify({
                         result: null
-                    }));
+                    });
                     
                 }
                 else {
                     this.logger.warn('JWT verification failed');
-                    return Promise.resolve(JSON.stringify({
+                    return JSON.stringify({
                         error: {
-                            code: "system.loginFailed",
+                            code: "system.invalidParams",
                             message: "JWT verification failed"
                         }
-                    }));
+                    });
                 }
             }
         } catch (error) {
             this.logger.error(`JWT verification failed: ${error.message}`);
-            return Promise.resolve(JSON.stringify({
+            return JSON.stringify({
                 error: {
-                    code: "system.loginFailed",
+                    code: "system.invalidParams",
                     message: error.message
                 }
-            }));
+            });
         }
     }
 

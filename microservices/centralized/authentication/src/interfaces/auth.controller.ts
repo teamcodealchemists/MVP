@@ -22,7 +22,7 @@ export class AuthController {
     }
 
     @MessagePattern('call.authTest.ping')
-    async ping(): Promise<boolean> {
+    async ping(): Promise<string> {
         return await this.inboundPortsAdapter.ping();
     }
 }

@@ -28,11 +28,11 @@ JwtHeaderAuthenticationListener {
         return await this.authService.logout();
     }
 
-    async authenticate(jwtDTO: JwtDTO, cidDTO: CidDTO): Promise<string> {
-        return await this.authService.authenticate(jwtDTO.jwt, cidDTO.cid);
+    authenticate(jwtDTO: JwtDTO, cidDTO: CidDTO): string {
+        return this.authService.authenticate(jwtDTO.jwt, cidDTO.cid);
     }
 
-    async ping(): Promise<boolean> {
+    async ping(): Promise<string> {
         return await Promise.resolve(this.authService.ping());
     }
 }

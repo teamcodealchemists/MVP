@@ -11,8 +11,8 @@ export class OutboundPortsAdapter implements
 SetTokenPortPublisher {
     constructor(private readonly authEventHandler: AuthEventHandler) {}
 
-    async emitAccessToken(token: string, cid: string): Promise<void> {
-        await this.authEventHandler.emitAccessToken(token, cid);
+    emitAccessToken(token: string, cid: string): void {
+        this.authEventHandler.emitAccessToken(token, cid);
     }
 
 }
