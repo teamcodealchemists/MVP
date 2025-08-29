@@ -15,17 +15,12 @@ export class JwtController {
     ) { }
 
     @MessagePattern('auth.auth.jwtHeader')
-    getJwtFromHeader(@Payload('header') header: any, @Payload('cid') cid: any): string | null {
+    async getJwtFromHeader(@Payload('header') header: any, @Payload('cid') cid: any): Promise<string | null> {
 
         logger.log(`Received cid: ${JSON.stringify(cid)}`);
 
-        // Supponendo che header.Authorization sia un array come nell'esempio
         const authHeader = Array.isArray(header.Authorization) ? header.Authorization[0] : header.Authorization;
-
-        // Extract Bearer token from the Authorization header
         let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
-
-
 
         logger.log(`Extracted JWT: ${token}`);
 
@@ -36,18 +31,18 @@ export class JwtController {
         cidDTO.cid = cid;
 
         try {
-            validateOrReject(jwtDto);
-            validateOrReject(cidDTO);
+            await validateOrReject(jwtDto);
+            await validateOrReject(cidDTO);
+
+            return await this.inboundPortsAdapter.authenticate(jwtDto, cidDTO);
         } catch (error) {
-            logger.error('Validation failed:', error);
+            logger.error('Validation or authentication failed:', error);
             return JSON.stringify({
                 error: {
                     code: "system.accessDenied",
-                    message: "ERRORE"
+                    message: error?.message || "ERRORE"
                 }
             });
         }
-
-        return this.inboundPortsAdapter.authenticate(jwtDto, cidDTO);
     }
 }

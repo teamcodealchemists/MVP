@@ -1,4 +1,4 @@
-import { Controller, Injectable, Inject } from '@nestjs/common';
+import { Controller, Injectable, Inject, Logger } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 
 //Inbound Ports
@@ -7,6 +7,7 @@ import { InboundPortsAdapter } from 'src/infrastructure/portAdapters/indboundPor
 //DTOs
 import { AuthenticationDTO } from './dto/authentication.dto';
 
+const logger = new Logger('AuthController');
 
 @Controller()
 export class AuthController {
@@ -16,13 +17,23 @@ export class AuthController {
 
     @MessagePattern('call.auth.login')
     async login(@Payload('params') authenticationDTO: AuthenticationDTO): Promise<string> {
-        console.log('AuthController - login called with DTO:', authenticationDTO);
-        return await this.inboundPortsAdapter.login(authenticationDTO);
-        //return Promise.resolve(JSON.stringify({ result: 'Login successful' }));
+        try {
+            logger.log('AuthController - login called with DTO:', authenticationDTO);
+            return await this.inboundPortsAdapter.login(authenticationDTO);
+        } catch (error) {
+            logger.error('AuthController - login error:', error);
+            // Return a serialized error response or rethrow as needed
+            return Promise.resolve(JSON.stringify({ error: { code: 'system.error', message: error?.message || 'Unknown error' } }));
+        }
     }
 
     @MessagePattern('call.authTest.ping')
     async ping(): Promise<string> {
-        return await this.inboundPortsAdapter.ping();
+        try {
+            return await this.inboundPortsAdapter.ping();
+        } catch (error) {
+            logger.error('AuthController - ping error:', error);
+            return JSON.stringify({ error: { code: 'system.error', message: error?.message || 'Unknown error' } });
+        }
     }
 }

@@ -6,14 +6,14 @@ export class AuthEventHandler implements OnModuleInit {
     constructor(@Inject('NATS_SERVICE') private readonly natsClient: ClientProxy,) { }
 
     async onModuleInit() {
-        await this.natsClient.connect(); // 🔑 forza la connessione prima di usare emit/send
+        await this.natsClient.connect(); // forza la connessione prima di usare emit/send
     }
 
-    emitAccessToken(token: string, cid: string): void {
-        this.natsClient.emit(
+    async emitAccessToken(token: string, cid: string): Promise<void> {
+        await this.natsClient.emit(
             `conn.${cid}.token`,
             token
         );
-        return;
+        return Promise.resolve();
     }
 }

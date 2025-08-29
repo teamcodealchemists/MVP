@@ -1,3 +1,3 @@
 export interface SetTokenPortPublisher{
-    emitAccessToken(token: string, cid: string): void;
+    emitAccessToken(token: string, cid: string): Promise<void>;
 }
