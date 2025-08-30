@@ -1,4 +1,4 @@
-import { InboundPortsAdapter } from 'src/infrastructure/portAdapters/indboundPortsAdapter';
+import { InboundPortsAdapter } from 'src/infrastructure/adapters/portAdapters/indboundPortsAdapter';
 import { Controller, Header } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { Logger } from '@nestjs/common';

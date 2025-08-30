@@ -86,8 +86,8 @@ services:
       - "27017:27017"
     networks:
       - shared-warehouses
-    volumes:
-      - ./microservizi/mongo_db:/docker-entrypoint-initdb.d
+    #volumes:
+    #  - ./microservizi/mongo_db:/docker-entrypoint-initdb.d
 
   nats:
      container_name: nats

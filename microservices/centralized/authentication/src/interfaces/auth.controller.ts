@@ -2,7 +2,7 @@ import { Controller, Injectable, Inject, Logger } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 
 //Inbound Ports
-import { InboundPortsAdapter } from 'src/infrastructure/portAdapters/indboundPortsAdapter';
+import { InboundPortsAdapter } from 'src/infrastructure/adapters/portAdapters/indboundPortsAdapter';
 
 //DTOs
 import { AuthenticationDTO } from './dto/authentication.dto';

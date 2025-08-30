@@ -1,13 +1,15 @@
 import { Authentication } from 'src/domain/authentication.entity';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { OutboundPortsAdapter } from 'src/infrastructure/portAdapters/outboundPortsAdapter';
+import { OutboundPortsAdapter } from 'src/infrastructure/adapters/portAdapters/outboundPortsAdapter';
+import { AuthRepository } from 'src/domain/mongodb/auth.repository';
 
 @Injectable()
 export class AuthService {
     constructor(
         private readonly jwtService: JwtService,
-        private readonly outboundPortsAdapter: OutboundPortsAdapter
+        private readonly outboundPortsAdapter: OutboundPortsAdapter,
+        @Inject('AUTHREPOSITORY') private readonly authRepository: AuthRepository
     ) {}
     private readonly logger = new Logger(AuthService.name);
 
@@ -18,11 +20,18 @@ export class AuthService {
 
         // Set JWT for client session as a token
         try {
+            const auth = await this.authRepository.findByEmail(authentication.getEmail());
+            if (!auth) { //If it doesn't return anything the mail doesn't exist
+                throw new Error('Email does not exist');
+            }
+            if (auth.getPassword() !== authentication.getPassword()) { //Check password
+                throw new Error('Password is not valid');
+            }
+            // Both email and password are correct
+
             const JWT = this.generateJWT(authentication);
             this.logger.log(`Generated JWT token for user ${authentication.getEmail()}: ${JWT}`);
 
-            // Set JWT as a cookie (example for NestJS with response object)
-            // Here, just returning the token as before, since setting cookies should be handled in the controller layer.
             return Promise.resolve(JSON.stringify({
                 result: 'Login successful',
                 meta: {
