@@ -57,6 +57,7 @@
   - ```npm i --save @nestjs/microservices```
   - ```npm i --save nats```
   - ```npm install --save mongoose```
+  - Se ci sono altri comandi o moduli da recuperare controllare la documentazione di NestJS
 - Ora si modifica il main.ts della vostra cartella srv per trasformarlo in un microservizio che funziona con nestjs, quindi:
     ```ts
         import { nome_del_microservizioModule } from './application/inventory.module'; //Modulo Principale
@@ -71,7 +72,7 @@
         const logger = new Logger();
 
         async function bootstrap() {
-        const app = await NestFactory.createMicroservice<MicroserviceOptions>(InventoryModule, {
+        const app = await NestFactory.createMicroservice<MicroserviceOptions>(NomeModule, { //RICORDA DI CAMBIARE I NOMI DEI MODULI
             logger: logger,
             transport: Transport.NATS,
             options: {
@@ -80,12 +81,14 @@
             serializer: new OutboundResponseSerializer(),
             },
         });
+        app.useGlobalPipes(new ValidationPipe({ exceptionFactory: (errors) => new RpcException(errors) }));
         await app.listen();
         }
 
         bootstrap();
 
     ```
+- Per quanto riguarda i Serializer/Deserializer fai riferimento alla Branch di Microservizio di Auth e copiali pure da lì in quanto sono i più aggiornati e stabili (Forse lol)
 - Ora puoi procedere con la programmazione
 ```
      _._     _,-'""`-._
