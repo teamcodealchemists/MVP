@@ -3,6 +3,9 @@ import { Injectable, Logger, Inject } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { OutboundPortsAdapter } from 'src/infrastructure/adapters/portAdapters/outboundPortsAdapter';
 import { AuthRepository } from 'src/domain/mongodb/auth.repository';
+import { User } from 'src/domain/user.entity';
+import { Role } from 'src/domain/role.entity';
+import { LocalSupervisor } from 'src/domain/localSupervisior.entity';
 
 @Injectable()
 export class AuthService {
@@ -16,20 +19,19 @@ export class AuthService {
     public async login(authentication: Authentication) : Promise<string> {
         this.logger.log(`User ${authentication.getEmail()} logging in with ${authentication.getPassword()}.`);
 
-        //TODO: Implement login logic here
-
-        // Set JWT for client session as a token
+        // Set JWT for client session as a token and check for login
         try {
-            const auth = await this.authRepository.findByEmail(authentication.getEmail());
-            if (!auth) { //If it doesn't return anything the mail doesn't exist
+            const user = await this.authRepository.findByEmail(authentication.getEmail());
+
+            if (!user) { //If it doesn't return anything the mail doesn't exist
                 throw new Error('Email does not exist');
             }
-            if (auth.getPassword() !== authentication.getPassword()) { //Check password
-                throw new Error('Password is not valid');
+            if (user.getAuthentication().getPassword() !== authentication.getPassword()) { //Check password
+                throw new Error(`Password is not valid, the password is ${user.getAuthentication().getPassword()}`);
             }
             // Both email and password are correct
 
-            const JWT = this.generateJWT(authentication);
+            const JWT = await this.generateJWT(user);
             this.logger.log(`Generated JWT token for user ${authentication.getEmail()}: ${JWT}`);
 
             return Promise.resolve(JSON.stringify({
@@ -41,7 +43,7 @@ export class AuthService {
                 }
             }));
         } catch (error) {
-            this.logger.error(`Failed to generate JWT token for user ${authentication.getEmail()}: ${error.message}`);
+            this.logger.error(`Failed to login for user ${authentication.getEmail()}: ${error.message}`);
             return Promise.resolve(JSON.stringify({
             error: {
                 code: "system.accessDenied",
@@ -111,12 +113,32 @@ export class AuthService {
         }
     }
 
-    private generateJWT(authentication: Authentication): string {
-        const payload = { sub: authentication.getEmail(), isGlobal: true };
+    private async generateJWT(user: User): Promise<string> {
+        let payload;
 
         //TODO: Costruire il payload da MongoDB
 
-        this.logger.log(`Generating JWT for subject: ${payload.sub}`);
+        this.logger.log(`Generating JWT for user: ${user.getRole()}`);
+
+        if(user.getRole() == Role.GLOBAL)
+        {
+            payload = {
+                sub: await this.authRepository.getIdByEmail(user.getAuthentication().getEmail()),
+                isGlobal: true
+            }
+        }
+        else
+        {
+            // If user is an interface and getWarehouseAssigned is only implemented by a subclass,
+            // you should check if the method exists before calling it.
+            payload = {
+                sub: await this.authRepository.getIdByEmail(user.getAuthentication().getEmail()),
+                isGlobal: false,
+                warehouseAssigned: (user as LocalSupervisor).getWarehouseAssigned()
+            }
+        }
+
+        
         this.logger.log(`Using JWT secret: ${process.env.JWT_SECRET}`);
         return this.jwtService.sign(payload);
     }

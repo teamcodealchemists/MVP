@@ -19,7 +19,7 @@ export class LocalSupervisor extends User {
         this.warehouseAssigned = warehouseAssigned;
     }
 
-    getWarehouses(): WarehouseId[] {
+    getWarehouseAssigned(): WarehouseId[] {
         return this.warehouseAssigned;
     }
 }

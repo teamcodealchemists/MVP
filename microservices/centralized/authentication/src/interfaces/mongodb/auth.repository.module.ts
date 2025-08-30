@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthRepositoryMongo } from './auth.repository.impl';
 import { AuthenticationSchema } from "src/infrastructure/adapters/mongdb/schemas/auth.schema";
-import { AuthenticationModel } from "src/infrastructure/adapters/mongdb/models/auth.model";
 
 @Module({
     imports: [

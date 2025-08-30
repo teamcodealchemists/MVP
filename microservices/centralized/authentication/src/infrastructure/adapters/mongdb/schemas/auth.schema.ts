@@ -3,7 +3,7 @@ import { Document } from 'mongoose';
 
 export type AuthenticationDocument = UserSchema & Document;
 
-@Schema()
+@Schema({collection:'user'})
 export class UserSchema {
   @Prop({ required: true, unique: true })
   email: string;

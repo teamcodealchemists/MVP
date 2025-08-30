@@ -78,7 +78,7 @@ export const DataMapper = {
                 password: localSupervisor.getAuthentication().getPassword().toString()
             },
             role: localSupervisor.getRole(),
-            warehouseAssigned: localSupervisor.getWarehouses().map(warehouse => ({
+            warehouseAssigned: localSupervisor.getWarehouseAssigned().map(warehouse => ({
                 warehouseId: warehouse.getId()
             }))
         };
