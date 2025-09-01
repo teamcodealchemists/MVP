@@ -3,7 +3,7 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 import { OrderQuantity } from 'src/domain/orderQuantity.entity';
 import { WarehouseId } from 'src/domain/warehouseId.entity';
 
-import { InboundPortsAdapter } from 'src/infrastructure/adapters/centralSystemController';
+import { InboundPortsAdapter } from 'src/infrastructure/adapters/InboundPortsAdapter';
 
 import { OrderQuantityDTO } from 'src/interfaces/http/dto/orderQuantity.dto';
 import { productDto } from 'src/interfaces/http/dto/product.dto';
@@ -45,20 +45,49 @@ export class centralSystemController {
   }
 
   @MessagePattern('event.inventory.criticalQuantity.min')
-  async handleCriticalQuantityMin(@Payload() data: { product: productDto; warehouse: warehouseIdDto }): Promise<void> {
+  async handleCriticalQuantityMin(@Payload() data: any): Promise<void> {
     try {
-      logger.log(`Received criticalQuantity.min event with payload: ${JSON.stringify(data)}`);
-      await this.inboundPortsAdapter.handleCriticalQuantityMin(data.product, data.warehouse);
+      const productDtoInstance = new productDto();
+      productDtoInstance.id = data.product?.id;
+      productDtoInstance.name = data.product?.name;
+      productDtoInstance.unitPrice = data.product?.unitPrice;
+      productDtoInstance.quantity = data.product?.quantity;
+      productDtoInstance.minThres = data.product?.minThres;
+      productDtoInstance.maxThres = data.product?.maxThres;
+
+      // Trasformazione warehouseId in DTO
+      const warehouseDtoInstance = new warehouseIdDto();
+      warehouseDtoInstance.warehouseId = data.product?.warehouseId; // assegni il numero al campo id
+
+      productDtoInstance.warehouseId = warehouseDtoInstance;
+      
+      logger.log(`Received criticalQuantity.min event with payload: ${JSON.stringify(productDtoInstance)}`);
+      
+      await this.inboundPortsAdapter.handleCriticalQuantityMin(productDtoInstance);
     } catch (error) {
       logger.error(`Error handling criticalQuantity.min event: ${error?.message}`, error?.stack);
     }
   }
 
+
   @MessagePattern('event.inventory.criticalQuantity.max')
-  async handleCriticalQuantityMax(@Payload() data: { product: productDto; warehouse: warehouseIdDto }): Promise<void> {
+  async handleCriticalQuantityMax(@Payload() data: any): Promise<void> {
     try {
+      const productDtoInstance = new productDto();
+      productDtoInstance.id = data.product?.id;
+      productDtoInstance.name = data.product?.name;
+      productDtoInstance.unitPrice = data.product?.unitPrice;
+      productDtoInstance.quantity = data.product?.quantity;
+      productDtoInstance.minThres = data.product?.minThres;
+      productDtoInstance.maxThres = data.product?.maxThres;
+
+      // Trasformazione warehouseId in DTO
+      const warehouseDtoInstance = new warehouseIdDto();
+      warehouseDtoInstance.warehouseId = data.product?.warehouseId; // assegni il numero al campo id
+
+      productDtoInstance.warehouseId = warehouseDtoInstance;
       logger.log(`Received criticalQuantity.max event with payload: ${JSON.stringify(data)}`);
-      await this.inboundPortsAdapter.handleCriticalQuantityMax(data.product, data.warehouse);
+      await this.inboundPortsAdapter.handleCriticalQuantityMax(productDtoInstance);
     } catch (error) {
       logger.error(`Error handling criticalQuantity.max event: ${error?.message}`, error?.stack);
     }

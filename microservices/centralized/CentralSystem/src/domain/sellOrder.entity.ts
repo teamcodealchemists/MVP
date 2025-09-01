@@ -22,4 +22,5 @@ export class SellOrder extends Order {
     setDestinationAddress(newDestinationAddress: string): void {
         this.destinationAddress = newDestinationAddress;
     }
+
 }

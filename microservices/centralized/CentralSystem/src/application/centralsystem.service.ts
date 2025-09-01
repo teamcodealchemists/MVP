@@ -36,8 +36,8 @@ export class CentralSystemService {
     const dist: WarehouseState[] = distDto.map(dto => DataMapper.warehouseStatetoDomain(dto));*/
     // --- Mock prodotti per 3 magazzini, ciascuno con 10 prodotti ---
     // --- Mock prodotti per 3 magazzini, ciascuno con 10 prodotti ---
-    const warehouseIds = [new WarehouseId(1), new WarehouseId(2), new WarehouseId(3)];
-    const productsPerWarehouse = 5;
+    const warehouseIds = [new WarehouseId(2)]//, new WarehouseId(3)];
+    const productsPerWarehouse = 1;
 
     // --- Mock Inventory Products statici ---
     const mockInventoryProducts: Product[] = [];
@@ -45,19 +45,19 @@ export class CentralSystemService {
       for (let i = 1; i <= productsPerWarehouse; i++) {
         mockInventoryProducts.push(
           new Product(
-            new ProductId(`1-${i}`),
+            new ProductId(`${i}`),
             `Prodotto $'1-${i}`,
             10 + i,  // prezzo statico
-            50 + i,  // quantità disponibile statica
+            25,  // quantità disponibile statica
             10,      // minThres
             200,     // maxThres
-            wh       // id del magazzino
+            wh     // id del magazzino
           )
         );
       }
     });
     const inv = new Inventory(mockInventoryProducts);
-    console.log("Questo è inventario: " + JSON.stringify(inv, null, 2));
+    //console.log("Questo è inventario: " + JSON.stringify(inv, null, 2));
     // --- Mock SellOrders e InternalOrders statici ---
     const mockSellOrders: SellOrder[] = [];
     const mockInternalOrders: InternalOrder[] = [];
@@ -65,13 +65,13 @@ export class CentralSystemService {
     warehouseIds.forEach((wh) => {
       for (let i = 1; i <= productsPerWarehouse; i++) {
         const sellItem = new OrderItemDetail(
-          new OrderItem(new ItemId(Number(`${wh.getId()}-${i}`)), i), // quantità statica
+          new OrderItem(new ItemId(i), 6), // quantità statica
           0,
           10 + i // prezzo unitario statico
         );
         mockSellOrders.push(
           new SellOrder(
-            new OrderId(`S-${wh.getId()}-${i}`),
+            new OrderId(`S-${i}`),
             [sellItem],
             OrderState.PENDING,
             new Date('2025-09-01T12:00:00Z'), // data statica
@@ -81,13 +81,13 @@ export class CentralSystemService {
         );
 
         const internalItem = new OrderItemDetail(
-          new OrderItem(new ItemId(Number(`${wh.getId()}-${i}`)), i),
+          new OrderItem(new ItemId(i), i+4),
           0,
           10 + i
         );
         mockInternalOrders.push(
           new InternalOrder(
-            new OrderId(`I-${wh.getId()}-${i}`),
+            new OrderId(`I-${i}`),
             [internalItem],
             OrderState.PROCESSING,
             new Date('2025-09-01T12:00:00Z'),
@@ -99,21 +99,21 @@ export class CentralSystemService {
     });
 
     const order = new Orders(mockSellOrders, mockInternalOrders);
-    console.log("Questo è order: " + JSON.stringify(order, null, 2));
+    //console.log("Questo è order: " + JSON.stringify(order, null, 2));
     // --- Mock WarehouseState statici ---
    const dist: WarehouseState[] = warehouseIds
     .filter((wh) => wh.getId() !== warehouseId.getId()) // escludo quello in gioco
     .map((wh) => {
       return new WarehouseState("Good", new WarehouseId(wh.getId())); // esempio statico
     });
-    console.log("Questo è dist: " + JSON.stringify(dist, null, 2));
+    //console.log("Questo è dist: " + JSON.stringify(dist, null, 2));
     return { inv, order, dist };
   }
 
   async CheckRestocking(
     product: Product,
-    warehouseId : WarehouseId
   ): Promise<void> {
+    const warehouseId = new WarehouseId(product.getIdWarehouse());
     const { inv, order, dist } = await this.RequestAllNeededData(warehouseId);
     for (const whState of dist) {
       const whId = whState.getId();
@@ -182,13 +182,24 @@ async CheckInsufficientQuantity(
         (p) => p.getId() === product.getItemId().toString() && p.getIdWarehouse() === whId
       );
 
-      if (!productInInv) continue;
-
+      if (!productInInv){
+        //console.log("Non ci sono prodotti con questo Id");
+        continue;
+      }
       const availableQty =
         productInInv.getQuantity() - product.getQuantity();
 
-      if (availableQty < productInInv.getMinThres()) continue;
-
+      if (availableQty < productInInv.getMinThres()){
+        /*
+        console.log("WarehouseId : " + whState.getId());
+        console.log("Parte Inventario | Problema scende sotto la soglia : ");
+        console.log("Parte Inventario | Soglia : "+ productInInv.getMinThres());
+        console.log("Parte Inventario | Quantità dell'inventario : "+ productInInv.getQuantity());
+        console.log("Parte Inventario | Quantità richiesta : "+ product.getQuantity());
+        console.log("Parte Inventario | Quantità rimanente se fosse stata tolta "+ availableQty);
+        */
+        continue;
+      }
       const pendingOrdersInternal = order
         .getInternalOrders()
         .filter(
@@ -196,12 +207,11 @@ async CheckInsufficientQuantity(
             o.getWarehouseDeparture() === whId &&
             o.getItemsDetail().some(
               (item) =>
-                item.getItem().getItemId() === product.getItemId()
+                item.getItem().getItemId() === Number(product.getItemId())
             ) &&
             (o.getOrderState() === OrderState.PENDING ||
               o.getOrderState() === OrderState.PROCESSING)
         );
-
       const pendingOrdersSell = order
         .getSellOrders()
         .filter(
@@ -209,12 +219,11 @@ async CheckInsufficientQuantity(
             o.getWarehouseDeparture() === whId &&
             o.getItemsDetail().some(
               (item) =>
-                item.getItem().getItemId() === product.getItemId()
+                item.getItem().getItemId() === Number(product.getItemId())
             ) &&
             (o.getOrderState() === OrderState.PENDING ||
               o.getOrderState() === OrderState.PROCESSING)
         );
-
       const pendingQtyInternal = pendingOrdersInternal.reduce(
         (sum, o) =>
           sum +
@@ -230,9 +239,13 @@ async CheckInsufficientQuantity(
               (itemSum, item) => itemSum + item.getItem().getQuantity(),0
             ),0
       );
-
+      /*
+      console.log("Rimanente : "+ availableQty);
+      console.log("Internal richiede : "+ pendingQtyInternal);
+      console.log("Sell richiede : "+ pendingQtySell);
+      */
       const residualQty = availableQty - pendingQtyInternal - pendingQtySell;
-
+      //console.log("Residuo : "+ residualQty);
       if (residualQty >= productInInv.getMinThres()) {
          const oI = new OrderItem(
           new ItemId(product.getItemId()),
@@ -241,6 +254,16 @@ async CheckInsufficientQuantity(
         const oID = new OrderItemDetail(oI, 0, productInInv.getUnitPrice());
         orderItemsDetails.push(oID);
         productsForThisWarehouse.push(product);
+      }else{
+        /*
+        console.log("WarehouseId : " + whState.getId());
+        console.log("Parte Ordine | Problema scende sotto la soglia : ");
+        console.log("Parte Ordine | Soglia : "+ productInInv.getMinThres());
+        console.log("Parte Ordine | Quantità disponibile : "+ availableQty);
+        console.log("Parte Ordine | Quantità da togliere per InternalOrder : "+ pendingQtyInternal);
+        console.log("Parte Ordine | Quantità da togliere per SellOrder : "+ pendingQtySell);
+        console.log("Parte Ordine | Quantità rimanente se fosse stata tolta "+ residualQty);
+        */
       }
     }
 
@@ -289,8 +312,8 @@ async CheckInsufficientQuantity(
 
   async ManageOverMaxThres(
     product: Product,
-    warehouseId : WarehouseId
   ): Promise<void> {
+    const warehouseId = new WarehouseId(product.getIdWarehouse());
     const { inv, order, dist } = await this.RequestAllNeededData(warehouseId);
     for (const whState of dist) {
       const whId = whState.getId();
@@ -298,11 +321,22 @@ async CheckInsufficientQuantity(
         (p) => p.getId() === product.getId() && p.getIdWarehouse() === whId
       );
 
-      if (!productInInv) continue; 
+      if (!productInInv){
+        //console.log("Entro ProductInInv vuoto");
+        continue; 
+      }
 
       const availableQty = productInInv.getQuantity() + product.getQuantity();
 
-      if (availableQty > product.getMaxThres()) continue;
+      if (availableQty > productInInv.getMaxThres()){
+        /*
+        console.log("availableQty > product.getMaxThres()");
+        console.log("product.getMaxThres() : "+product.getMaxThres());
+        console.log("productInInv.getQuantity() : " + productInInv.getQuantity());
+        console.log("product.getQuantity() : " + product.getQuantity());
+        */
+        continue; 
+      }
 
       //Controllo se ci sono destinazioni che vengono da me
       const pendingOrdersInternal = order.getInternalOrders().filter(
@@ -317,8 +351,7 @@ async CheckInsufficientQuantity(
         }, 0
       );
       const residualQty = availableQty + pendingQtyInternal;
-
-      if (residualQty <= product.getMaxThres()) {
+      if (residualQty <= productInInv.getMaxThres()) {
         //Chiamata per creare un ordine nuovo avendo già i dati del magazzino trovato
         //per ricordare
         let oI = new OrderItem(new ItemId(Number(product.getId())),product.getMinThres()-product.getQuantity());
@@ -330,7 +363,7 @@ async CheckInsufficientQuantity(
         return;
       }
     }
-    console.log("Nessun magazzino ha disponibilità");
+    console.log("Attualmente non ci sono magazzini disponibili");
   }
   /*
   async CloudInventoryRequest(): Promise<void> {

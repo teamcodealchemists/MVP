@@ -21,15 +21,13 @@ export class InboundPortsAdapter
     await this.service.CheckInsufficientQuantity(domainOrderQuantity,domainWarehouseId);
   }
 
-  async handleCriticalQuantityMin(product: productDto, warehouseId : warehouseIdDto): Promise<void> {
+  async handleCriticalQuantityMin(product: productDto): Promise<void> {
     const domainProduct = await DataMapper.toDomainProduct(product);
-    const domainWarehouseId = DataMapper.warehouseIdToDomain(warehouseId);
-    await this.service.CheckRestocking(domainProduct, domainWarehouseId);
+    await this.service.CheckRestocking(domainProduct);
   }
-async handleCriticalQuantityMax(product: productDto, warehouseId: warehouseIdDto): Promise<void> {
+async handleCriticalQuantityMax(product: productDto): Promise<void> {
     const domainProduct = await DataMapper.toDomainProduct(product);
-    const domainWarehouseId = DataMapper.warehouseIdToDomain(warehouseId);
-    await this.service.CheckRestocking(domainProduct, domainWarehouseId);
+    await this.service.ManageOverMaxThres(domainProduct);
   }
   async getWarehouseState(warehouseState: WarehouseStateDTO[]): Promise<void> {
     const domainWarehouseStates: WarehouseState[] = [];

@@ -8,7 +8,7 @@ import { CentralSystemService } from './centralsystem.service';
 import { centralSystemController } from 'src/interfaces/centralSystemController';
 
 // Infrastructure & Adapters
-import { InboundPortsAdapter } from 'src/infrastructure/adapters/centralSystemController';
+import { InboundPortsAdapter } from 'src/infrastructure/adapters/InboundPortsAdapter';
 import { OutboundPortsAdapter } from 'src/infrastructure/adapters/centralSystemEventAdapter';
 import { NatsClientModule } from 'src/interfaces/nats/natsClientModule/natsClient.module';
 
