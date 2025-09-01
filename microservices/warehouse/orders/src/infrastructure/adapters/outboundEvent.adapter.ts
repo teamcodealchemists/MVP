@@ -2,14 +2,13 @@ import { Injectable } from '@nestjs/common';
 
 import { InternalOrderEventPublisher } from '../../interfaces/outbound-ports/internalOrderEvent.publisher';
 import { OrderStatusEventPublisher } from '../../interfaces/outbound-ports/orderStatusEvent.publisher';
-import { OrderUpdateEventPublisher } from '../../interfaces/outbound-ports/orderUpdateEvent.publisher';
+/* import { OrderUpdateEventPublisher } from '../../interfaces/outbound-ports/orderUpdateEvent.publisher'; */
 import { RequestStockReplenishmentPublisher } from '../../interfaces/outbound-ports/requestStockReplenishment.publisher';
 import { ReserveStockCommandPublisher } from '../../interfaces/outbound-ports/reserveStockCommand.publisher';
 import { SellOrderEventPublisher } from '../../interfaces/outbound-ports/sellOrderEvent.publisher';
 import { ShipStockCommandPublisher } from '../../interfaces/outbound-ports/shipStockCommand.publisher';
 
 import { NatsService } from '../../interfaces/nats/nats.service';
-import { OrdersService } from 'src/application/orders.service';
 import { DataMapper } from '../../infrastructure/mappers/data.mapper';
 
 import { OrderItem } from "src/domain/orderItem.entity";
@@ -30,7 +29,7 @@ SellOrderEventPublisher, ShipStockCommandPublisher {
       await this.natsService.publish(
           `call.warehouse.${process.env.WAREHOUSE_ID}.order.replenishment.received`, 
           { 
-              id: orderId.getId()  // Solo l'ID string
+              id: orderId.getId()  // ID string
           }
       );
   }
@@ -40,7 +39,7 @@ SellOrderEventPublisher, ShipStockCommandPublisher {
       await this.natsService.publish(
           `call.warehouse.${process.env.WAREHOUSE_ID}.order.stock.shipped`, 
           { 
-              id: orderId.getId()  // Solo l'ID string
+              id: orderId.getId()  // ID string
           }
       );
   }
@@ -50,7 +49,7 @@ SellOrderEventPublisher, ShipStockCommandPublisher {
       await this.natsService.publish(
           `call.warehouse.${destination}.order.stock.received`, 
           { 
-              id: orderId.getId()  // Solo l'ID string
+              id: orderId.getId()  // ID string
           }
       );
   }
