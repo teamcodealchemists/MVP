@@ -60,13 +60,7 @@ async orderItemToDomain(dto: OrderItemDTO): Promise<OrderItem> {
 async orderIdToDomain(dto: OrderIdDTO): Promise<OrderId> {
   const id = dto.id;
   
-/*   // Regex per UUID v4 che inizia con S o I
-  const uuidv4Regex = /^[SI][a-fA-F0-9]{8}-[a-fA-F0-9]{4}-4[a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$/;  
-  
-  if (!uuidv4Regex.test(id)) {
-    throw new Error(`Formato OrderId non valido: ${id}. Deve essere un UUID v4 che inizia con S o I`);
-  }
- */  return new OrderId(id);
+   return new OrderId(id);
 }
 
 async orderStateToDomain(dto: OrderStateDTO): Promise<OrderState> {

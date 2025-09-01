@@ -1,5 +1,5 @@
-import { ItemId } from "src/domain/itemId.entity";
-import { OrderItem } from "src/domain/orderItem.entity";
+import { ItemId } from "src/domain/syncItemId.entity";
+import { OrderItem } from "src/domain/syncOrderItem.entity";
 
 
 describe("Test per ItemId", () => {

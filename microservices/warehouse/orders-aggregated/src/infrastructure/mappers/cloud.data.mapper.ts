@@ -1,0 +1,207 @@
+import { SyncInternalOrder } from "src/domain/syncInternalOrder.entity";
+import { SyncSellOrder } from "src/domain/syncSellOrder.entity";
+import { SyncOrderItem } from "src/domain/syncOrderItem.entity";
+import { SyncOrderItemDetail } from "src/domain/syncOrderItemDetail.entity";
+import { SyncOrderState } from "src/domain/syncOrderState.enum";
+import { SyncOrderId } from "src/domain/syncOrderId.entity";
+import { SyncOrders } from "src/domain/syncOrders.entity";
+import { SyncItemId } from "src/domain/syncItemId.entity";
+
+import { SyncInternalOrderDTO } from "src/interfaces/dto/syncInternalOrder.dto";
+import { SyncSellOrderDTO } from "src/interfaces/dto/syncSellOrder.dto";
+import { SyncOrderItemDTO } from "src/interfaces/dto/syncOrderItem.dto";
+import { SyncOrderItemDetailDTO } from "src/interfaces/dto/syncOrderItemDetail.dto";
+import { SyncOrderStateDTO } from "src/interfaces/dto/syncOrderState.dto";
+import { SyncOrderIdDTO } from "src/interfaces/dto/syncOrderId.dto";
+import { SyncOrdersDTO } from "src/interfaces/dto/syncOrders.dto";
+import { SyncOrderQuantityDTO } from "src/interfaces/dto/syncOrderQuantity.dto";
+
+
+export class CloudDataMapper {
+
+// DTO ===> DOMAIN
+
+async syncInternalOrderToDomain(orderIdDTO: SyncOrderIdDTO, orderDTO: SyncInternalOrderDTO): Promise<SyncInternalOrder> {
+  // Validazione: Non si può partire e arrivare allo stesso magazzino
+  if (orderDTO.warehouseDeparture === orderDTO.warehouseDestination) {
+    throw new Error(`Il magazzino di partenza (${orderDTO.warehouseDeparture}) non può essere uguale alla destinazione`);
+  }
+
+  return new SyncInternalOrder(
+    await this.syncOrderIdToDomain(orderIdDTO), 
+    await Promise.all(orderDTO.items.map(i => this.syncOrderItemDetailToDomain(i))), 
+    await this.syncOrderStateToDomain(orderDTO.orderState),
+    orderDTO.creationDate,
+    orderDTO.warehouseDeparture,
+    orderDTO.warehouseDestination
+  );
+}
+
+async syncSellOrderToDomain(orderIdDTO: SyncOrderIdDTO, orderDTO: SyncSellOrderDTO): Promise<SyncSellOrder> {
+  // TODO: Verifica che l'indirizzo "destinationAddress" sia nel formato giusto
+  return new SyncSellOrder(
+    await this.syncOrderIdToDomain(orderIdDTO),
+    await Promise.all(orderDTO.items.map(i => this.syncOrderItemDetailToDomain(i))),
+    await this.syncOrderStateToDomain(orderDTO.orderState),
+    orderDTO.creationDate,
+    orderDTO.warehouseDeparture,
+    orderDTO.destinationAddress
+  );        
+}
+
+async syncOrderItemToDomain(dto: SyncOrderItemDTO): Promise<SyncOrderItem> {
+    return new SyncOrderItem(
+            new SyncItemId(dto.itemId.id),
+            dto.quantity
+        );
+}
+
+async syncOrderIdToDomain(dto: SyncOrderIdDTO): Promise<SyncOrderId> {
+  const id = dto.id;
+  
+/*   // Regex per UUID v4 che inizia con S o I
+  const uuidv4Regex = /^[SI][a-fA-F0-9]{8}-[a-fA-F0-9]{4}-4[a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$/;  
+  
+  if (!uuidv4Regex.test(id)) {
+    throw new Error(`Formato OrderId non valido: ${id}. Deve essere un UUID v4 che inizia con S o I`);
+  }
+ */  return new SyncOrderId(id);
+}
+
+async syncOrderStateToDomain(dto: SyncOrderStateDTO): Promise<SyncOrderState> {
+  const state = dto.orderState;
+  
+  if (!Object.values(SyncOrderState).includes(state as SyncOrderState)) {
+    throw new Error(`Stato ordine non valido: ${state}. Stati validi: ${Object.values(SyncOrderState).join(', ')}`);
+  }
+  return state as SyncOrderState;
+}
+
+async syncOrderItemDetailToDomain(dto: SyncOrderItemDetailDTO): Promise<SyncOrderItemDetail> {
+  // quantityReserved NON può esser maggiore della quantity totale ordinata
+  if (dto.quantityReserved > dto.item.quantity) {
+    throw new Error(`Quantità riservata (${dto.quantityReserved}) maggiore della quantità ordinata (${dto.item.quantity})`);
+  }
+
+  return new SyncOrderItemDetail(
+    await this.syncOrderItemToDomain(dto.item),
+    dto.quantityReserved,
+    dto.unitPrice
+  );
+}
+
+// DOMAIN ===> DTO
+
+async syncInternalOrderToDTO(entity: SyncInternalOrder): Promise<{orderIdDTO: SyncOrderIdDTO; internalOrderDTO: SyncInternalOrderDTO;}> {
+    const orderIdDTO = await this.syncOrderIdToDTO(entity['orderId']);
+    
+    const internalOrderDTO: SyncInternalOrderDTO = {
+        items: await Promise.all(
+            entity.getItemsDetail().map(d => this.syncOrderItemDetailToDTO(d))
+        ),
+        orderState: await this.syncOrderStateToDTO(entity.getOrderState()),
+        creationDate: entity.getCreationDate(),
+        warehouseDeparture: entity.getWarehouseDeparture(),
+        warehouseDestination: entity.getWarehouseDestination()
+    };
+
+    return {orderIdDTO, internalOrderDTO};
+}
+
+async syncSellOrderToDTO(entity: SyncSellOrder): Promise<{orderIdDTO: SyncOrderIdDTO; sellOrderDTO: SyncSellOrderDTO;}> {
+    const orderIdDTO = await this.syncOrderIdToDTO(entity['orderId']);
+    
+    const sellOrderDTO: SyncSellOrderDTO = {
+        items: await Promise.all(
+            entity.getItemsDetail().map(d => this.syncOrderItemDetailToDTO(d))
+        ),
+        orderState: await this.syncOrderStateToDTO(entity.getOrderState()),
+        creationDate: entity.getCreationDate(),
+        warehouseDeparture: entity.getWarehouseDeparture(),
+        destinationAddress: entity.getDestinationAddress()
+    };
+
+    return {orderIdDTO, sellOrderDTO};
+}
+
+async syncOrderItemToDTO(entity: SyncOrderItem): Promise<SyncOrderItemDTO> {
+    return {
+        itemId: { id: entity.getItemId() },
+        quantity: entity.getQuantity()
+    };
+}
+
+async syncOrderIdToDTO(entity: SyncOrderId): Promise<SyncOrderIdDTO> {
+    return { id: entity.getId() };
+}
+
+async syncOrderStateToDTO(state: SyncOrderState): Promise<SyncOrderStateDTO> {
+    return { orderState: state };
+}
+
+async syncOrderItemDetailToDTO(entity: SyncOrderItemDetail): Promise<SyncOrderItemDetailDTO> {
+    return {
+        item: await this.syncOrderItemToDTO(entity.getItem()),
+        quantityReserved: entity.getQuantityReserved(),
+        unitPrice: entity.getUnitPrice()
+    };
+}
+
+async syncOrderQuantityToDTO(orderId: SyncOrderId, items: SyncOrderItem[]): Promise<SyncOrderQuantityDTO> {
+    return {
+        id: await this.syncOrderIdToDTO(orderId),
+        items: await Promise.all(items.map(i => this.syncOrderItemToDTO(i)))
+    };
+}
+
+
+async syncOrdersToDTO(orders: SyncOrders): Promise<SyncOrdersDTO> {
+    try {
+        // Conversione SellOrder a SellOrderDTO Array
+        const sellOrdersArray = await Promise.all(
+            orders.getSellOrders().map(async (order, index) => {
+                try {
+                    const result = await this.syncSellOrderToDTO(order);
+                    console.log(`SyncSellOrder ${index + 1} convertito a DTO`);
+                    
+                    return {
+                        orderId: result.orderIdDTO,
+                        order: result.sellOrderDTO
+                    };
+                } catch (error) {
+                    console.error(`Errore conversione SyncSellOrder ${index} a DTO:`, error);
+                    throw error;
+                }
+            })
+        );
+        // Conversione InternalOrder a InternalOrderDTO Array
+        const internalOrdersArray = await Promise.all(
+            orders.getInternalOrders().map(async (order, index) => {
+                try {
+                    const result = await this.syncInternalOrderToDTO(order);
+                    console.log(`SyncInternalOrder ${index + 1} convertito a DTO`);
+                    
+                    return {
+                        orderId: result.orderIdDTO,
+                        order: result.internalOrderDTO
+                    };
+                } catch (error) {
+                    console.error(`Errore conversione SyncInternalOrder ${index} a DTO:`, error);
+                    throw error;
+                }
+            })
+        );
+
+        console.log('Conversione SyncOrders a DTO completata');
+        return {
+            sellOrders: sellOrdersArray,
+            internalOrders: internalOrdersArray
+        };
+        
+    } catch (error) {
+        console.error('Errore in syncOrdersToDTO:', error);
+        throw error;
+    }
+}
+
+}

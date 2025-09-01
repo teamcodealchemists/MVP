@@ -1,17 +1,17 @@
-import { OrdersService } from "src/application/orders.service";
+import { OrdersService } from "src/application/cloud.orders.service";
 
-import { Orders } from "src/domain/orders.entity";
-import { InternalOrder } from "src/domain/internalOrder.entity";
-import { SellOrder } from "src/domain/sellOrder.entity";
+import { Orders } from "src/domain/syncOrders.entity";
+import { InternalOrder } from "src/domain/syncInternalOrder.entity";
+import { SellOrder } from "src/domain/syncSellOrder.entity";
 
-import { ItemId } from "src/domain/itemId.entity";
+import { ItemId } from "src/domain/syncItemId.entity";
 
-import { OrderId } from "src/domain/orderId.entity";
-import { OrderState } from "src/domain/orderState.enum";
+import { OrderId } from "src/domain/syncOrderId.entity";
+import { OrderState } from "src/domain/syncOrderState.enum";
 
 import { Test } from "@nestjs/testing";
 
-import { OrdersRepositoryMongo } from '../../src/infrastructure/adapters/mongodb/orders.repository.impl';
+import { OrdersRepositoryMongo } from '../../src/infrastructure/adapters/mongodb/cloud.orders.repository.impl';
 
 /*const id = new OrderId("12345");
 const itemId = new ItemId(2);

@@ -1,4 +1,4 @@
-import { OrderId } from "src/domain/orderId.entity";
+import { OrderId } from "src/domain/syncOrderId.entity";
 
 describe("Test per OrderId", () => {
     it("Dovrebbe restituire l'id di OrderId passato dal costruttore", () => {

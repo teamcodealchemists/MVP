@@ -1,4 +1,4 @@
-import { OrdersModule } from './application/orders.module';
+import { CloudOrdersModule } from './application/cloud.orders.module';
 import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 
@@ -7,7 +7,7 @@ import { InboundRequestDeserializer } from './interfaces/nats/natsMessagesFormat
 
 
 async function bootstrap() {
-  const app = await NestFactory.createMicroservice(OrdersModule, {
+  const app = await NestFactory.createMicroservice(CloudOrdersModule, {
     transport: Transport.NATS,
     options: {
       servers: ['nats://nats:4222'],

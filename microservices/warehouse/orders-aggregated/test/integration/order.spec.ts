@@ -1,8 +1,8 @@
-import { Order } from '../../src/domain/order.entity';
-import { OrderId } from '../../src/domain/orderId.entity';
-import { ItemId } from '../../src/domain/itemId.entity';
-import { OrderItem } from '../../src/domain/orderItem.entity';
-import { OrderItemDetail } from '../../src/domain/orderItemDetail.entity';
+import { Order } from '../../src/domain/syncOrder.entity';
+import { OrderId } from '../../src/domain/syncOrderId.entity';
+import { ItemId } from '../../src/domain/syncItemId.entity';
+import { OrderItem } from '../../src/domain/syncOrderItem.entity';
+import { OrderItemDetail } from '../../src/domain/syncOrderItemDetail.entity';
 
 enum OrderState { PENDING = 'PENDING', SHIPPED = 'SHIPPED' }
 
