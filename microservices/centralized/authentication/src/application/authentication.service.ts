@@ -6,6 +6,8 @@ import { AuthRepository } from 'src/domain/mongodb/auth.repository';
 import { User } from 'src/domain/user.entity';
 import { Role } from 'src/domain/role.entity';
 import { LocalSupervisor } from 'src/domain/localSupervisior.entity';
+import { GlobalSupervisor } from 'src/domain/globalSupervisor.entity';
+import { UserId } from 'src/domain/userId.entity';
 
 @Injectable()
 export class AuthService {
@@ -13,10 +15,10 @@ export class AuthService {
         private readonly jwtService: JwtService,
         private readonly outboundPortsAdapter: OutboundPortsAdapter,
         @Inject('AUTHREPOSITORY') private readonly authRepository: AuthRepository
-    ) {}
+    ) { }
     private readonly logger = new Logger(AuthService.name);
 
-    public async login(authentication: Authentication) : Promise<string> {
+    public async login(authentication: Authentication): Promise<string> {
         this.logger.log(`User ${authentication.getEmail()} logging in with ${authentication.getPassword()}.`);
 
         // Set JWT for client session as a token and check for login
@@ -45,10 +47,10 @@ export class AuthService {
         } catch (error) {
             this.logger.error(`Failed to login for user ${authentication.getEmail()}: ${error.message}`);
             return Promise.resolve(JSON.stringify({
-            error: {
-                code: "system.accessDenied",
-                message: error.message
-            }
+                error: {
+                    code: "system.accessDenied",
+                    message: error.message
+                }
             }));
         }
     }
@@ -75,13 +77,13 @@ export class AuthService {
             }
             else {
                 const decoded = this.jwtService.verify(jwt);
-                if(decoded) {
+                if (decoded) {
 
-                    //TODO: Fare altri controlli
+                    //TODO: Fare altri controlli <-- Vedere se fare altri controlli
 
                     this.logger.debug(`JWT verified successfully: ${JSON.stringify(decoded)}`);
 
-                    const token = {token : decoded};
+                    const token = { token: decoded };
 
                     // Call the emit function to notify RESGATE of the token
                     await this.outboundPortsAdapter.emitAccessToken(JSON.stringify(token), cid);
@@ -113,24 +115,45 @@ export class AuthService {
         }
     }
 
+    public async registerGlobalSupervisor(globalSupervisor: GlobalSupervisor): Promise<string> {
+        try {
+            if (!(await this.isGlobalSet())) {
+                const newGlobalId = await this.authRepository.newProfile(globalSupervisor);
+                return Promise.resolve(JSON.stringify({
+                    result: "Global Supervisor registered successfully, with id: " + newGlobalId,
+                }));
+            }
+            else {
+                throw new Error('A Global Supervisor is already signed in');
+            }
+        } catch (error) {
+            this.logger.error(`Failed to Register GlobalSupervisor`);
+            return Promise.resolve(JSON.stringify({
+                error: {
+                    code: "system.accessDenied",
+                    message: error.message
+                }
+            }));
+        }
+    }
+
+    public async isGlobalSet(): Promise<boolean> {
+        const globalSupervisor = await this.authRepository.getGlobalSupervisor();
+        return globalSupervisor !== null;
+    }
+
     private async generateJWT(user: User): Promise<string> {
         let payload;
 
-        //TODO: Costruire il payload da MongoDB
-
         this.logger.log(`Generating JWT for user: ${user.getRole()}`);
 
-        if(user.getRole() == Role.GLOBAL)
-        {
+        if (user.getRole() == Role.GLOBAL) {
             payload = {
                 sub: await this.authRepository.getIdByEmail(user.getAuthentication().getEmail()),
                 isGlobal: true
             }
         }
-        else
-        {
-            // If user is an interface and getWarehouseAssigned is only implemented by a subclass,
-            // you should check if the method exists before calling it.
+        else {
             payload = {
                 sub: await this.authRepository.getIdByEmail(user.getAuthentication().getEmail()),
                 isGlobal: false,
@@ -138,7 +161,7 @@ export class AuthService {
             }
         }
 
-        
+
         this.logger.log(`Using JWT secret: ${process.env.JWT_SECRET}`);
         return this.jwtService.sign(payload);
     }

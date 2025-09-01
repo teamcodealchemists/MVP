@@ -6,18 +6,22 @@ import { DataMapper } from "src/infrastructure/mappers/dataMapper";
 
 //Ports Interfaces
 import { AuthenticationEventListener } from "src/domain/inbound-ports/authenticationEvent.listener";
-import { AuthenticationDTO } from "src/interfaces/dto/authentication.dto";
+import { RegisterGlobalSupervisorEventListener } from "src/domain/inbound-ports/registerGlobalSupervisorEvent.listener";
 
 //DTOs
 import { JwtHeaderAuthenticationListener } from "src/domain/inbound-ports/jwtHeaderAuthentication.listener";
 import { JwtDTO } from "src/interfaces/dto/jwt.dto";
 import { CidDTO } from "src/interfaces/dto/cid.dto";
+import { AuthenticationDTO } from "src/interfaces/dto/authentication.dto";
+import { GlobalSupervisorDTO } from "src/interfaces/dto/globalSupervisor.dto";
+import { UserId } from "src/domain/userId.entity";
 
 
 @Injectable()
 export class InboundPortsAdapter implements 
 AuthenticationEventListener,
-JwtHeaderAuthenticationListener {
+JwtHeaderAuthenticationListener,
+RegisterGlobalSupervisorEventListener {
     constructor(private readonly authService: AuthService) {}
 
     async login(authenticationDTO: AuthenticationDTO) : Promise<string> {
@@ -30,6 +34,10 @@ JwtHeaderAuthenticationListener {
 
     async authenticate(jwtDTO: JwtDTO, cidDTO: CidDTO): Promise<string> {
         return await this.authService.authenticate(jwtDTO.jwt, cidDTO.cid);
+    }
+
+    async registerGlobalSupervisor(globalSupervisorDTO: GlobalSupervisorDTO): Promise<string> {
+        return await this.authService.registerGlobalSupervisor(DataMapper.globalSupervisorToDomain(globalSupervisorDTO));
     }
 
     async ping(): Promise<string> {

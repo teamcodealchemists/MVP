@@ -21,8 +21,4 @@ export class GlobalSupervisorDTO {
     @IsNotEmpty()
     @Type(() => AuthenticationDTO)
     authentication: AuthenticationDTO;
-
-    @IsNotEmpty()
-    @IsEnum({ "GLOBAL":0, "LOCAL":1 })
-    role: number;
 }

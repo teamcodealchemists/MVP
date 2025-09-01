@@ -11,6 +11,7 @@ import { Authentication } from 'src/domain/authentication.entity';
 import { LocalSupervisor } from 'src/domain/localSupervisior.entity';
 import { WarehouseId } from 'src/domain/warehouseId.entity';
 import { UserId } from 'src/domain/userId.entity';
+import { Role } from 'src/domain/role.entity';
 
 export const DataMapper = {
     globalSupervisorToDomain(GlobalSupervisorDTO: GlobalSupervisorDTO) : GlobalSupervisor {
@@ -22,7 +23,7 @@ export const DataMapper = {
                 GlobalSupervisorDTO.authentication.email,
                 GlobalSupervisorDTO.authentication.password
             ),
-            GlobalSupervisorDTO.role
+            Role.GLOBAL
         );
     },
 
@@ -63,8 +64,7 @@ export const DataMapper = {
             authentication: {
                 email: globalSupervisor.getAuthentication().getEmail().toString(),
                 password: globalSupervisor.getAuthentication().getPassword().toString()
-            },
-            role: globalSupervisor.getRole()
+            }
         };
     },
 
