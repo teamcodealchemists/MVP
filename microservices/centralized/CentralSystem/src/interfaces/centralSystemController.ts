@@ -1,5 +1,7 @@
 import { Controller, Logger } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
+import { OrderQuantity } from 'src/domain/orderQuantity.entity';
+import { WarehouseId } from 'src/domain/warehouseId.entity';
 
 import { InboundPortsAdapter } from 'src/infrastructure/adapters/centralSystemController';
 
@@ -7,6 +9,8 @@ import { OrderQuantityDTO } from 'src/interfaces/http/dto/orderQuantity.dto';
 import { productDto } from 'src/interfaces/http/dto/product.dto';
 import { warehouseIdDto } from 'src/interfaces/http/dto/warehouseId.dto';
 import { WarehouseStateDTO } from 'src/interfaces/http/dto/warehouseState.dto';
+import { OrderIdDTO } from './http/dto/orderId.dto';
+import { OrderItemDTO } from './http/dto/orderItem.dto';
 
 const logger = new Logger('InventoryController');
 
@@ -17,8 +21,22 @@ export class centralSystemController {
   ) {}
 
   @MessagePattern('event.inventory.insufficientQuantity')
-  async handleInsufficientQuantity(@Payload() oQ: OrderQuantityDTO, id : warehouseIdDto): Promise<void> {
+  async handleInsufficientQuantity(@Payload() data : any): Promise<void> {
     try {
+      let oQ = new OrderQuantityDTO();
+          oQ.id = new OrderIdDTO();
+      oQ.id.id = data.id;
+
+      oQ.items = data.items?.map((item: any) => {
+        const orderItem = new OrderItemDTO();
+        orderItem.itemId = item.itemId;
+        orderItem.quantity = item.quantity;
+        return orderItem;
+      }) || [];
+
+
+      const id = new warehouseIdDto();
+      id.warehouseId = data.warehouseId;
       logger.log(`Received insufficientQuantity event with payload: ${JSON.stringify(oQ)}`);
       await this.inboundPortsAdapter.handleInsufficientQuantity(oQ,id);
     } catch (error) {

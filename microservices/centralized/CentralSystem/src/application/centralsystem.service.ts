@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-
+import { Logger } from '@nestjs/common';
 // Domain Entities
 import { Orders } from "src/domain/orders.entity";
 import { Inventory } from "src/domain/inventory.entity";
@@ -25,7 +25,7 @@ export class CentralSystemService {
   constructor(
     private readonly outboundPortsAdapter: OutboundPortsAdapter,
   ) {}
-
+  private readonly logger = new Logger("CentralSystemService");
   // === Metodi applicativi ===
   async RequestAllNeededData(warehouseId : WarehouseId): Promise<{ inv: Inventory; order: Orders; dist: WarehouseState[] }> {
     /*const invDto = await this.outboundPortsAdapter.CloudInventoryRequest();  
@@ -37,60 +37,76 @@ export class CentralSystemService {
     // --- Mock prodotti per 3 magazzini, ciascuno con 10 prodotti ---
     // --- Mock prodotti per 3 magazzini, ciascuno con 10 prodotti ---
     const warehouseIds = [new WarehouseId(1), new WarehouseId(2), new WarehouseId(3)];
-    const productsPerWarehouse = 10;
-    const mockInventoryProducts: Product[] = [];
+    const productsPerWarehouse = 5;
 
+    // --- Mock Inventory Products statici ---
+    const mockInventoryProducts: Product[] = [];
     warehouseIds.forEach((wh) => {
       for (let i = 1; i <= productsPerWarehouse; i++) {
         mockInventoryProducts.push(
           new Product(
-            new ProductId(`${wh.getId()}-${i}`),
-            `Prodotto ${wh.getId()}-${i}`,
-            Math.floor(Math.random() * 100) / 10 + 1, // prezzo casuale
-            Math.floor(Math.random() * 100) + 20,      // quantità disponibile
-            10, // minThres
-            200, // maxThres
-            wh // id del magazzino
+            new ProductId(`1-${i}`),
+            `Prodotto $'1-${i}`,
+            10 + i,  // prezzo statico
+            50 + i,  // quantità disponibile statica
+            10,      // minThres
+            200,     // maxThres
+            wh       // id del magazzino
+          )
+        );
+      }
+    });
+    const inv = new Inventory(mockInventoryProducts);
+    console.log("Questo è inventario: " + JSON.stringify(inv, null, 2));
+    // --- Mock SellOrders e InternalOrders statici ---
+    const mockSellOrders: SellOrder[] = [];
+    const mockInternalOrders: InternalOrder[] = [];
+
+    warehouseIds.forEach((wh) => {
+      for (let i = 1; i <= productsPerWarehouse; i++) {
+        const sellItem = new OrderItemDetail(
+          new OrderItem(new ItemId(Number(`${wh.getId()}-${i}`)), i), // quantità statica
+          0,
+          10 + i // prezzo unitario statico
+        );
+        mockSellOrders.push(
+          new SellOrder(
+            new OrderId(`S-${wh.getId()}-${i}`),
+            [sellItem],
+            OrderState.PENDING,
+            new Date('2025-09-01T12:00:00Z'), // data statica
+            wh.getId(),
+            `Indirizzo ${wh.getId()}`
+          )
+        );
+
+        const internalItem = new OrderItemDetail(
+          new OrderItem(new ItemId(Number(`${wh.getId()}-${i}`)), i),
+          0,
+          10 + i
+        );
+        mockInternalOrders.push(
+          new InternalOrder(
+            new OrderId(`I-${wh.getId()}-${i}`),
+            [internalItem],
+            OrderState.PROCESSING,
+            new Date('2025-09-01T12:00:00Z'),
+            wh.getId(),
+            wh.getId()
           )
         );
       }
     });
 
-    const inv = new Inventory(mockInventoryProducts);
-
-    // --- Mock ordini ---
-    const mockSellOrders: SellOrder[] = [];
-    const mockInternalOrders: InternalOrder[] = [];
-
-    warehouseIds.forEach((wh) => {
-      for (let i = 1; i <= 10; i++) {
-        const sellItem = new OrderItemDetail(
-          new OrderItem(new ItemId(Number(`${wh.getId()}-${i}`)), Math.floor(Math.random() * 5) + 1),
-          0,
-          Math.floor(Math.random() * 100) / 10 + 1
-        );
-        mockSellOrders.push(
-          new SellOrder(new OrderId(`S-${wh.getId()}-${i}`), [sellItem], OrderState.PENDING, new Date(), wh.getId(), "Default Address")
-        );
-
-        const internalItem = new OrderItemDetail(
-          new OrderItem(new ItemId(Number(`${wh.getId()}-${i}`)), Math.floor(Math.random() * 5) + 1),
-          0,
-          Math.floor(Math.random() * 100) / 10 + 1
-        );
-        mockInternalOrders.push(
-          new InternalOrder(new OrderId(`I-${wh.getId()}-${i}`), [internalItem], OrderState.PROCESSING, new Date(), wh.getId(), wh.getId())
-        );
-      }
-    });
-
     const order = new Orders(mockSellOrders, mockInternalOrders);
-
-    // --- Mock warehouse state ---
-    const dist: WarehouseState[] = warehouseIds.map((wh) => {
-      return new WarehouseState(wh.getId().toString(), new WarehouseId(Math.floor(Math.random() * 100)));
+    console.log("Questo è order: " + JSON.stringify(order, null, 2));
+    // --- Mock WarehouseState statici ---
+   const dist: WarehouseState[] = warehouseIds
+    .filter((wh) => wh.getId() !== warehouseId.getId()) // escludo quello in gioco
+    .map((wh) => {
+      return new WarehouseState("Good", new WarehouseId(wh.getId())); // esempio statico
     });
-
+    console.log("Questo è dist: " + JSON.stringify(dist, null, 2));
     return { inv, order, dist };
   }
 
@@ -141,6 +157,7 @@ export class CentralSystemService {
         let oI = new OrderItem(new ItemId(Number(product.getId())),product.getMinThres()-product.getQuantity());
         let oID = new OrderItemDetail(oI,0,product.getUnitPrice());
         let internalOrders = new InternalOrder(new OrderId(""),[oID],OrderState.PENDING, new Date(), whId,warehouseId.getId());
+        console.log("service : Magazzino mandato! \n"+ JSON.stringify(internalOrders, null, 2));
         this.outboundPortsAdapter.createInternalOrder(internalOrders);
         return;
       }
@@ -253,9 +270,11 @@ async CheckInsufficientQuantity(
       productsToAllocate.map((p) => p.getItemId())
     );
   }else{
+    this.logger.log(`Received orderQuantity: ${JSON.stringify(internalOrdersToCreate)}`);
     for (const internalOrder of internalOrdersToCreate) {
       await this.outboundPortsAdapter.createInternalOrder(internalOrder);
     }
+    console.log("service : Magazzino mandato! \n"+ JSON.stringify(internalOrdersToCreate, null, 2));
   }
 }
 
@@ -305,8 +324,9 @@ async CheckInsufficientQuantity(
         let oI = new OrderItem(new ItemId(Number(product.getId())),product.getMinThres()-product.getQuantity());
         let oID = new OrderItemDetail(oI,0,product.getUnitPrice());
         let internalOrders = new InternalOrder(new OrderId(""),[oID],OrderState.PENDING, new Date(),warehouseId.getId(),whId);
-        console.log("service : Magazzino mandato! \n"+ internalOrders);
+        console.log("service : Magazzino mandato! \n"+ JSON.stringify(internalOrders, null, 2));
         this.outboundPortsAdapter.createInternalOrder(internalOrders);
+        
         return;
       }
     }

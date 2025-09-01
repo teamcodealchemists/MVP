@@ -70,8 +70,6 @@ services:
         - shared-warehouses
     depends_on:
         - nats
-        - mongodb
-        - resgate
 
 #==========================================================================#
 #                         Infrastructure Microservices                     #
