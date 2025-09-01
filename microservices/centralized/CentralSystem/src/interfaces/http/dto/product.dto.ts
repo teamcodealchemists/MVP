@@ -1,4 +1,5 @@
 import { IsUUID, IsNotEmpty, IsString, IsNumber, Min } from 'class-validator';
+import { warehouseIdDto } from './warehouseId.dto';
 
 export class productDto {
   @IsUUID()
@@ -21,4 +22,7 @@ export class productDto {
   @IsNumber()
   @Min(0)
   maxThres: number;
+
+  @IsNumber()
+  warehouseId : warehouseIdDto;
 }

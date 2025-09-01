@@ -12,7 +12,6 @@ export class OrderItem {
     getQuantity(): number {
         return this.quantity;
     }
-
     setQuantity(newQuantity): void {
         this.quantity = newQuantity;
     }

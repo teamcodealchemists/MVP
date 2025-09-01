@@ -20,7 +20,7 @@ import { OrderState } from "src/domain/orderState.enum";
 import { OrderId } from "src/domain/orderId.entity";
 import { Orders } from "src/domain/orders.entity";
 import { ItemId } from "src/domain/itemId.entity";
-import { WarehouseStateDTO } from "src/interfaces/http/dto/warehousestate.dto";
+import { WarehouseStateDTO } from "src/interfaces/http/dto/warehouseState.dto";
 import { WarehouseState } from "src/domain/warehouseState.entity";
 import { InternalOrderDTO } from "src/interfaces/http/dto/internalOrder.dto";
 import { SellOrderDTO } from "src/interfaces/http/dto/sellOrder.dto";
@@ -30,6 +30,7 @@ import { OrderStateDTO } from "src/interfaces/http/dto/orderState.dto";
 import { OrderIdDTO } from "src/interfaces/http/dto/orderId.dto";
 import { OrdersDTO } from "src/interfaces/http/dto/orders.dto";
 import { OrderQuantityDTO } from "src/interfaces/http/dto/orderQuantity.dto";
+import { OrderQuantity } from 'src/domain/orderQuantity.entity';
 
 
 export const DataMapper = {
@@ -43,7 +44,8 @@ export const DataMapper = {
       productDTO.unitPrice,
       productDTO.quantity,
       productDTO.minThres,
-      productDTO.maxThres
+      productDTO.maxThres,
+      DataMapper.warehouseIdToDomain(productDTO.warehouseId),
     );
   },
   
@@ -53,12 +55,13 @@ export const DataMapper = {
   },
   toDtoProduct(product: Product): productDto {
     return {
-      id: product.getId().getId(),
+      id: product.getId(),
       name: product.getName(),
       unitPrice: product.getUnitPrice(),
       quantity: product.getQuantity(),
       minThres: product.getMinThres(),
       maxThres: product.getMaxThres(),
+      warehouseId : DataMapper.warehouseIdToDto(new WarehouseId(product.getIdWarehouse()))
     };
   },
   toDTOProductId(productId: ProductId): productIdDto {
@@ -78,14 +81,14 @@ export const DataMapper = {
   },
   toBelowMinDTO(product: Product): belowMinThresDto {
     return {
-      id: product.getId().getId(),
+      id: product.getId(),
       quantity: product.getQuantity(),
       minThres: product.getMinThres(),
     };
   },
   toAboveMaxDTO(product: Product): aboveMaxThresDto {
     return {
-      id: product.getId().getId(),
+      id: product.getId(),
       quantity: product.getQuantity(),
       maxThres: product.getMaxThres(),
     };
@@ -223,12 +226,29 @@ async orderQuantityToDTO(orderId: OrderId, items: OrderItem[]): Promise<OrderQua
         items: await Promise.all(items.map(i => this.orderItemToDTO(i)))
     };
 },
-
+async orderQuantityToDomain(orderQuantity: OrderQuantityDTO): Promise<OrderQuantity> {
+    const orderId = new OrderId(orderQuantity.id.id);
+    const items = orderQuantity.items.map(
+      (i) => new OrderItem(new ItemId(i.itemId.id), i.quantity)
+    );
+    return new OrderQuantity(orderId, items);
+  },
 async ordersToDTO(entity: Orders): Promise<OrdersDTO> {
     return {
         sellOrders: await Promise.all(entity.getSellOrders().map(o => this.sellOrderToDTO(o))),
         internalOrders: await Promise.all(entity.getInternalOrders().map(o => this.internalOrderToDTO(o)))
     };
+},
+async ordersToDomain(dto: OrdersDTO): Promise<Orders> {
+    const internalOrders = await Promise.all(
+        dto.internalOrders.map(o => this.internalOrderToDomain(o))
+    );
+
+    const sellOrders = await Promise.all(
+        dto.sellOrders.map(o => this.sellOrderToDomain(o))
+    );
+
+    return new Orders(internalOrders, sellOrders);
 },
 productQuantityToDTO(entity: { productId: ProductId; quantity: number }): productQuantityDto {
   return {
@@ -250,10 +270,15 @@ warehouseIdToDomain(dto: warehouseIdDto): WarehouseId {
   }
   return new WarehouseId(dto.warehouseId);
 },
-WarehouseStatetoDomain(dto: WarehouseStateDTO): WarehouseState {
+warehouseStatetoDomain(dto: WarehouseStateDTO): WarehouseState {
     return new WarehouseState(dto.state, new WarehouseId(dto.warehouseId.warehouseId));
 },
-WarehouseStatetoDto(domain: WarehouseState): WarehouseStateDTO {
+warehouseIdToDto(warehouseId: WarehouseId): warehouseIdDto {
+  return {
+    warehouseId: warehouseId.getId(),
+  };
+},
+warehouseStatetoDto(domain: WarehouseState): WarehouseStateDTO {
     return {
       state: domain.getState(),
       warehouseId: {warehouseId : domain.getId()},
