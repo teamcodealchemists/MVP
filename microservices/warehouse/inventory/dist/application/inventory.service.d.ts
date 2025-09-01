@@ -3,10 +3,12 @@ import { Product } from 'src/domain/product.entity';
 import { ProductId } from 'src/domain/productId.entity';
 import { InventoryRepository } from 'src/domain/inventory.repository';
 import { ProductQuantity } from 'src/domain/productQuantity.entity';
+import { OutboundEventAdapter } from 'src/infrastructure/adapters/outbound-event.adapter';
 export declare class InventoryService {
     private readonly inventoryRepository;
+    private readonly natsAdapter;
     private readonly warehouseId;
-    constructor(inventoryRepository: InventoryRepository);
+    constructor(inventoryRepository: InventoryRepository, natsAdapter: OutboundEventAdapter);
     addProduct(newProduct: Product): Promise<void>;
     removeProduct(id: ProductId): Promise<boolean>;
     editProduct(editedProduct: Product): Promise<void>;

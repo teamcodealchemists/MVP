@@ -7,13 +7,15 @@ import { DataMapper} from '../infrastructure/mappers/dataMapper';
 import { plainToInstance } from 'class-transformer';
 import { Product } from 'src/domain/product.entity';
 import { Inventory } from 'src/domain/inventory.entity';
+import { Payload } from '@nestjs/microservices';
+import { OutboundEventAdapter } from 'src/infrastructure/adapters/outbound-event.adapter';
 
 
 @Controller()
 export class CommandHandler {
   constructor(private readonly inventoryService: InventoryService) {}
 
- @MessagePattern(`api.warehouse.${process.env.WAREHOUSE_ID}.newStock`)
+ @MessagePattern(`api.warehouse.1.newStock`)
 async handleNewStock(payload: any): Promise<void> {
   const data = typeof payload === 'string' ? payload : payload?.data ? payload.data.toString() : payload;
 
@@ -30,10 +32,11 @@ async handleNewStock(payload: any): Promise<void> {
 
   const product = DataMapper.toDomainProduct(productDTO);
   return this.inventoryService.addProduct(product);
+  
 } 
 
 
-  @MessagePattern(`api.warehouse.${process.env.WAREHOUSE_ID}.removeStock`)
+  @MessagePattern(`api.warehouse.1.removeStock`)
 async handleRemoveStock(payload: any): Promise<boolean> {
  
   const data =
@@ -42,7 +45,7 @@ async handleRemoveStock(payload: any): Promise<boolean> {
       : payload?.data
       ? payload.data.toString()
       : payload;
-
+ 
 
   const productObj = JSON.parse(data);
   const productIdDTO: productIdDto = {
@@ -57,7 +60,8 @@ async handleRemoveStock(payload: any): Promise<boolean> {
  
  
 
-   @MessagePattern(`api.warehouse.${process.env.WAREHOUSE_ID}.editStock`)
+   @MessagePattern(`api.warehouse.1.editStock`) //call.warehouse.variabile.stock.#stock.set
+   //fare @payload
   async handleEditStock(payload: any): Promise<void> {
   
   const data =

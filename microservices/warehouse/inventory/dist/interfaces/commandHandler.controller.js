@@ -91,19 +91,19 @@ let CommandHandler = class CommandHandler {
 };
 exports.CommandHandler = CommandHandler;
 __decorate([
-    (0, microservices_1.MessagePattern)(`api.warehouse.${process.env.WAREHOUSE_ID}.newStock`),
+    (0, microservices_1.MessagePattern)(`api.warehouse.1.newStock`),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], CommandHandler.prototype, "handleNewStock", null);
 __decorate([
-    (0, microservices_1.MessagePattern)(`api.warehouse.${process.env.WAREHOUSE_ID}.removeStock`),
+    (0, microservices_1.MessagePattern)(`api.warehouse.1.removeStock`),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], CommandHandler.prototype, "handleRemoveStock", null);
 __decorate([
-    (0, microservices_1.MessagePattern)(`api.warehouse.${process.env.WAREHOUSE_ID}.editStock`),
+    (0, microservices_1.MessagePattern)(`api.warehouse.1.editStock`),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)

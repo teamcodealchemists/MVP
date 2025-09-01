@@ -5,28 +5,34 @@ import { Product } from 'src/domain/product.entity';
 import { ProductId } from 'src/domain/productId.entity';
 import { InventoryRepository } from 'src/domain/inventory.repository';
 import {ProductQuantity} from 'src/domain/productQuantity.entity';
+import { OutboundEventAdapter } from 'src/infrastructure/adapters/outbound-event.adapter';
 
 @Injectable()
 export class InventoryService {
   private readonly warehouseId: WarehouseId;
-
   constructor(
     @Inject('INVENTORYREPOSITORY')
     private readonly inventoryRepository: InventoryRepository,
+    private readonly natsAdapter: OutboundEventAdapter,
   ) {
     this.warehouseId = new WarehouseId(`${process.env.WAREHOUSE_ID}`);
   }
 
   async addProduct(newProduct: Product): Promise<void> {
     await this.inventoryRepository.addProduct(newProduct);
+     console.log('Publishing stockAdded event', newProduct);
+    this.natsAdapter.stockAdded(newProduct, this.warehouseId.getId());
+     console.log('pUBBLICATO stockAdded event');
   }
 
   async removeProduct(id: ProductId): Promise<boolean> {
     return await this.inventoryRepository.removeById(id);
+    this.natsAdapter.stockRemoved(id.getId(), this.warehouseId.getId());
   }
 
   async editProduct(editedProduct: Product): Promise<void> {
     await this.inventoryRepository.updateProduct(editedProduct);
+    this.natsAdapter.stockUpdated(editedProduct, this.warehouseId.getId());
   }
 
   async getProduct(id: ProductId): Promise<Product> {

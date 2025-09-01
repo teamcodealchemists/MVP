@@ -16,21 +16,29 @@ exports.InventoryService = void 0;
 const common_1 = require("@nestjs/common");
 const warehouseId_entity_1 = require("../domain/warehouseId.entity");
 const inventory_repository_1 = require("../domain/inventory.repository");
+const outbound_event_adapter_1 = require("../infrastructure/adapters/outbound-event.adapter");
 let InventoryService = class InventoryService {
     inventoryRepository;
+    natsAdapter;
     warehouseId;
-    constructor(inventoryRepository) {
+    constructor(inventoryRepository, natsAdapter) {
         this.inventoryRepository = inventoryRepository;
+        this.natsAdapter = natsAdapter;
         this.warehouseId = new warehouseId_entity_1.WarehouseId(`${process.env.WAREHOUSE_ID}`);
     }
     async addProduct(newProduct) {
         await this.inventoryRepository.addProduct(newProduct);
+        console.log('Publishing stockAdded event', newProduct);
+        this.natsAdapter.stockAdded(newProduct, this.warehouseId.getId());
+        console.log('pUBBLICATO stockAdded event');
     }
     async removeProduct(id) {
         return await this.inventoryRepository.removeById(id);
+        this.natsAdapter.stockRemoved(id.getId(), this.warehouseId.getId());
     }
     async editProduct(editedProduct) {
         await this.inventoryRepository.updateProduct(editedProduct);
+        this.natsAdapter.stockUpdated(editedProduct, this.warehouseId.getId());
     }
     async getProduct(id) {
         const product = await this.inventoryRepository.getById(id);
@@ -68,6 +76,6 @@ exports.InventoryService = InventoryService;
 exports.InventoryService = InventoryService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, common_1.Inject)('INVENTORYREPOSITORY')),
-    __metadata("design:paramtypes", [Object])
+    __metadata("design:paramtypes", [Object, outbound_event_adapter_1.OutboundEventAdapter])
 ], InventoryService);
 //# sourceMappingURL=inventory.service.js.map

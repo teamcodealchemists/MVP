@@ -1,4 +1,28 @@
+version: '3.8'
+
 services:
+  mongodb:
+    image: mongo:latest
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    networks:
+      - shared-warehouses
+    volumes:
+      - ./microservizi/mongo_db:/docker-entrypoint-initdb.d
+
+  nats:
+    image: nats:latest
+    container_name: nats
+    ports:
+      - "4222:4222"
+    command:
+      - "--jetstream"
+      - "--debug"
+      - "--trace"
+    networks:
+      - shared-warehouses
+
   inventory:
     build:
       context: ./microservices/warehouse/inventory
@@ -6,9 +30,26 @@ services:
     environment:
       - NODE_ENV=development
       - WAREHOUSE_ID=1
-      - MONGO_URI=mongodb://mongodb:27017/inventory_db 
+      - MONGO_URI=mongodb://mongodb:27017/inventory_db
+      - NATS_URL=nats://nats:4222
     volumes:
       - ./microservices/warehouse/inventory/src:/usr/src/app/src
+    networks:
+      - shared-warehouses
+    depends_on:
+      - nats
+      - mongodb
+
+  inventory-aggregated:
+    build:
+      context: ./microservices/warehouse/inventory-aggregated
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=development
+      - MONGO_URI=mongodb://mongodb:27017/inventory_aggregated_db
+      - NATS_URL=nats://nats:4222
+    volumes:
+      - ./microservices/warehouse/inventory-aggregated/src:/usr/src/app/src
     networks:
       - shared-warehouses
     depends_on:
@@ -22,50 +63,27 @@ services:
     environment:
       - NODE_ENV=development
       - WAREHOUSE_ID=1
+      - NATS_URL=nats://nats:4222
     volumes:
       - ./microservices/warehouse/orders/src:/usr/src/app/src
     networks:
       - shared-warehouses
     depends_on:
-      - nats    
+      - nats
 
   resgate:
     image: resgateio/resgate
     container_name: resgate
     ports:
       - "8080:8080"
-    depends_on:
-      - nats
-    #volumes:
-    #  - ./microservizi/resgate/resgate-config.json:/app/config.json
-    command: 
+    command:
       - "-n"
       - "nats://nats:4222"
       - "-DV"
     networks:
       - shared-warehouses
-
-  mongodb:
-    image: mongo:latest
-    container_name: mongo
-    ports:
-      - "27017:27017"
-    networks:
-      - shared-warehouses
-    volumes:
-      - ./microservizi/mongo_db:/docker-entrypoint-initdb.d
-
-  nats:
-     container_name: nats
-     image: nats:latest
-     ports:
-       - "4222:4222"
-     command:
-       - "--jetstream"
-       - "--debug"
-       - "--trace"
-     networks:
-       - shared-warehouses
+    depends_on:
+      - nats
 
 networks:
   shared-warehouses:

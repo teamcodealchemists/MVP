@@ -23,7 +23,7 @@ exports.InventoryModule = InventoryModule;
 exports.InventoryModule = InventoryModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            mongoose_1.MongooseModule.forRoot('mongodb://localhost:27017/inventorydb'),
+            mongoose_1.MongooseModule.forRoot(process.env.MONGO_URI || 'mongodb://localhost:27017/inventorydb'),
             inventory_repository_module_1.InventoryRepositoryModule,
         ],
         controllers: [commandHandler_controller_1.CommandHandler],
