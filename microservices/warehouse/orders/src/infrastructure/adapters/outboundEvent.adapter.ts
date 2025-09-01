@@ -1,25 +1,28 @@
-import { MessagePattern } from '@nestjs/microservices';
-import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
-import { connect, NatsConnection, JSONCodec } from 'nats';
-import { NatsService } from '../../interfaces/nats/nats.service';
+import { Injectable } from '@nestjs/common';
 
+import { InternalOrderEventPublisher } from '../../interfaces/outbound-ports/internalOrderEvent.publisher';
+import { OrderStatusEventPublisher } from '../../interfaces/outbound-ports/orderStatusEvent.publisher';
+import { OrderUpdateEventPublisher } from '../../interfaces/outbound-ports/orderUpdateEvent.publisher';
+import { RequestStockReplenishmentPublisher } from '../../interfaces/outbound-ports/requestStockReplenishment.publisher';
+import { ReserveStockCommandPublisher } from '../../interfaces/outbound-ports/reserveStockCommand.publisher';
+import { SellOrderEventPublisher } from '../../interfaces/outbound-ports/sellOrderEvent.publisher';
+import { ShipStockCommandPublisher } from '../../interfaces/outbound-ports/shipStockCommand.publisher';
+
+import { NatsService } from '../../interfaces/nats/nats.service';
 import { OrdersService } from 'src/application/orders.service';
 import { DataMapper } from '../../infrastructure/mappers/data.mapper';
 
-import { Order } from "src/domain/order.entity";
-import { Orders } from "src/domain/orders.entity";
 import { OrderItem } from "src/domain/orderItem.entity";
-import { OrderItemDetail } from "src/domain/orderItemDetail.entity";
-import { OrderState } from "src/domain/orderState.enum";
 
 import { OrderId } from "src/domain/orderId.entity";
 import { InternalOrder } from "src/domain/internalOrder.entity";
 import { SellOrder } from "src/domain/sellOrder.entity";
 
 @Injectable()
-export class OutboundEventAdapter { 
-  constructor(private readonly ordersService: OrdersService,
-    private readonly natsService: NatsService,
+export class OutboundEventAdapter implements InternalOrderEventPublisher, OrderStatusEventPublisher, RequestStockReplenishmentPublisher, ReserveStockCommandPublisher, 
+SellOrderEventPublisher, ShipStockCommandPublisher { 
+
+  constructor(private readonly natsService: NatsService,
       private readonly dataMapper: DataMapper) {}
 
   // (Deduco) Corrisponde in PUB a replenishmentReceived()

@@ -1,6 +1,6 @@
 import { OrdersDTO } from '../dto/orders.dto';
 
-export interface UpdateOrderStateUseCase {
+export interface GetAllOrdersUseCase {
 
 getAllOrders(): OrdersDTO;
 

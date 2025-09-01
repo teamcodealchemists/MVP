@@ -1,12 +1,25 @@
 import { Controller, Inject } from '@nestjs/common';
 import { MessagePattern, Payload, Ctx } from '@nestjs/microservices';
+
+// Use Cases
+import { GetAllOrdersUseCase } from './inbound-ports/getAllOrders.useCase';
+import { GetOrderUseCase } from './inbound-ports/getOrder.useCase';
+import { GetOrderStateUseCase } from './inbound-ports/getOrderState.useCase';
+import { UpdateOrderStateUseCase } from './inbound-ports/updateOrderState.useCase';
+
+// Event Listeners
+import { InternalOrderEventListener } from './inbound-ports/internalOrderEvent.listener';
+import { OrderStatusEventListener } from './inbound-ports/orderStatusEvent.listener';
+import { ReservationEventListener } from './inbound-ports/reservationEvent.listener';
+import { SellOrderEventListener } from './inbound-ports/sellOrderEvent.listener';
+import { ShipmentEventListener } from './inbound-ports/shipmentEvent.listener';
+
 import { OrdersService } from 'src/application/orders.service';
 import { DataMapper } from '../infrastructure/mappers/data.mapper';
 import { OrdersRepository } from '../domain/orders.repository';
 
 import { Orders } from "src/domain/orders.entity";
 import { OrderItem } from "src/domain/orderItem.entity";
-import { OrderItemDetail } from "src/domain/orderItemDetail.entity";
 import { OrderState } from "src/domain/orderState.enum";
 
 import { OrderId } from "src/domain/orderId.entity";
@@ -20,11 +33,12 @@ import { OrderStateDTO } from "src/interfaces/dto/orderState.dto";
 import { InternalOrderDTO } from "src/interfaces/dto/internalOrder.dto";
 import { SellOrderDTO } from "src/interfaces/dto/sellOrder.dto";
 import { OrdersDTO } from "src/interfaces/dto/orders.dto";
-import { OrderItemDetailDTO } from './dto/orderItemDetail.dto';
+
 
 @Controller()
-// **************************** METTERE GLI IMPLEMENTS ****************/
-export class OrdersController {
+export class OrdersController implements GetAllOrdersUseCase, GetOrderUseCase, GetOrderStateUseCase, 
+InternalOrderEventListener, OrderStatusEventListener, ReservationEventListener,
+SellOrderEventListener, ShipmentEventListener, UpdateOrderStateUseCase {
   constructor(
     private readonly ordersService: OrdersService,
     private readonly dataMapper: DataMapper,
