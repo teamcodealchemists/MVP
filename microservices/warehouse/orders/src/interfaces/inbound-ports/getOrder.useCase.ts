@@ -4,6 +4,6 @@ import { SellOrderDTO } from '../dto/sellOrder.dto';
 
 export interface GetOrderUseCase {
 
-getOrder(OrderIdDTO): InternalOrderDTO | SellOrderDTO;
+getOrder(OrderIdDTO): {OrderIdDTO, InternalOrderDTO} | {OrderIdDTO, SellOrderDTO};
 
 }

@@ -1,7 +1,7 @@
 import { Controller, Inject } from '@nestjs/common';
 import { MessagePattern, Payload, Ctx } from '@nestjs/microservices';
 import { OrdersService } from 'src/application/orders.service';
-import { DataMapper } from '../application/data.mapper';
+import { DataMapper } from '../infrastructure/mappers/data.mapper';
 import { OrdersRepository } from '../domain/orders.repository';
 
 import { Orders } from "src/domain/orders.entity";
@@ -20,8 +20,10 @@ import { OrderStateDTO } from "src/interfaces/dto/orderState.dto";
 import { InternalOrderDTO } from "src/interfaces/dto/internalOrder.dto";
 import { SellOrderDTO } from "src/interfaces/dto/sellOrder.dto";
 import { OrdersDTO } from "src/interfaces/dto/orders.dto";
+import { OrderItemDetailDTO } from './dto/orderItemDetail.dto';
 
 @Controller()
+// **************************** METTERE GLI IMPLEMENTS ****************/
 export class OrdersController {
   constructor(
     private readonly ordersService: OrdersService,
@@ -32,33 +34,66 @@ export class OrdersController {
 
   @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.stock.reserved`)
   // Metodo per aggiornare il n° di quantità di prodotto riservata dal magazzino.
-  async stockReserved(orderQuantityDTO: OrderQuantityDTO): Promise<void> {
-    const orderId = await this.dataMapper.orderIdToDomain(orderQuantityDTO.id);
-  
-    const orderItems: OrderItem[] = [];
-    for (const itemDTO of orderQuantityDTO.items) {
-      const orderItem = await this.dataMapper.orderItemToDomain(itemDTO);
-      orderItems.push(orderItem);
-    }
+  // Corrisponde in PUB a publishStockRepl()
+  async stockReserved(@Payload() orderQuantityDTO: OrderQuantityDTO): Promise<void> {
+    try {    
+      // Converti OrderIdDTO a dominio
+      const orderId = await this.dataMapper.orderIdToDomain(orderQuantityDTO.id);
+      
+      // Converti tutti gli OrderItemDTO a dominio
+      const orderItems: OrderItem[] = [];
+      for (const itemDTO of orderQuantityDTO.items) {
+        const orderItem = await this.dataMapper.orderItemToDomain(itemDTO);
+        orderItems.push(orderItem);
+      }
 
-    await this.ordersService.updateReservedStock(orderId, orderItems); 
-  }
+      // Chiama il service per aggiornare lo stock riservato
+      await this.ordersService.updateReservedStock(orderId, orderItems);
+      
+      console.log(`Quantità riservata aggiornata per l'ordine: ${orderQuantityDTO.id.id}`);
+      
+    } catch (error) {
+      console.error('Errore in stockReserved:', error);
+      throw error;
+    }
+}
 
   @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.sell.new`)
-  async addSellOrder(sellOrderDTO: SellOrderDTO): Promise<void>  {
-    console.log('Ricevuto un SellOrderDTO:', sellOrderDTO);
-    
-    const sellOrderDomain = await this.dataMapper.sellOrderToDomain(sellOrderDTO);
+  async addSellOrder(@Payload() payload: any): Promise<void>  { 
+    // Separa il payload in due DTO
+    const orderIdDTO: OrderIdDTO = {
+        id: payload.orderId.id
+    };
+  
+    const sellOrderDTO: SellOrderDTO = {
+        items: payload.items,
+        orderState: payload.orderState,
+        creationDate: payload.creationDate,
+        warehouseDeparture: payload.warehouseDeparture,
+        destinationAddress: payload.destinationAddress
+    };
+
+    const sellOrderDomain = await this.dataMapper.sellOrderToDomain(orderIdDTO, sellOrderDTO);
     await this.ordersService.createSellOrder(sellOrderDomain);
     
     console.log('SellOrder creato con successo!');  
   }
 
   @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.internal.new`)
-  async addInternalOrder(internalOrderDTO: InternalOrderDTO): Promise<void> {
-    console.log('Ricevuto un InternalOrderDTO:', internalOrderDTO);
-    
-    const internalOrderDomain = await this.dataMapper.internalOrderToDomain(internalOrderDTO);
+  async addInternalOrder(@Payload() payload: any): Promise<void> {    
+    // Separa il payload in due DTO
+    const orderIdDTO: OrderIdDTO = {
+        id: payload.orderId.id
+    };
+    const internalOrderDTO: InternalOrderDTO = {
+        items: payload.items,
+        orderState: payload.orderState,
+        creationDate: payload.creationDate,
+        warehouseDeparture: payload.warehouseDeparture,
+        warehouseDestination: payload.warehouseDestination
+    };
+
+    const internalOrderDomain = await this.dataMapper.internalOrderToDomain(orderIdDTO, internalOrderDTO);
     await this.ordersService.createInternalOrder(internalOrderDomain);
     
     console.log('InternalOrder creato con successo!');  
@@ -72,6 +107,7 @@ export class OrdersController {
     await this.ordersService.updateOrderState(orderId, OrderState.PROCESSING);
   }
 
+  // Corrisponde in PUB a publishShipment()
   @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.stock.shipped`)  
   // Metodo per comunicare a ordini che il magazzino ha spedito la merce.
   async stockShipped(orderIdDTO: OrderIdDTO) : Promise<void> {
@@ -79,6 +115,7 @@ export class OrdersController {
     await this.ordersService.shipOrder(orderId);
   }
 
+  // Corrisponde in PUB a receiveShipment()
   @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.stock.received`) 
   // Metodo per comunicare a ordini che il magazzino di destinazione ha ricevuto la merce
   async stockReceived(orderIdDTO: OrderIdDTO): Promise<void> {
@@ -86,6 +123,7 @@ export class OrdersController {
     await this.ordersService.receiveOrder(orderId);
   }
 
+  // (Deduco) Corrisponde in PUB a publishReserveStock()
   @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.replenishment.received`) 
   // Metodo per comunicare al servizio di ordini che il riassortimento è stato completato.
   async replenishmentReceived(orderIdDTO: OrderIdDTO): Promise<void> {
@@ -118,7 +156,7 @@ export class OrdersController {
       console.log(`Lo stato dell'ordine con ID ${orderId} è stato aggiornato con successo a ${orderState}`);
       
     } catch (error) {
-      console.error('Errore in updateOrderState:', error);
+      console.error('Errore nell\'aggiornamento dello stato dell\'ordine:', error);
       throw error;
     }  
   }
@@ -127,17 +165,17 @@ export class OrdersController {
   async cancelOrder(@Ctx() context: any): Promise<void> {  
       try {
           const tokens = context.getSubject().split('.');
-          const orderIdStr = tokens[4]; // Token 5 (es. I1001)
+          const orderIdStr = tokens[4]; 
           
           // Chiama updateOrderState con stato CANCELED
           const fakeContext = {
               getSubject: () => `call.warehouse.${process.env.WAREHOUSE_ID}.order.${orderIdStr}.state.update.CANCELED`
           };
-          
+
           return await this.updateOrderState(fakeContext);
           
       } catch (error) {
-          console.error('Errore in cancelOrder:', error);
+          console.error('Errore nella cancellazione dell\'ordine:', error);
           throw error;
       }  
   }
@@ -146,7 +184,7 @@ export class OrdersController {
   async completeOrder(@Ctx() context: any): Promise<void> {
       try {
           const tokens = context.getSubject().split('.');
-          const orderIdStr = tokens[4]; // Token 5 (es. I1001)
+          const orderIdStr = tokens[4]; 
           
           // Chiama updateOrderState con stato CANCELED
           const fakeContext = {
@@ -156,7 +194,7 @@ export class OrdersController {
           return await this.updateOrderState(fakeContext);
           
       } catch (error) {
-          console.error('Errore in completeOrder:', error);
+          console.error('Errore nel completamento dell\'ordine:', error);
           throw error;
       }  
   }
@@ -179,50 +217,78 @@ export class OrdersController {
       return response;
       
     } catch (error) {
-      console.error('Errore nel get dello stato dell\'ordine:', error);
-      return { orderState: 'ERROR' };
+      throw new Error ('Errore nel get dello stato dell\'ordine:', error);
     }  
   }
 
   @MessagePattern(`get.warehouse.${process.env.WAREHOUSE_ID}.order.*`)
-  async getOrder(@Ctx() context: any): Promise<InternalOrderDTO | SellOrderDTO> {
+  async getOrder(@Ctx() context: any): Promise<{OrderIdDTO, InternalOrderDTO} | {OrderIdDTO, SellOrderDTO}> {
     // ESTRAZIONE SUBJECT
     const orderIdStr = context.getSubject().split('.').pop();
 
     // VALIDAZIONE DEL DTO ed ESECUZIONE GET
     let orderId: string = orderIdStr;
-    const orderIdDTO: OrderIdDTO = { id: orderId };
-    const orderIdDomain = await this.dataMapper.orderIdToDomain(orderIdDTO);
-    console.log("Valore orderId: ", orderIdDomain);
+    let orderIdDTO: OrderIdDTO = { id: orderId };
+    let orderIdDomain = await this.dataMapper.orderIdToDomain(orderIdDTO);
     
     const receivedOrder = await this.ordersRepository.getById(orderIdDomain);
-    console.log("Valore orderDomain: ", receivedOrder);
 
     if (receivedOrder instanceof InternalOrder) {
-          console.log("Valore INTERNAL!");
-
-        return this.dataMapper.internalOrderToDTO(receivedOrder);
-      }
-
-      if (receivedOrder instanceof SellOrder) {
-        console.log("Valore SELL! ");
-        return this.dataMapper.sellOrderToDTO(receivedOrder);
-      }
-
-      throw new Error(
-        `Tipo di ordine non riconosciuto per l'ordine: ${orderId}`
-      );  
+        const { orderIdDTO, internalOrderDTO } = await this.dataMapper.internalOrderToDTO(receivedOrder);
+        return { OrderIdDTO: orderIdDTO, InternalOrderDTO: internalOrderDTO };      
+    }
+    if (receivedOrder instanceof SellOrder) {
+      const { orderIdDTO, sellOrderDTO } = await this.dataMapper.sellOrderToDTO(receivedOrder);
+      return { OrderIdDTO: orderIdDTO, SellOrderDTO: sellOrderDTO };      
+    }
+    throw new Error(
+      `Tipo di ordine non riconosciuto per l'ordine: ${orderId}`
+    );  
   }
 
-  @MessagePattern(`get.warehouse.${process.env.WAREHOUSE_ID}.order.all`) 
+  @MessagePattern(`get.warehouse.${process.env.WAREHOUSE_ID}.orders`) 
   async getAllOrders(): Promise<OrdersDTO> {
-    try {
-      const ordersDomain: Orders = await this.ordersRepository.getAllOrders();
-      const ordersDTO: OrdersDTO = await this.dataMapper.ordersToDTO(ordersDomain);
-      return ordersDTO;
-    } catch (error) {
-      console.error('Errore nel recupero di tutti gli ordini:', error);
-      throw error;
-    }
-  } 
+      try {
+          
+          const ordersDomain: Orders = await this.ordersRepository.getAllOrders();
+          console.log('Orders domain recuperati correttamente');
+          
+          const ordersDTO: OrdersDTO = await this.dataMapper.ordersToDTO(ordersDomain);
+          console.log('Orders convertiti a DTO correttamente', ordersDTO);
+          
+          return ordersDTO;
+          
+      } catch (error) {
+          throw new Error('Non è stato possibile prelevare tutti gli ordini presenti nel magazzino.');
+      }
+  }
+
+
+  @MessagePattern(`get.warehouse.${process.env.WAREHOUSE_ID}.order.*.reserved.qty`) 
+  async testGetReservedQuantity(@Ctx() context: any): Promise<void> {
+      try {
+        // ESTRAZIONE SUBJECT
+        const tokens = context.getSubject().split('.');
+        const orderIdStr = tokens[tokens.length - 3]; // Terzultimo token
+
+        // VALIDAZIONE DEL DTO ed ESECUZIONE GET
+        let orderId: string = orderIdStr;
+        const orderIdDTO: OrderIdDTO = { id: orderId };
+        const orderIdDomain = await this.dataMapper.orderIdToDomain(orderIdDTO);
+        
+        const receivedOrder = await this.ordersRepository.getById(orderIdDomain);
+
+        if (receivedOrder instanceof InternalOrder) {
+            const fullOrder = this.ordersRepository.checkReservedQuantityForInternalOrder(receivedOrder);
+          }
+
+          if (receivedOrder instanceof SellOrder) {
+            const fullOrder = this.ordersRepository.checkReservedQuantityForSellOrder(receivedOrder);
+          }
+
+          
+      } catch (error) {
+          throw new Error('Non è stato possibile prelevare tutti gli ordini presenti nel magazzino.');
+      }
+  }
 }

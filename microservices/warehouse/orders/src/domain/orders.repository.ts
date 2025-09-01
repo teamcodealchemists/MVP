@@ -15,7 +15,7 @@ export interface OrdersRepository {
     addInternalOrder(order: InternalOrder): Promise<void>;
     removeById(id: OrderId): Promise<boolean>;
     updateOrderState(id: OrderId, state: OrderState): Promise<InternalOrder | SellOrder>;
-    genUniqueId(orderType): Promise<OrderId>;
+    genUniqueId(orderType): Promise<OrderId>;   
     updateReservedStock(id: OrderId, items: OrderItem[]): Promise<InternalOrder | SellOrder>
     checkReservedQuantityForSellOrder(sellOrder: SellOrder): Promise<void>;
     checkReservedQuantityForInternalOrder(internalOrder: InternalOrder): Promise<void>;

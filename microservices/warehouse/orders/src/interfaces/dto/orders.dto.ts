@@ -1,13 +1,13 @@
-import {IsArray} from 'class-validator';
+import {IsInstance} from 'class-validator';
 
+import { OrderIdDTO } from "./orderId.dto";
 import { SellOrderDTO } from "./sellOrder.dto";
 import { InternalOrderDTO } from "./internalOrder.dto";
 
 export class OrdersDTO {
-    @IsArray()
-    sellOrders: SellOrderDTO[];
+    @IsInstance(Map)    
+    sellOrders: Map<OrderIdDTO, SellOrderDTO>;
 
-    @IsArray()
-    internalOrders: InternalOrderDTO[];
-
+    @IsInstance(Map)    
+    internalOrders: Map<OrderIdDTO, InternalOrderDTO>;
 }

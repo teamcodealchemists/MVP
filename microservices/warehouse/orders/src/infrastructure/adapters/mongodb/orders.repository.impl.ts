@@ -1,7 +1,7 @@
 import { Injectable, Inject, NotFoundException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 
-import { DataMapper } from "src/application/data.mapper";
+import { DataMapper } from "src/infrastructure/mappers/data.mapper";
 import { InternalOrderModel } from "./model/internalOrder.model";
 import { SellOrderModel } from "./model/sellOrder.model";
 import { OrderItemDetailModel } from "./model/orderItemDetail.model";
@@ -16,6 +16,7 @@ import { OrderId } from "src/domain/orderId.entity";
 import { ItemId } from "src/domain/itemId.entity";
 import { InternalOrder } from "src/domain/internalOrder.entity";
 import { SellOrder } from "src/domain/sellOrder.entity";
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class OrdersRepositoryMongo implements OrdersRepository {
@@ -27,18 +28,20 @@ export class OrdersRepositoryMongo implements OrdersRepository {
     private readonly mapper: DataMapper
   ) {}
   
+    
     async getById(id: OrderId): Promise<InternalOrder | SellOrder> {
         try {
             // Cerca un InternalOrder con quell'ID
             const internalDoc = await this.internalOrderModel.findOne(
                 { "orderId.id": id.getId() }).lean().exec() as any;
             if (internalDoc) {
+                // Ritorna l'oggetto ordine convertito da Document a Domain
                 return new InternalOrder(
                         new OrderId(internalDoc.orderId.id),
                         internalDoc.items.map(item => 
                             new OrderItemDetail(
                                     new OrderItem(
-                                        new ItemId(item.item.id),
+                                        new ItemId(item.item.itemId),
                                         item.item.quantity), 
                                 item.quantityReserved,
                                 item.unitPrice
@@ -56,13 +59,13 @@ export class OrdersRepositoryMongo implements OrdersRepository {
                 { "orderId.id": id.getId() }).lean().exec() as any;
             console.log("sellDoc generato", sellDoc);
             if (sellDoc) {
-                console.log("sellDoc esistente:", sellDoc);
+                // Ritorna l'oggetto ordine convertito da Document a Domain
                 return new SellOrder(
                     new OrderId(sellDoc.orderId.id),
                     sellDoc.items.map(item => 
                         new OrderItemDetail(
                                 new OrderItem(
-                                    new ItemId(item.item.id),
+                                    new ItemId(item.item.itemId),
                                     item.item.quantity), 
                             item.quantityReserved,
                             item.unitPrice
@@ -103,51 +106,86 @@ export class OrdersRepositoryMongo implements OrdersRepository {
 
     async getAllOrders(): Promise<Orders> {
         try {
-            const internalDocs = await this.internalOrderModel.find().lean().exec();
-            const sellDocs = await this.sellOrderModel.find().lean().exec();
+            const internalDocs = await this.internalOrderModel.find().lean().exec() as any[];
+            const sellDocs = await this.sellOrderModel.find().lean().exec() as any[];
 
-            const internalOrders = await Promise.all(internalDocs.map(doc => this.mapper.internalOrderToDomain(doc as any)));
-            const sellOrders = await Promise.all(sellDocs.map(doc => this.mapper.sellOrderToDomain(doc as any)));
+        // Conversione da documento a dominio
+            const internalOrders = internalDocs.map(doc => {
+                try {
+                    return new InternalOrder(
+                        new OrderId(doc.orderId.id),
+                        (doc.items || []).map(item => 
+                            new OrderItemDetail(
+                                new OrderItem(
+                                    new ItemId(item.item.itemId),
+                                    item.item.quantity
+                                ), 
+                                item.quantityReserved,
+                                item.unitPrice
+                            )
+                        ),
+                        doc.orderState as OrderState,
+                        new Date(doc.creationDate),
+                        doc.warehouseDeparture,
+                        doc.warehouseDestination
+                    );
+                } catch (error) {
+                    throw new Error('Errore conversione internalDoc:', error);
+                }
+            });
+
+        // Conversione da documento a dominio
+            const sellOrders = sellDocs.map(doc => {
+                try {
+                    return new SellOrder(
+                        new OrderId(doc.orderId.id),
+                        (doc.items || []).map(item => 
+                            new OrderItemDetail(
+                                new OrderItem(
+                                    new ItemId(item.item.itemId),
+                                    item.item.quantity
+                                ), 
+                                item.quantityReserved,
+                                item.unitPrice
+                            )
+                        ),
+                        doc.orderState as OrderState,
+                        new Date(doc.creationDate),
+                        doc.warehouseDeparture,
+                        doc.destinationAddress
+                    );
+                } catch (error) {
+                    throw new Error('Errore conversione sellDoc:', error);
+                }
+            });
 
             return new Orders(sellOrders, internalOrders);
+            
         } catch (error) {
-            console.error("Errore durante il recupero di tutti gli ordini:", error);
-            throw error;
+            throw new Error ("Errore durante il recupero di tutti gli ordini:", error);
         }
     }
 
-    // TODO: Per sia S che I, approfondire il fatto "genUniqueId"
     async addSellOrder(order: SellOrder): Promise<void> {
         try {
-            // Verifica se l'ordine esiste già
-            const existingOrder = await this.sellOrderModel.findOne({
-                "orderId.id": this.genUniqueId('S')
-            }).exec();
+            // Genera ID univoco 
+            const uniqueOrderId = await this.genUniqueId('S');
+            
+            const newOrder = new SellOrder(
+                uniqueOrderId,
+                order.getItemsDetail(),
+                order.getOrderState(),
+                order.getCreationDate(),
+                order.getWarehouseDeparture(),
+                order.getDestinationAddress()
+            );
 
-            if (existingOrder) {
-                console.log(`L'Ordine con ID ${order.getOrderId()} è già esistente. L'Id verrà rigenerato.`);
-                
-                // Rigenera ID e clona l'ordine con nuovo ID
-                const newOrderId = await this.genUniqueId('S');
-                const newOrder = new SellOrder(
-                    newOrderId,
-                    order.getItemsDetail(),
-                    order.getOrderState(),
-                    order.getCreationDate(),
-                    order.getWarehouseDeparture(),
-                    order.getDestinationAddress()
-                );
-                
-                // Richiama ricorsivamente con il nuovo ordine
-                return await this.addSellOrder(newOrder);
-            }
-
-            // Se non esiste, procedi con il salvataggio
+            // Salva l'ordine
             const orderData = {
                 orderId: {
-                    id: order.getOrderId()
+                    id: newOrder.getOrderId()
                 },
-                items: order.getItemsDetail().map(item => ({
+                items: newOrder.getItemsDetail().map(item => ({
                     item: {
                         id: item.getItem().getItemId()
                     },
@@ -155,16 +193,16 @@ export class OrdersRepositoryMongo implements OrdersRepository {
                     quantityReserved: item.getQuantityReserved(),
                     unitPrice: item.getUnitPrice()
                 })),
-                orderState: order.getOrderState(),
-                creationDate: order.getCreationDate(),
-                warehouseDeparture: order.getWarehouseDeparture(),
-                destinationAddress: order.getDestinationAddress()
+                orderState: newOrder.getOrderState(),
+                creationDate: newOrder.getCreationDate(),
+                warehouseDeparture: newOrder.getWarehouseDeparture(),
+                destinationAddress: newOrder.getDestinationAddress()
             };
 
             const createdOrder = new this.sellOrderModel(orderData);
             await createdOrder.save();
             
-            console.log('Aggiunto con successo l\'ordine con ID:', order.getOrderId());
+            console.log('Aggiunto con successo l\'ordine con ID:', newOrder.getOrderId());
             
         } catch (error) {
             console.error("Errore durante l'aggiunta del SellOrder:", error);
@@ -174,35 +212,25 @@ export class OrdersRepositoryMongo implements OrdersRepository {
 
     async addInternalOrder(order: InternalOrder): Promise<void> {
         try {
-            // Verifica se esiste già un ordine con lo stesso ID
-            const existingOrder = await this.internalOrderModel.findOne({
-                "orderId.id": this.genUniqueId('I')
-            }).exec();
+            // Genera ID univoco
+            const uniqueOrderId = await this.genUniqueId('I');
+            
+            // Crea il nuovo ordine con l'ID unico
+            const newOrder = new InternalOrder(
+                uniqueOrderId,
+                order.getItemsDetail(),
+                order.getOrderState(),
+                order.getCreationDate(),
+                order.getWarehouseDeparture(),
+                order.getWarehouseDestination()
+            );
 
-            if (existingOrder) {
-                console.log(`L'Ordine con ID ${order.getOrderId()} è già esistente. L'Id verrà rigenerato.`);
-                
-                // Rigenera ID e clona l'ordine con il nuovo ID
-                const newOrderId = await this.genUniqueId('I');
-                const newOrder = new InternalOrder(
-                    newOrderId,
-                    order.getItemsDetail(),
-                    order.getOrderState(),
-                    order.getCreationDate(),
-                    order.getWarehouseDeparture(),
-                    order.getWarehouseDestination()
-                );
-                
-                // Richiama ricorsivamente con il nuovo ordine
-                return await this.addInternalOrder(newOrder);
-            }
-
-            // Se l'ID generato è unico, procedi con il salvataggio
+            // Salva l'ordine
             const orderData = {
                 orderId: {
-                    id: order.getOrderId()
+                    id: newOrder.getOrderId()
                 },
-                items: order.getItemsDetail().map(item => ({
+                items: newOrder.getItemsDetail().map(item => ({
                     item: {
                         id: item.getItem().getItemId()
                     },
@@ -210,16 +238,16 @@ export class OrdersRepositoryMongo implements OrdersRepository {
                     quantityReserved: item.getQuantityReserved(),
                     unitPrice: item.getUnitPrice()
                 })),
-                orderState: order.getOrderState(),
-                creationDate: order.getCreationDate(),
-                warehouseDeparture: order.getWarehouseDeparture(),
-                warehouseDestination: order.getWarehouseDestination()
+                orderState: newOrder.getOrderState(),
+                creationDate: newOrder.getCreationDate(),
+                warehouseDeparture: newOrder.getWarehouseDeparture(),
+                warehouseDestination: newOrder.getWarehouseDestination()
             };
 
             const createdOrder = new this.internalOrderModel(orderData);
             await createdOrder.save();
             
-            console.log('Aggiunto con successo l\'ordine con ID:', order.getOrderId());
+            console.log('Aggiunto con successo l\'ordine con ID:', newOrder.getOrderId());
             
         } catch (error) {
             console.error("Errore durante l'aggiunta dell'InternalOrder:", error);
@@ -228,23 +256,11 @@ export class OrdersRepositoryMongo implements OrdersRepository {
     }
 
     async removeById(id: OrderId): Promise<boolean> {
-      /* Rimozione
-        try {
-            const resInternal = await this.internalOrderModel.deleteOne({ "orderId.id": id.getId() }).exec();
-            if (resInternal.deletedCount > 0) return true;
-
-            const resSell = await this.sellOrderModel.deleteOne({ "orderId.id": id.getId() }).exec();
-            return resSell.deletedCount > 0;
-        } catch (error) {
-            console.error("Errore durante la rimozione dell'ordine:", error);
-            throw error;
-        } 
-            
-        Cancellazione */
+        // Per cancellazione ordine
         const currentState = await this.getState(id);
 
         if (currentState === OrderState.CANCELED) {
-            return false; // E' gia in stato "CANCELED"
+            return false; // E' gia in stato "CANCELED", non verrà aggiornato
         }
 
         const updatedOrder = await this.updateOrderState(id, OrderState.CANCELED);
@@ -253,6 +269,7 @@ export class OrdersRepositoryMongo implements OrdersRepository {
         return updatedOrder.getOrderState() === OrderState.CANCELED;
 
     }
+
 
     async updateOrderState(id: OrderId, state: OrderState): Promise<InternalOrder | SellOrder> {
         try {
@@ -269,7 +286,7 @@ export class OrdersRepositoryMongo implements OrdersRepository {
                     internalDoc.items.map(item => 
                         new OrderItemDetail(
                                 new OrderItem(
-                                    new ItemId(item.item.id),
+                                    new ItemId(item.item.itemId),
                                     item.item.quantity), 
                             item.quantityReserved,
                             item.unitPrice
@@ -294,7 +311,7 @@ export class OrdersRepositoryMongo implements OrdersRepository {
                     sellDoc.items.map(item => 
                         new OrderItemDetail(
                                 new OrderItem(
-                                    new ItemId(item.item.id),
+                                    new ItemId(item.item.itemId),
                                     item.item.quantity), 
                             item.quantityReserved,
                             item.unitPrice
@@ -314,89 +331,200 @@ export class OrdersRepositoryMongo implements OrdersRepository {
         }
     }
 
+
     async genUniqueId(orderType: 'S' | 'I'): Promise<OrderId> {
-        try {
-            const randomNumber = Math.floor(1000 + Math.random() * 9000); // 1000-9999
-            const uniqueId = `${orderType}${randomNumber}`;
-            
-            return new OrderId(uniqueId);
-        } catch (error) {
-            console.error("Errore durante la generazione dell'ID univoco:", error);
-            throw error;
+        while (true) {            
+            const randomId = uuidv4();
+            const fullOrderId = `${orderType}${randomId}`;
+
+            // L'UUID v4 ha % vicine allo zero di creare duplicati, ma metto comunque il controllo (locale) duplicati 
+            try {
+                const orderIdToCheck = new OrderId(fullOrderId);
+                // Controllo se l'id creato è univoco
+                try {
+                    const existingOrder = await this.getById(orderIdToCheck);
+                    // Se va a questa prossima riga, l'ordine esiste già
+                    console.log(`ID ${fullOrderId} già esistente.`);
+                    
+                } catch (error) {
+                    // Se getById returna existingOrder = null/undefined o eccezione, l'ID è univoco
+                    console.log(`ID univoco generato: ${fullOrderId}`);
+                    return orderIdToCheck;
+                }
+            } catch (error) {
+                throw new Error(`Errore durante la verifica dell'ID ${fullOrderId}:`, error);
+            }
         }
     }
+ 
 
     async updateReservedStock(id: OrderId, items: OrderItem[]): Promise<InternalOrder | SellOrder> {
         try {
-            const updateItems = items.map(i => ({
-                item: { itemId: { id: i.getItemId() }, quantity: i.getQuantity() },
-                quantityReserved: i.getQuantity(), 
-                unitPrice: 0 
+            // Trova tipo di ordine e documento
+            const internalDoc = await this.internalOrderModel.findOne({ 
+                "orderId.id": id.getId() 
+            }).lean().exec() as any;
+
+            let model: any;
+            let mapper: (doc: any) => Promise<InternalOrder | SellOrder>;
+        
+            if (internalDoc) {
+                model = this.internalOrderModel;
+                mapper = async (doc) => {
+                    const orderIdDTO = doc.orderId;
+                    const internalOrderDTO = {
+                        items: doc.items,
+                        orderState: doc.orderState,
+                        creationDate: doc.creationDate,
+                        warehouseDeparture: doc.warehouseDeparture,
+                        warehouseDestination: doc.warehouseDestination
+                    };
+                    return this.mapper.internalOrderToDomain(orderIdDTO, internalOrderDTO);
+                };
+            } else {
+                model = this.sellOrderModel;
+                mapper = async (doc) => {
+                    const orderIdDTO = doc.orderId;
+                    const sellOrderDTO = {
+                        items: doc.items,
+                        orderState: doc.orderState,
+                        creationDate: doc.creationDate,
+                        warehouseDeparture: doc.warehouseDeparture,
+                        destinationAddress: doc.destinationAddress
+                    };
+                    return this.mapper.sellOrderToDomain(orderIdDTO, sellOrderDTO);
+                };
+            }
+
+            // Prepara e esegui gli aggiornamenti
+            const updateOperations = items.map(item => ({
+                updateOne: {
+                    filter: { 
+                        "orderId.id": id.getId(),
+                        "items.item.itemId.id": item.getItemId()
+                    },
+                    update: {
+                        $set: { 
+                            "items.$.quantityReserved": item.getQuantity()
+                        }
+                    }
+                }
             }));
 
-            const internalDoc = await this.internalOrderModel.findOneAndUpdate(
-                { "orderId.id": id.getId() },
-                { $set: { items: updateItems } },
-                { new: true }
-            ).lean().exec();
-            if (internalDoc) return await this.mapper.internalOrderToDomain(internalDoc as any);
-
-            const sellDoc = await this.sellOrderModel.findOneAndUpdate(
-                { "orderId.id": id.getId() },
-                { $set: { items: updateItems } },
-                { new: true }
-            ).lean().exec();
-            if (sellDoc) return await this.mapper.sellOrderToDomain(sellDoc as any);
-
-            throw new Error(`Impossibile aggiornare la riserva: ordine con ID ${id.getId()} non trovato`);
+            if (updateOperations.length > 0) {
+                await model.bulkWrite(updateOperations);
+            }
+            
+            // Recupera il documento aggiornato
+            const updatedDoc = await model.findOne({ 
+                "orderId.id": id.getId() 
+            }).lean().exec();
+            
+            if (!updatedDoc) {
+                throw new Error(`Ordine con ID ${id.getId()} non trovato dopo l'aggiornamento`);
+            }
+            
+            // Converti a dominio e restituisci il documento aggiornato
+            return await mapper(updatedDoc as any);
+            
         } catch (error) {
-        console.error("Errore durante l'aggiornamento della quantità riservata:", error);
-        throw error;
+            console.error("Errore durante l'aggiornamento della quantità riservata:", error);
+            throw new Error(`Impossibile trovare l'ordine con ID ${id.getId()}`);
         }
     }
+
 
     async checkReservedQuantityForSellOrder(sellOrder: SellOrder): Promise<void> {
         try {
             const stringId = sellOrder.getOrderId();
             const orderId = new OrderId(stringId);
-            const order = await this.getById(orderId);
+            
+            // Cerca direttamente nel modello SellOrder
+            const sellDoc = await this.sellOrderModel.findOne(
+                { "orderId.id": orderId.getId() }
+            ).lean().exec() as any;
 
-            if (!order || !(order instanceof SellOrder)) {
-            throw new NotFoundException('SellOrder non trovato');
+            if (!sellDoc) {
+                throw new NotFoundException('SellOrder non trovato');
             }
 
-            const items = order.getItemsDetail();
+            // Converti il documento in dominio
+            const foundOrder = new SellOrder(
+                new OrderId(sellDoc.orderId.id),
+                sellDoc.items.map(item => 
+                    new OrderItemDetail(
+                        new OrderItem(
+                            new ItemId(item.item.itemId),
+                            item.item.quantity
+                        ), 
+                        item.quantityReserved,
+                        item.unitPrice
+                    )
+                ),
+                sellDoc.orderState as OrderState,
+                new Date(sellDoc.creationDate),
+                sellDoc.warehouseDeparture,
+                sellDoc.destinationAddress
+            );
+
+            const items = foundOrder.getItemsDetail();
             items.forEach((itemDetail: OrderItemDetail) => {
-            const reservedQty = itemDetail.getQuantityReserved();
-            console.log(`Item: ${itemDetail.getItem().getItemId()}, Reserved: ${reservedQty}`);
-            // Eventuale logica di validazione
+                const itemId = itemDetail.getItem().getItemId();
+                const reservedQty = itemDetail.getQuantityReserved();
+                console.log(`SellOrder - Item: ${itemId}, Reserved: ${reservedQty}`);
+                // Eventuale logica di validazione specifica per SellOrder
             });
+            
         } catch (error) {
             console.error(`Errore in checkReservedQuantityForSellOrder: ${error.message}`);
-            throw error; 
-        }    
+            throw error;
+        }
     }
 
-    async checkReservedQuantityForInternalOrder(internalOrder: InternalOrder): Promise<void>{
+    
+    async checkReservedQuantityForInternalOrder(internalOrder: InternalOrder): Promise<void> {
         try {
             const stringId = internalOrder.getOrderId();
             const orderId = new OrderId(stringId);
-            const order = await this.getById(orderId);
+            
+            // Cerca direttamente nel modello InternalOrder
+            const internalDoc = await this.internalOrderModel.findOne(
+                { "orderId.id": orderId.getId() }
+            ).lean().exec() as any;
 
-            if (!order || !(order instanceof InternalOrder)) {
-            throw new NotFoundException('InternalOrder non trovato');
+            if (!internalDoc) {
+                throw new NotFoundException('InternalOrder non trovato');
             }
 
-            const items = order.getItemsDetail();
+            // Converti il documento in dominio
+            const foundOrder = new InternalOrder(
+                new OrderId(internalDoc.orderId.id),
+                internalDoc.items.map(item => 
+                    new OrderItemDetail(
+                        new OrderItem(
+                            new ItemId(item.item.itemId),
+                            item.item.quantity
+                        ), 
+                        item.quantityReserved,
+                        item.unitPrice
+                    )
+                ),
+                internalDoc.orderState as OrderState,
+                new Date(internalDoc.creationDate),
+                internalDoc.warehouseDeparture,
+                internalDoc.warehouseDestination
+            );
+
+            const items = foundOrder.getItemsDetail();
             items.forEach((itemDetail: OrderItemDetail) => {
-            const reservedQty = itemDetail.getQuantityReserved();
-            console.log(`Item: ${itemDetail.getItem().getItemId()}, Reserved: ${reservedQty}`);
-            // Eventuale logica di validazione
+                const itemId = itemDetail.getItem().getItemId();
+                const reservedQty = itemDetail.getQuantityReserved();
+                console.log(`InternalOrder - Item: ${itemId}, Reserved: ${reservedQty}`);
             });
+            
         } catch (error) {
             console.error(`Errore in checkReservedQuantityForInternalOrder: ${error.message}`);
             throw error;
         }
     }
-
 }

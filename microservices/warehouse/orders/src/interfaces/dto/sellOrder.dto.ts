@@ -6,11 +6,6 @@ import { OrderStateDTO } from "./orderState.dto";
 
 export class SellOrderDTO {
         @IsNotEmpty()
-        @IsString()
-        @Min(0)
-        orderId: OrderIdDTO;
-
-        @IsNotEmpty()
         @IsArray()
         items: OrderItemDetailDTO[];
 

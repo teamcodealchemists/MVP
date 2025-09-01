@@ -4,7 +4,7 @@ import { connect, NatsConnection, JSONCodec } from 'nats';
 import { NatsService } from '../../interfaces/nats/nats.service';
 
 import { OrdersService } from 'src/application/orders.service';
-import { DataMapper } from '../../application/data.mapper';
+import { DataMapper } from '../../infrastructure/mappers/data.mapper';
 
 import { Order } from "src/domain/order.entity";
 import { Orders } from "src/domain/orders.entity";
@@ -22,48 +22,119 @@ export class OutboundEventAdapter {
     private readonly natsService: NatsService,
       private readonly dataMapper: DataMapper) {}
 
+  // (Deduco) Corrisponde in PUB a replenishmentReceived()
   async publishReserveStock(orderId: OrderId, items: OrderItem[]) {
-    await this.natsService.publish('orders.reserve_stock', { orderId: orderId.getId(), items });
+      await this.natsService.publish(
+          `call.warehouse.${process.env.WAREHOUSE_ID}.order.replenishment.received`, 
+          { 
+              id: orderId.getId()  // Solo l'ID string
+          }
+      );
   }
 
+  // Corrisponde in SUB a stockShipped()
   async publishShipment(orderId: OrderId, items: OrderItem[]) {
-    await this.natsService.publish('orders.shipment', { orderId: orderId.getId(), items });
+      await this.natsService.publish(
+          `call.warehouse.${process.env.WAREHOUSE_ID}.order.stock.shipped`, 
+          { 
+              id: orderId.getId()  // Solo l'ID string
+          }
+      );
   }
 
+  // Corrisponde in SUB a stockReceived()
   async receiveShipment(orderId: OrderId, items: OrderItem[], destination: number) {
-    await this.natsService.publish('orders.receive_shipment', { orderId: orderId.getId(), items, destination });
+      await this.natsService.publish(
+          `call.warehouse.${destination}.order.stock.received`, 
+          { 
+              id: orderId.getId()  // Solo l'ID string
+          }
+      );
   }
-
+  // Corrisponde in SUB a stockReserved()
   async publishStockRepl(orderId: OrderId, items: OrderItem[]) {
-    await this.natsService.publish('orders.stock_replenish', { orderId: orderId.getId(), items });
+      // Converti gli OrderItem in formato DTO per il payload
+      const itemsDTO = items.map(item => ({
+          itemId: { id: item.getItemId() },
+          quantity: item.getQuantity()
+      }));
+      
+      await this.natsService.publish(
+          `call.warehouse.${process.env.WAREHOUSE_ID}.order.stock.reserved`, 
+          { 
+              id: { id: orderId.getId() },  // OrderIdDTO
+              items: itemsDTO               // OrderItemDTO[]
+          }
+      );
   }
 
-  async orderUpdated(order: Order) {
+/* async orderUpdated(order: Order) {
     await this.natsService.publish('orders.updated', order);
-  }
+  } */
 
   async orderCancelled(orderId: OrderId, warehouse: number) {
-    await this.natsService.publish('orders.cancelled', { orderId: orderId.getId(), warehouse });
+   try {
+      const orderIdStr = orderId.getId();
+
+      let aggregateSubject  = `call.aggregate.order.cancel`;
+      let warehouseSubject  = `call.warehouse.${warehouse}.order.${orderIdStr}.cancel`;
+
+      await this.natsService.publish( aggregateSubject, { orderId: orderIdStr });
+      await this.natsService.publish( warehouseSubject, { orderId: orderIdStr });
+
+    } catch (error) {
+        console.error('Errore in orderCancelled:', error);
+        throw error;
+    }
   }
 
   async orderCompleted(orderId: OrderId, warehouse: number) {
-    await this.natsService.publish('orders.completed', { orderId: orderId.getId(), warehouse });
+   try {
+      const orderIdStr = orderId.getId();
+
+      let aggregateSubject  = `call.aggregate.order.complete`;
+      let warehouseSubject  = `call.warehouse.${warehouse}.order.${orderIdStr}.complete`;
+
+      await this.natsService.publish( aggregateSubject, { orderId: orderIdStr });
+      await this.natsService.publish( warehouseSubject, { orderId: orderIdStr });
+
+    } catch (error) {
+        console.error('Errore in orderCompleted:', error);
+        throw error;
+    }
   }
 
-  async publishInternalOrder(internalOrder: InternalOrder) {
-    await this.natsService.publish('orders.internal', internalOrder);
+  async publishInternalOrder(internalOrder: InternalOrder, context: { destination: 'aggregate' | 'warehouse', warehouseId?: number }) {
+
+    const { orderIdDTO, internalOrderDTO }  = await this.dataMapper.internalOrderToDTO(internalOrder);
+    let subject: string;
+
+    if (context.destination === 'aggregate') {
+      subject = `call.aggregate.${context.destination}.order.internal.new`;
+      await this.natsService.publish( subject, { orderIdDTO, internalOrderDTO });
+    } 
+      else if (context.destination === 'warehouse' && context.warehouseId) {
+        subject = `call.warehouse.${context.warehouseId}.order.internal.new`;
+        await this.natsService.publish( subject, { orderIdDTO, internalOrderDTO });
+      }
+    
   }
 
-  async publishInternalOrderCopy(internalOrder: InternalOrder, warehouse: number) {
-    await this.natsService.publish('orders.internal_copy', { ...internalOrder, warehouse });
-  }
+  async publishSellOrder(sellOrder: SellOrder, context: { destination: 'aggregate' | 'warehouse', warehouseId?: number } ) {
 
-  async publishSellOrder(sellOrder: SellOrder) {
-    await this.natsService.publish('orders.sell', sellOrder);
-  }
+    const { orderIdDTO, sellOrderDTO }  = await this.dataMapper.sellOrderToDTO(sellOrder);
+    let subject: string;
 
-  async publishSellOrderCopy(sellOrder: SellOrder, warehouse: number) {
-    await this.natsService.publish('orders.sell_copy', { ...sellOrder, warehouse });
+    if (context.destination === 'aggregate') {
+      subject = `call.aggregate.${context.destination}.order.sell.new`;
+      
+      await this.natsService.publish( subject, { orderIdDTO, sellOrderDTO });
+    } 
+      else if (context.destination === 'warehouse' && context.warehouseId) {
+        subject = `call.warehouse.${context.warehouseId}.order.sell.new`;
+        await this.natsService.publish( subject, { orderIdDTO, sellOrderDTO });
+      }
+    
   }
 
 }
