@@ -66,6 +66,7 @@ export class OrdersService {
 
         await this.ordersRepositoryMongo.addSellOrder(orderWithUniqueId);
         // fare check ResQ così da far partire saga?
+       
     }
 
     async createInternalOrder(order: InternalOrder): Promise<void>{
@@ -83,6 +84,7 @@ export class OrdersService {
 
         await this.ordersRepositoryMongo.addInternalOrder(orderWithUniqueId);
         // fare check ResQ così da far partire saga?
+    
     }
 
     async cancelOrder(id: OrderId): Promise<void> {

@@ -60,12 +60,13 @@ async orderItemToDomain(dto: OrderItemDTO): Promise<OrderItem> {
 async orderIdToDomain(dto: OrderIdDTO): Promise<OrderId> {
   const id = dto.id;
   
-  const orderIdRegex = /^[SI]\d+$/;
+/*   // Regex per UUID v4 che inizia con S o I
+  const uuidv4Regex = /^[SI][a-fA-F0-9]{8}-[a-fA-F0-9]{4}-4[a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$/;  
   
-  if (!orderIdRegex.test(id)) {
-    throw new Error(`Formato OrderId non valido: ${id}. Si accettano solo i formati del tipo S1234 o I5678`);
+  if (!uuidv4Regex.test(id)) {
+    throw new Error(`Formato OrderId non valido: ${id}. Deve essere un UUID v4 che inizia con S o I`);
   }
-  return new OrderId(id);
+ */  return new OrderId(id);
 }
 
 async orderStateToDomain(dto: OrderStateDTO): Promise<OrderState> {
@@ -154,7 +155,7 @@ async orderQuantityToDTO(orderId: OrderId, items: OrderItem[]): Promise<OrderQua
     };
 }
 
-async ordersToDTO(orders: Orders): Promise<OrdersDTO> {
+/* async ordersToDTO(orders: Orders): Promise<OrdersDTO> {
     try {
         console.log('Conversione Orders a DTO...');
         
@@ -188,6 +189,56 @@ async ordersToDTO(orders: Orders): Promise<OrdersDTO> {
         return {
             sellOrders: sellOrdersDTO,
             internalOrders: internalOrdersDTO
+        };
+        
+    } catch (error) {
+        console.error('Errore in ordersToDTO:', error);
+        throw error;
+    }
+}
+ */
+
+async ordersToDTO(orders: Orders): Promise<OrdersDTO> {
+    try {
+        // Conversione SellOrder a SellOrderDTO Array
+        const sellOrdersArray = await Promise.all(
+            orders.getSellOrders().map(async (order, index) => {
+                try {
+                    const result = await this.sellOrderToDTO(order);
+                    console.log(`SellOrder ${index + 1} convertito a DTO`);
+                    
+                    return {
+                        orderId: result.orderIdDTO,
+                        order: result.sellOrderDTO
+                    };
+                } catch (error) {
+                    console.error(`Errore conversione SellOrder ${index} a DTO:`, error);
+                    throw error;
+                }
+            })
+        );
+        // Conversione InternalOrder a InternalOrderDTO Array
+        const internalOrdersArray = await Promise.all(
+            orders.getInternalOrders().map(async (order, index) => {
+                try {
+                    const result = await this.internalOrderToDTO(order);
+                    console.log(`InternalOrder ${index + 1} convertito a DTO`);
+                    
+                    return {
+                        orderId: result.orderIdDTO,
+                        order: result.internalOrderDTO
+                    };
+                } catch (error) {
+                    console.error(`Errore conversione InternalOrder ${index} a DTO:`, error);
+                    throw error;
+                }
+            })
+        );
+
+        console.log('Conversione Orders a DTO completata');
+        return {
+            sellOrders: sellOrdersArray,
+            internalOrders: internalOrdersArray
         };
         
     } catch (error) {

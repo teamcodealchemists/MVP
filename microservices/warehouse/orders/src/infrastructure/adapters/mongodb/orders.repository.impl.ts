@@ -202,7 +202,7 @@ export class OrdersRepositoryMongo implements OrdersRepository {
             const createdOrder = new this.sellOrderModel(orderData);
             await createdOrder.save();
             
-            console.log('Aggiunto con successo l\'ordine con ID:', newOrder.getOrderId());
+            console.log('Aggiunto con successo il SellOrder con ID:', newOrder.getOrderId());
             
         } catch (error) {
             console.error("Errore durante l'aggiunta del SellOrder:", error);
@@ -247,7 +247,7 @@ export class OrdersRepositoryMongo implements OrdersRepository {
             const createdOrder = new this.internalOrderModel(orderData);
             await createdOrder.save();
             
-            console.log('Aggiunto con successo l\'ordine con ID:', newOrder.getOrderId());
+            console.log('Aggiunto con successo l\'InternalOrder con ID:', newOrder.getOrderId());
             
         } catch (error) {
             console.error("Errore durante l'aggiunta dell'InternalOrder:", error);

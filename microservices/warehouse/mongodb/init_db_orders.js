@@ -5,7 +5,7 @@ db.createCollection('internalOrders');
 db.internalOrders.insertMany(
 [
   {
-    orderId: { id: "I1001" },
+    orderId: { id: "I5359cefb-d1e0-4d1f-82b3-173728305ffe" },
     items: [
       {
         item: {
@@ -30,7 +30,7 @@ db.internalOrders.insertMany(
     warehouseDestination: 3
   },
   {
-    orderId: { id: "I1002" },
+    orderId: { id: "I55e624c5-a87e-4a26-b956-5ed78586987a" },
     items: [
       {
         item: {
@@ -54,7 +54,7 @@ db.createCollection('sellOrders');
 db.sellOrders.insertMany(
 [
   {
-    orderId: { id: "S1001" },
+    orderId: { id: "Sb2e567ad-5a72-498b-8fd5-b431d72ebc84" },
     items: [
       {
         item: {
@@ -79,7 +79,7 @@ db.sellOrders.insertMany(
     destinationAddress: "Via Roma 123, Padova, Italia"
   },
   {
-    orderId: { id: "S1002" },
+    orderId: { id: "S9f15ebe7-d21a-4a70-aa13-bbb69e98ff3a" },
     items: [
       {
         item: {

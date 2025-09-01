@@ -74,7 +74,8 @@ SellOrderEventListener, ShipmentEventListener, UpdateOrderStateUseCase {
 
   @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.sell.new`)
   async addSellOrder(@Payload() payload: any): Promise<void>  { 
-    // Separa il payload in due DTO
+    try {
+      // Separa il payload in due DTO
     const orderIdDTO: OrderIdDTO = {
         id: payload.orderId.id
     };
@@ -88,45 +89,70 @@ SellOrderEventListener, ShipmentEventListener, UpdateOrderStateUseCase {
     };
 
     const sellOrderDomain = await this.dataMapper.sellOrderToDomain(orderIdDTO, sellOrderDTO);
+
     await this.ordersService.createSellOrder(sellOrderDomain);
-    
-    console.log('SellOrder creato con successo!');  
+
+    } catch (error) {
+      console.error('Errore nella creazione di un SellOrder:', error);
+      throw error;
+    }
   }
 
   @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.internal.new`)
   async addInternalOrder(@Payload() payload: any): Promise<void> {    
     // Separa il payload in due DTO
-    const orderIdDTO: OrderIdDTO = {
-        id: payload.orderId.id
-    };
-    const internalOrderDTO: InternalOrderDTO = {
-        items: payload.items,
-        orderState: payload.orderState,
-        creationDate: payload.creationDate,
-        warehouseDeparture: payload.warehouseDeparture,
-        warehouseDestination: payload.warehouseDestination
-    };
+    try {
+      const orderIdDTO: OrderIdDTO = {
+          id: payload.orderId.id
+      };
+      const internalOrderDTO: InternalOrderDTO = {
+          items: payload.items,
+          orderState: payload.orderState,
+          creationDate: payload.creationDate,
+          warehouseDeparture: payload.warehouseDeparture,
+          warehouseDestination: payload.warehouseDestination
+      };
 
-    const internalOrderDomain = await this.dataMapper.internalOrderToDomain(orderIdDTO, internalOrderDTO);
-    await this.ordersService.createInternalOrder(internalOrderDomain);
-    
-    console.log('InternalOrder creato con successo!');  
+      const internalOrderDomain = await this.dataMapper.internalOrderToDomain(orderIdDTO, internalOrderDTO);
+      const addedInternalOrder = await this.ordersService.createInternalOrder(internalOrderDomain);
+    } catch (error) {
+        console.error('Errore nella creazione di un InternalOrder:', error);
+        throw error;
+    }
   }
 
-  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.waiting.stock`)  
+  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.*.waiting.stock`)  
   // Metodo per comunicare al magazzino di partenza che il magazzino di destinazione 
   // ha inserito l’ordine e sta attendendo che la merce venga inviata.
-  async waitingForStock(orderIdDTO: OrderIdDTO) : Promise<void> {
-    const orderId = new OrderId(orderIdDTO.id);
-    await this.ordersService.updateOrderState(orderId, OrderState.PROCESSING);
+  async waitingForStock(@Ctx() context: any) : Promise<void> {
+    
+/*     // ESTRAZIONE TOKEN DAL SUBJECT
+    const tokens = context.getSubject().split('.');
+    const orderIdStr = tokens[tokens.length - 3]; // ID = Terzultimo token
+          
+    // VALIDAZIONE DEL DTO ed ESECUZIONE GET
+    let orderId: string = orderIdStr;
+    const orderIdDTO: OrderIdDTO = { id: orderId };
+    const orderIdDomain = await this.dataMapper.orderIdToDomain(orderIdDTO);
+    
+    await this.ordersService.updateOrderState(orderIdDomain, OrderState.PROCESSING); */
   }
 
   // Corrisponde in PUB a publishShipment()
-  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.stock.shipped`)  
+  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.*.stock.shipped`)  
   // Metodo per comunicare a ordini che il magazzino ha spedito la merce.
-  async stockShipped(orderIdDTO: OrderIdDTO) : Promise<void> {
-    const orderId = new OrderId(orderIdDTO.id);
-    await this.ordersService.shipOrder(orderId);
+  async stockShipped(@Ctx() context: any) : Promise<void> {
+    
+    // ESTRAZIONE TOKEN DAL SUBJECT
+    const tokens = context.getSubject().split('.');
+    const orderIdStr = tokens[tokens.length - 3]; // ID = Terzultimo token
+          
+    // VALIDAZIONE DEL DTO ed ESECUZIONE GET
+    let orderId: string = orderIdStr;
+    const orderIdDTO: OrderIdDTO = { id: orderId };
+    const orderIdDomain = await this.dataMapper.orderIdToDomain(orderIdDTO);
+    
+    await this.ordersService.updateOrderState(orderIdDomain, OrderState.SHIPPED);
   }
 
   // Corrisponde in PUB a receiveShipment()
@@ -178,15 +204,16 @@ SellOrderEventListener, ShipmentEventListener, UpdateOrderStateUseCase {
   @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.*.cancel`) 
   async cancelOrder(@Ctx() context: any): Promise<void> {  
       try {
-          const tokens = context.getSubject().split('.');
-          const orderIdStr = tokens[4]; 
-          
-          // Chiama updateOrderState con stato CANCELED
-          const fakeContext = {
-              getSubject: () => `call.warehouse.${process.env.WAREHOUSE_ID}.order.${orderIdStr}.state.update.CANCELED`
-          };
-
-          return await this.updateOrderState(fakeContext);
+        // ESTRAZIONE TOKEN DAL SUBJECT
+        const tokens = context.getSubject().split('.');
+        const orderIdStr = tokens[tokens.length - 2]; // ID = Penultimo token
+              
+        // VALIDAZIONE DEL DTO ed ESECUZIONE GET
+        let orderId: string = orderIdStr;
+        const orderIdDTO: OrderIdDTO = { id: orderId };
+        const orderIdDomain = await this.dataMapper.orderIdToDomain(orderIdDTO);
+        
+        await this.ordersService.updateOrderState(orderIdDomain, OrderState.CANCELED);
           
       } catch (error) {
           console.error('Errore nella cancellazione dell\'ordine:', error);
@@ -197,16 +224,16 @@ SellOrderEventListener, ShipmentEventListener, UpdateOrderStateUseCase {
   @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.*.complete`)
   async completeOrder(@Ctx() context: any): Promise<void> {
       try {
+          // ESTRAZIONE TOKEN DAL SUBJECT
           const tokens = context.getSubject().split('.');
-          const orderIdStr = tokens[4]; 
+          const orderIdStr = tokens[tokens.length - 2]; // ID = Penultimo token
+                
+          // VALIDAZIONE DEL DTO ed ESECUZIONE GET
+          let orderId: string = orderIdStr;
+          const orderIdDTO: OrderIdDTO = { id: orderId };
+          const orderIdDomain = await this.dataMapper.orderIdToDomain(orderIdDTO);
           
-          // Chiama updateOrderState con stato CANCELED
-          const fakeContext = {
-              getSubject: () => `call.warehouse.${process.env.WAREHOUSE_ID}.order.${orderIdStr}.state.update.COMPLETED`
-          };
-          
-          return await this.updateOrderState(fakeContext);
-          
+          await this.ordersService.updateOrderState(orderIdDomain, OrderState.COMPLETED);
       } catch (error) {
           console.error('Errore nel completamento dell\'ordine:', error);
           throw error;

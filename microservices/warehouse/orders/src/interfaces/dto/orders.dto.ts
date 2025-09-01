@@ -1,13 +1,15 @@
-import {IsInstance} from 'class-validator';
+import {IsArray, ValidateNested} from 'class-validator';
 
 import { OrderIdDTO } from "./orderId.dto";
 import { SellOrderDTO } from "./sellOrder.dto";
 import { InternalOrderDTO } from "./internalOrder.dto";
 
 export class OrdersDTO {
-    @IsInstance(Map)    
-    sellOrders: Map<OrderIdDTO, SellOrderDTO>;
+    @IsArray()
+    @ValidateNested({ each: true })
+    sellOrders: Array<{ orderId: OrderIdDTO; order: SellOrderDTO }>;
 
-    @IsInstance(Map)    
-    internalOrders: Map<OrderIdDTO, InternalOrderDTO>;
+    @IsArray()
+    @ValidateNested({ each: true })
+    internalOrders: Array<{ orderId: OrderIdDTO; order: InternalOrderDTO }>;
 }

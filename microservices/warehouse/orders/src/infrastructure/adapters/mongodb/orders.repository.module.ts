@@ -6,7 +6,7 @@ import { SellOrderSchema } from './schemas/sellOrder.schema';
 import { OrderItemDetailSchema } from './schemas/orderItemDetail.schema';
 
 import { OrdersRepositoryMongo } from './orders.repository.impl';
-import { DataMapper } from "../../../application/data.mapper";
+import { DataMapper } from "../../mappers/data.mapper";
 
 @Module({
   imports: [
