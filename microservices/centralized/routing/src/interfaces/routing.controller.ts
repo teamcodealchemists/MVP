@@ -1,5 +1,5 @@
-import { Controller } from '@nestjs/common';
-import { MessagePattern } from '@nestjs/microservices';
+import { Controller, Post } from '@nestjs/common';
+import { MessagePattern, Payload } from '@nestjs/microservices';
 import { RoutingService } from 'src/application/routing.service';
 
 import { WarehouseIdDTO } from './dto/warehouseId.dto';
@@ -9,38 +9,89 @@ import { DataMapper } from './data.mapper';
 import { WarehouseAddressSubscriber } from 'src/domain/inbound-ports/warehouseAddressSubscriber';
 import { CriticQuantityEvent } from 'src/domain/inbound-ports/criticQuantity.event';
 import { ReceiveWarehouseState } from 'src/domain/inbound-ports/receiveWarehouseState';
+import { WarehouseSubscriber } from 'src/domain/inbound-ports/warehouseSubscriber';
+import { WarehouseAddress } from 'src/domain/warehouseAddress.entity';
+import { WarehouseState } from 'src/domain/warehouseState.entity';
+import { WarehouseId } from 'src/domain/warehouseId.entity';
 
 @Controller()
-export class RoutingController implements WarehouseAddressSubscriber, CriticQuantityEvent, ReceiveWarehouseState {
+export class RoutingController implements WarehouseAddressSubscriber, CriticQuantityEvent, ReceiveWarehouseState, WarehouseSubscriber {
     constructor(private readonly routingService: RoutingService) {}
 
-    @MessagePattern(`api.warehouse.${process.env.WAREHOUSE_ID}.updateAddress`)
-    async updateAddress(address: WarehouseAddressDTO): Promise<void> {
-        const domainAddress = DataMapper.warehouseAddressToDomain(address);
-        this.routingService.updateWarehouseAddress(domainAddress.getId(), domainAddress.getAddress());
+    @MessagePattern(`call.routing.warehouse.${process.env.WAREHOUSE_ID}.address.set`)
+    async updateAddress(@Payload('params') address: WarehouseAddressDTO): Promise<string|false> {
+        try{
+            const domainAddress = DataMapper.warehouseAddressToDomain(address);
+            return await this.routingService.updateWarehouseAddress(domainAddress.getId(), domainAddress.getAddress());
+        } catch (error) {
+            return Promise.resolve(JSON.stringify({
+                        error: {
+                            code: "system.invalidParams",
+                            message: error.message
+                        }
+                    }));
+        }
     }
 
-    @MessagePattern(`api.warehouse.${process.env.WAREHOUSE_ID}.removeAddress`)
-    async removeAddress(address: WarehouseAddressDTO): Promise<void> {
-        const domainAddress = DataMapper.warehouseAddressToDomain(address);
-        this.routingService.removeWarehouseAddress(domainAddress.getWarehouseState().getId());
+    @MessagePattern(`call.routing.warehouse.${process.env.WAREHOUSE_ID}.address.delete`)
+    async removeAddress(@Payload('params') address: WarehouseAddressDTO): Promise<string> {
+        try {
+            const domainAddress = DataMapper.warehouseAddressToDomain(address);
+            return await this.routingService.removeWarehouseAddress(domainAddress.getWarehouseState().getId());
+        } catch (error) {
+            return Promise.resolve(JSON.stringify({
+                error: {
+                    code: "system.invalidParams",
+                    message: error.message
+                }
+            }));
+        }
     }
 
-    @MessagePattern(`api.warehouse.${process.env.WAREHOUSE_ID}.addAddress`)
-    async addAddress(address: WarehouseAddressDTO): Promise<void> {
-        const domainAddress = DataMapper.warehouseAddressToDomain(address);
-        this.routingService.saveWarehouseAddress(domainAddress.getId(), domainAddress.getAddress());
+    @MessagePattern(`call.routing.warehouse.${process.env.WAREHOUSE_ID}.receiveRequest.set`)
+    async receiveRequest(@Payload('params') warehouseId: WarehouseIdDTO): Promise<string> {
+        try {
+            const domainId = DataMapper.warehouseIdToDomain(warehouseId);
+            await this.routingService.calculateDistance(domainId);
+            return Promise.resolve(JSON.stringify({ result: "Request received successfully" }));
+        } catch (error) {
+            return Promise.resolve(JSON.stringify({
+                error: {
+                    code: "system.invalidParams",
+                    message: error.message
+                }
+            }));
+        }
     }
 
-    @MessagePattern(`api.warehouse.${process.env.WAREHOUSE_ID}.receiveRequest`)
-    async receiveRequest(warehouseId: WarehouseIdDTO): Promise<void> {
-        const domainId = DataMapper.warehouseIdToDomain(warehouseId);
-        await this.routingService.calculateDistance(domainId);
+    @MessagePattern(`call.routing.warehouse.${process.env.WAREHOUSE_ID}.warehouseState.add`)
+    async updateWarehouseState(@Payload('params') warehouseState: WarehouseStateDTO): Promise<string|false> {
+        try {
+            const domainState = DataMapper.warehouseStateToDomain(warehouseState);
+            return await this.routingService.updateWarehouseState(domainState.getId(), domainState.getState());
+        } catch (error) {
+            return Promise.resolve(JSON.stringify({
+                error: {
+                    code: "system.invalidParams",
+                    message: error.message
+                }
+            }));
+        }
     }
 
-    @MessagePattern(`api.warehouse.${process.env.WAREHOUSE_ID}.updateWarehouseState`)
-    async updateWarehouseState(warehouseState: WarehouseStateDTO): Promise<void> {
-        const domainState = DataMapper.warehouseStateToDomain(warehouseState);
-        this.routingService.updateWarehouseState(domainState.getId(), domainState.getState());
+
+    @MessagePattern('call.routing.warehouse.create')
+    async createWarehouse(@Payload('params') dto: { state: string, address: string }): Promise<string|false> {
+        try {
+            return await this.routingService.saveWarehouse(dto.address, dto.state);
+        } catch (error) {
+            return Promise.resolve(JSON.stringify({
+            error: {
+                code: "system.invalidParams",
+                message: error.message
+            }
+            }));
+        }
     }
+
 }

@@ -2,12 +2,12 @@ import { Logger } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { ConsumerDeserializer } from '@nestjs/microservices';
 
-export class InboundRequestDeserializer
+export class InboundResponseDeserializer
   implements ConsumerDeserializer {
-  private readonly logger = new Logger('InboundRequestDeserializer');
+  private readonly logger = new Logger('InboundResponseDeserializer');
   deserialize(value: any, options?: Record<string, any>) {
     this.logger.verbose(
-      `<<-- deserializing inbound request message:\n${value}
+      `<<-- deserializing inbound response message:\n${value}
       \n\twith options: ${JSON.stringify(options)}`,
     );
     /**
@@ -16,7 +16,7 @@ export class InboundRequestDeserializer
      */
     return {
       pattern: undefined,
-      data: value,
+      data: JSON.parse(value),
       id: uuidv4(),
     };
   }

@@ -8,6 +8,7 @@ import { RoutingEventAdapter } from 'src/infrastructure/adapters/routing.event.a
 import { RoutingRepositoryMongo } from 'src/infrastructure/adapters/mongodb/routing.repository.impl';
 import { NatsModule } from 'src/interfaces/nats/nats.module';
 import { RoutingRepository } from 'src/domain/routing.repository';
+import { AccessController } from 'src/interfaces/access.controller';
 
 
 @Module({
@@ -17,7 +18,7 @@ import { RoutingRepository } from 'src/domain/routing.repository';
     RoutingRepositoryModule,
     NatsModule,
   ],
-  controllers: [RoutingController],
+  controllers: [RoutingController, AccessController],
   providers: [
     RoutingService,
     OutboundService,

@@ -1,9 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { WarehouseId } from 'src/domain/warehouseId.entity';
-import { WarehouseAddress } from 'src/domain/warehouseAddress.entity';
-import { WarehouseState } from 'src/domain/warehouseState.entity';
-import { RoutingRepository } from 'src/domain/routing.repository';
-import { haversine, geocodeAddress} from 'src/interfaces/geo';
+import { WarehouseId } from '../domain/warehouseId.entity';
+import { WarehouseAddress } from '../domain/warehouseAddress.entity';
+import { WarehouseState } from '../domain/warehouseState.entity';
+import { RoutingRepository } from '../domain/routing.repository';
+import { haversine, geocodeAddress} from '../interfaces/geo';
 
 @Injectable()
 export class RoutingService {
@@ -40,26 +40,57 @@ export class RoutingService {
       .map(d => d.id);
   }
 
-  async updateWarehouseAddress(warehouseId: WarehouseId, address: string): Promise<void> {
+  async updateWarehouseAddress(warehouseId: WarehouseId, address: string): Promise<string | false> {
+    if (!address) {
+      return false;
+    }
     const warehouseState = new WarehouseState(warehouseId, 'default');
     const warehouseAddress = new WarehouseAddress(warehouseState, address);
     await this.RoutingRepository.updateWarehouseAddress(warehouseAddress);
+    return JSON.stringify({ result: 'Address updated successfully' });
   }
 
-  async removeWarehouseAddress(warehouseId: WarehouseId): Promise<void> {
+  async removeWarehouseAddress(warehouseId: WarehouseId): Promise<string> {
     // Implement remove logic here
     await this.RoutingRepository.removeWarehouseAddress(warehouseId);
+    return JSON.stringify({ result: 'Address removed successfully' });
   }
 
-  async saveWarehouseAddress(warehouseId: WarehouseId, address: string): Promise<void> {
-    const warehouseState = new WarehouseState(warehouseId, 'default');
+  async saveWarehouseAddress(warehouseId: WarehouseId, address: string, state: string): Promise<void> {
+    const warehouseState = new WarehouseState(warehouseId, state);
     const warehouseAddress = new WarehouseAddress(warehouseState, address);
     await this.RoutingRepository.saveWarehouseAddress(warehouseAddress);
   }
 
-  async updateWarehouseState(warehouseId: WarehouseId, state: string): Promise<void> {
+  async saveWarehouse(state: string, address: string): Promise<string|false> {
+      if (!address || !state) {
+        return false;
+      }
+    const nextId = await this.generateNextWarehouseId();
+    const warehouseId = new WarehouseId(nextId);
+    console.log({
+        warehouseId: warehouseId.getId(),
+        state: state,
+        address: address,
+    });
+    await this.saveWarehouseAddress(warehouseId, address, state);
+    return JSON.stringify({ result: 'Warehouse created successfully' });
+  }
+
+  async updateWarehouseState(warehouseId: WarehouseId, state: string): Promise<string|false> {
+    if (!state) {
+      return false;
+    }
     // Implement update logic here
     await this.RoutingRepository.updateWarehouseState(new WarehouseState(warehouseId, state));
+    return JSON.stringify({ result: 'Warehouse state updated successfully' });
+  }
+
+  async generateNextWarehouseId(): Promise<number> {
+    const warehouses = await this.RoutingRepository.getAllWarehouses();
+    if (warehouses.length === 0) return 1;
+    const maxId = Math.max(...warehouses.map(w => w.getId()));
+    return maxId + 1;
   }
 }
 

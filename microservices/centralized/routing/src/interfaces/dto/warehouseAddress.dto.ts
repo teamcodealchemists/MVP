@@ -4,7 +4,6 @@ import { Type } from 'class-transformer';
 
 export class WarehouseAddressDTO {
     @IsNotEmpty()
-    @IsString()
     @Type(() => WarehouseStateDTO)
     warehouseState: WarehouseStateDTO;
 

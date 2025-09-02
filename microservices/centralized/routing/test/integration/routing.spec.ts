@@ -22,15 +22,15 @@ describe('Integration test tra classi WarehouseId, WarehouseAddress e WarehouseS
 
     // Testiamo la catena di integrazione
     // Per testare i get
-    expect(routing.getId()).toBe(1);
+  expect(routing.getId().getId()).toBe(1);
     expect(routing.getAddress()).toBe('Via Roma 1, Milano');
-    expect(routing.getWarehouseState()).toBe('ATTIVO');
+    expect(routing.getWarehouseState().getState()).toBe('ATTIVO');
 
     // Per testare i set
     routing.setAddress('Via Torino 2, Milano');
     routing.setState('INATTIVO');
 
     expect(routing.getAddress()).toBe('Via Torino 2, Milano');
-    expect(routing.getWarehouseState()).toBe('INATTIVO');
+    expect(routing.getWarehouseState().getState()).toBe('INATTIVO');
   });
 });
