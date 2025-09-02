@@ -307,7 +307,32 @@ async CheckInsufficientQuantity(
   }
 
   async CheckWarehouseState(warehouseState : WarehouseState[]): Promise<void> {
-    
+    if (!warehouseState || warehouseState.length === 0) {
+      console.log("Nessun warehouse da controllare.");
+      return;
+    }
+    const inactiveWarehouses = warehouseState.filter(ws => ws.getState() !== 'ACTIVE');
+    let not = "";
+    if (inactiveWarehouses.length === 0) {
+      console.log("Tutti i magazzini sono attivi.");
+    } else {
+      console.log("Alcuni magazzini non sono attivi:");
+        const notJson = inactiveWarehouses.map(ws => ({
+          warehouseId: ws.getId(),
+          state: ws.getState()
+        }));
+      inactiveWarehouses.forEach(ws => {
+        not+= `|Warehouse ID: ` + JSON.stringify(ws.getId()) +" |State : "+  ws.getState() + "\n";
+      });
+      /*
+      console.log("----------------------------------------------------------------------------------------------");
+      console.log("|Service announcement|");
+      console.log(not);
+      console.log("----------------------------------------------------------------------------------------------");
+      */
+      //Chiamata ad observability?
+      this.sendNotification(JSON.stringify(notJson));
+    }
   }
 
   async ManageOverMaxThres(

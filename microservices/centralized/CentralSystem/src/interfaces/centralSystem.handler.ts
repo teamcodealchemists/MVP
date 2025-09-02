@@ -13,10 +13,16 @@ export class centralSystemHandler implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    await this.natsClient.connect(); // forza la connessione
+    await this.natsClient.connect();
   }
 
   async handleNotification(message: string): Promise<void> {
+    /*
+    console.log("----------------------------------------------------------------------------------------------");
+    console.log("|Handler announcement|");
+    console.log(message);
+    console.log("----------------------------------------------------------------------------------------------");
+    */
     this.natsClient.emit("notification.send", { message });
   }
 

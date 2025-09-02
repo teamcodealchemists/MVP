@@ -35,6 +35,12 @@ NotificationPublisher
     constructor(private readonly centralSystemHandler: centralSystemHandler) {}
 
     async SendNotification(notification: string): Promise<void> {
+        /*
+        console.log("----------------------------------------------------------------------------------------------");
+        console.log("|OutboundAdapter announcement|");
+        console.log(notification);
+        console.log("----------------------------------------------------------------------------------------------");
+        */
         await this.centralSystemHandler.handleNotification(notification);
     }
 

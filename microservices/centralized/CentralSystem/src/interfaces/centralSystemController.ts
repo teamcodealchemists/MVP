@@ -11,6 +11,7 @@ import { warehouseIdDto } from 'src/interfaces/http/dto/warehouseId.dto';
 import { WarehouseStateDTO } from 'src/interfaces/http/dto/warehouseState.dto';
 import { OrderIdDTO } from './http/dto/orderId.dto';
 import { OrderItemDTO } from './http/dto/orderItem.dto';
+import { WarehouseState } from 'src/domain/warehouseState.entity';
 
 const logger = new Logger('InventoryController');
 
@@ -94,10 +95,18 @@ export class centralSystemController {
   }
 
   @MessagePattern('event.inventory.getWarehouseState')
-  async getWarehouseState(@Payload() warehouseState: WarehouseStateDTO[]): Promise<void> {
+  async getWarehouseState(@Payload() data : any): Promise<void> {
     try {
-      logger.log(`Received getWarehouseState request with payload: ${JSON.stringify(warehouseState)}`);
-      await this.inboundPortsAdapter.getWarehouseState(warehouseState);
+      const warehouseDtos: WarehouseStateDTO[] = data.map((p) => {
+      const dto = new WarehouseStateDTO();
+      let temp =  new warehouseIdDto();
+      temp.warehouseId = p?.warehouseId.id;
+      dto.warehouseId = temp;
+      dto.state = p?.state;
+      return dto;
+      });
+      logger.log(`Received getWarehouseState request with payload: ${JSON.stringify(warehouseDtos)}`);
+      await this.inboundPortsAdapter.getWarehouseState(warehouseDtos);
     } catch (error) {
       logger.error(`Error handling getWarehouseState event: ${error?.message}`, error?.stack);
     }
