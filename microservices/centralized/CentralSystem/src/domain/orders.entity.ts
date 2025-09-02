@@ -3,8 +3,8 @@ import { InternalOrder } from "./internalOrder.entity";
 
 export class Orders {
     constructor(
-        private sellOrders: SellOrder[],
         private internalOrders: InternalOrder[],
+        private sellOrders: SellOrder[],
     ) { }
 
     getSellOrders(): SellOrder[] {

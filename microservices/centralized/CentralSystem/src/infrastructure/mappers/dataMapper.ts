@@ -149,7 +149,6 @@ async orderIdToDomain(dto: OrderIdDTO): Promise<OrderId> {
 
 async orderStateToDomain(dto: OrderStateDTO): Promise<OrderState> {
   const state = dto.orderState;
-  
   if (!Object.values(OrderState).includes(state as OrderState)) {
     throw new Error(`Stato ordine non valido: ${state}. Stati validi: ${Object.values(OrderState).join(', ')}`);
   }

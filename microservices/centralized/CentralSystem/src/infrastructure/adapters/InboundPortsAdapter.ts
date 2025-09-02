@@ -23,7 +23,7 @@ export class InboundPortsAdapter
 
   async handleCriticalQuantityMin(product: productDto): Promise<void> {
     const domainProduct = await DataMapper.toDomainProduct(product);
-    await this.service.CheckRestocking(domainProduct);
+    await this.service.ManageCriticalMinThres(domainProduct);
   }
 async handleCriticalQuantityMax(product: productDto): Promise<void> {
     const domainProduct = await DataMapper.toDomainProduct(product);

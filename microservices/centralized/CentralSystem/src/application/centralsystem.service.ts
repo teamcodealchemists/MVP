@@ -17,8 +17,8 @@ import { OrderItem } from "src/domain/orderItem.entity";
 import { ItemId } from "src/domain/itemId.entity";
 import { OrderId } from "src/domain/orderId.entity";
 import { DataMapper } from "src/infrastructure/mappers/dataMapper";
-import { ProductId } from "src/domain/productId.entity";
 import { SellOrder } from "src/domain/sellOrder.entity";
+import { ProductId } from "src/domain/productId.entity";
 
 @Injectable()
 export class CentralSystemService {
@@ -28,17 +28,14 @@ export class CentralSystemService {
   private readonly logger = new Logger("CentralSystemService");
   // === Metodi applicativi ===
   async RequestAllNeededData(warehouseId : WarehouseId): Promise<{ inv: Inventory; order: Orders; dist: WarehouseState[] }> {
-    /*const invDto = await this.outboundPortsAdapter.CloudInventoryRequest();  
+    const invDto = await this.outboundPortsAdapter.CloudInventoryRequest();  
     const orderDto = await this.outboundPortsAdapter.CloudOrderRequest();    
     const distDto = await this.outboundPortsAdapter.RequestDistanceWarehouse(warehouseId);
     const inv = DataMapper.toDomainInventory(invDto);
     const order = await DataMapper.ordersToDomain(orderDto); 
-    const dist: WarehouseState[] = distDto.map(dto => DataMapper.warehouseStatetoDomain(dto));*/
-    // --- Mock prodotti per 3 magazzini, ciascuno con 10 prodotti ---
-    // --- Mock prodotti per 3 magazzini, ciascuno con 10 prodotti ---
-    const warehouseIds = [new WarehouseId(2)]//, new WarehouseId(3)];
-    const productsPerWarehouse = 1;
-
+    const dist: WarehouseState[] = distDto.map(dto => DataMapper.warehouseStatetoDomain(dto));
+    return { inv, order, dist };
+    /*
     // --- Mock Inventory Products statici ---
     const mockInventoryProducts: Product[] = [];
     warehouseIds.forEach((wh) => {
@@ -98,7 +95,7 @@ export class CentralSystemService {
       }
     });
 
-    const order = new Orders(mockSellOrders, mockInternalOrders);
+    const order = new Orders(mockInternalOrders,mockSellOrders);
     //console.log("Questo è order: " + JSON.stringify(order, null, 2));
     // --- Mock WarehouseState statici ---
    const dist: WarehouseState[] = warehouseIds
@@ -107,10 +104,11 @@ export class CentralSystemService {
       return new WarehouseState("Good", new WarehouseId(wh.getId())); // esempio statico
     });
     //console.log("Questo è dist: " + JSON.stringify(dist, null, 2));
-    return { inv, order, dist };
+      return { inv, order, dist }; 
+    */
   }
 
-  async CheckRestocking(
+  async ManageCriticalMinThres(
     product: Product,
   ): Promise<void> {
     const warehouseId = new WarehouseId(product.getIdWarehouse());
@@ -120,19 +118,30 @@ export class CentralSystemService {
       const productInInv = inv.getInventory().find(
         (p) => p.getId() === product.getId() && p.getIdWarehouse() === whId
       );
-
-      if (!productInInv) continue; 
+      //console.log(JSON.stringify(inv, null, 2));
+      
+      if (!productInInv){
+        continue;
+      } 
 
       const availableQty = productInInv.getQuantity() - product.getQuantity();
-
-      if (availableQty < product.getMinThres()) continue;
-
+      if (availableQty < productInInv.getMinThres()){
+        /*
+        console.log("Magazzino" + whId);
+        console.log("availableQty" + availableQty);
+        console.log("productInInv.getQuantity()" + productInInv.getQuantity());
+        console.log("product.getMinThres()" + productInInv.getMinThres());
+        */
+        continue;
+      } 
       const pendingOrdersInternal = order.getInternalOrders().filter(
       (o) =>
         o.getWarehouseDeparture() === whId &&
         o.getItemsDetail().some((item) => item.getItem().getItemId().toString() === product.getId()) &&
         (o.getOrderState() === OrderState.PENDING|| o.getOrderState() === OrderState.PROCESSING) 
       );
+      
+      //console.log(JSON.stringify(order.getSellOrders(), null, 2));
       const pendingOrdersSell = order.getSellOrders().filter(
       (o) =>
         o.getWarehouseDeparture() === whId &&
@@ -151,18 +160,20 @@ export class CentralSystemService {
       );
       const residualQty = availableQty - pendingQtyInternal - pendingQtySell;
 
-      if (residualQty >= product.getMinThres()) {
+      if (residualQty >= productInInv.getMinThres()) {
         //Chiamata per creare un ordine nuovo avendo già i dati del magazzino trovato
         //per ricordare
         let oI = new OrderItem(new ItemId(Number(product.getId())),product.getMinThres()-product.getQuantity());
         let oID = new OrderItemDetail(oI,0,product.getUnitPrice());
         let internalOrders = new InternalOrder(new OrderId(""),[oID],OrderState.PENDING, new Date(), whId,warehouseId.getId());
-        console.log("service : Magazzino mandato! \n"+ JSON.stringify(internalOrders, null, 2));
+        //console.log("service : Magazzino mandato! \n"+ JSON.stringify(internalOrders, null, 2));
         this.outboundPortsAdapter.createInternalOrder(internalOrders);
         return;
+      }else {
+        //console.log("Magazzino : "+whId+"\nresidualQty >= product.getMinThres()\n availableQty : " + availableQty + "\n pendingQtyInternal : "+ pendingQtyInternal + "\n pendingQtySell : "+ pendingQtySell + "\n residualQty : "+ residualQty);
       }
     }
-    console.log("Nessun magazzino ha quantità sufficiente per il prodotto");
+    //console.log("Nessun magazzino ha quantità sufficiente per il prodotto");
   }
 
 async CheckInsufficientQuantity(
@@ -181,7 +192,6 @@ async CheckInsufficientQuantity(
       const productInInv = inv.getInventory().find(
         (p) => p.getId() === product.getItemId().toString() && p.getIdWarehouse() === whId
       );
-
       if (!productInInv){
         //console.log("Non ci sono prodotti con questo Id");
         continue;
@@ -190,14 +200,14 @@ async CheckInsufficientQuantity(
         productInInv.getQuantity() - product.getQuantity();
 
       if (availableQty < productInInv.getMinThres()){
-        /*
+      /*  
         console.log("WarehouseId : " + whState.getId());
         console.log("Parte Inventario | Problema scende sotto la soglia : ");
         console.log("Parte Inventario | Soglia : "+ productInInv.getMinThres());
         console.log("Parte Inventario | Quantità dell'inventario : "+ productInInv.getQuantity());
         console.log("Parte Inventario | Quantità richiesta : "+ product.getQuantity());
         console.log("Parte Inventario | Quantità rimanente se fosse stata tolta "+ availableQty);
-        */
+      */
         continue;
       }
       const pendingOrdersInternal = order
@@ -255,7 +265,7 @@ async CheckInsufficientQuantity(
         orderItemsDetails.push(oID);
         productsForThisWarehouse.push(product);
       }else{
-        /*
+       /* 
         console.log("WarehouseId : " + whState.getId());
         console.log("Parte Ordine | Problema scende sotto la soglia : ");
         console.log("Parte Ordine | Soglia : "+ productInInv.getMinThres());
@@ -291,13 +301,14 @@ async CheckInsufficientQuantity(
     console.log(
       "Alcuni prodotti non hanno quantità sufficiente nei magazzini:",
       productsToAllocate.map((p) => p.getItemId())
+      //messaggio per annullare ordine
     );
   }else{
-    this.logger.log(`Received orderQuantity: ${JSON.stringify(internalOrdersToCreate)}`);
+    //this.logger.log(`Received orderQuantity: ${JSON.stringify(internalOrdersToCreate)}`);
     for (const internalOrder of internalOrdersToCreate) {
       await this.outboundPortsAdapter.createInternalOrder(internalOrder);
     }
-    console.log("service : Magazzino mandato! \n"+ JSON.stringify(internalOrdersToCreate, null, 2));
+    //console.log("service : Magazzino mandato! \n"+ JSON.stringify(internalOrdersToCreate, null, 2));
   }
 }
 
@@ -308,15 +319,15 @@ async CheckInsufficientQuantity(
 
   async CheckWarehouseState(warehouseState : WarehouseState[]): Promise<void> {
     if (!warehouseState || warehouseState.length === 0) {
-      console.log("Nessun warehouse da controllare.");
+      //console.log("Nessun warehouse da controllare.");
       return;
     }
     const inactiveWarehouses = warehouseState.filter(ws => ws.getState() !== 'ACTIVE');
     let not = "";
     if (inactiveWarehouses.length === 0) {
-      console.log("Tutti i magazzini sono attivi.");
+      //console.log("Tutti i magazzini sono attivi.");
     } else {
-      console.log("Alcuni magazzini non sono attivi:");
+      //console.log("Alcuni magazzini non sono attivi:");
         const notJson = inactiveWarehouses.map(ws => ({
           warehouseId: ws.getId(),
           state: ws.getState()
@@ -347,7 +358,7 @@ async CheckInsufficientQuantity(
       );
 
       if (!productInInv){
-        //console.log("Entro ProductInInv vuoto");
+       //console.log("Entro ProductInInv vuoto");
         continue; 
       }
 
@@ -382,29 +393,12 @@ async CheckInsufficientQuantity(
         let oI = new OrderItem(new ItemId(Number(product.getId())),product.getMinThres()-product.getQuantity());
         let oID = new OrderItemDetail(oI,0,product.getUnitPrice());
         let internalOrders = new InternalOrder(new OrderId(""),[oID],OrderState.PENDING, new Date(),warehouseId.getId(),whId);
-        console.log("service : Magazzino mandato! \n"+ JSON.stringify(internalOrders, null, 2));
+        //console.log("service : Magazzino mandato! \n"+ JSON.stringify(internalOrders, null, 2));
         this.outboundPortsAdapter.createInternalOrder(internalOrders);
         
         return;
-      }
+      }//else console.log("!residualQty <= productInInv.getMaxThres()");
     }
-    console.log("Attualmente non ci sono magazzini disponibili");
+    //console.log("Attualmente non ci sono magazzini disponibili");
   }
-  /*
-  async CloudInventoryRequest(): Promise<void> {
-    //da implementare
-  }
-  async CloudOrderRequest(order: Order): Promise<void> {
-    //da implementare
-  }
-  async RequestWarehouseState(id : WarehouseId): Promise<void> {
-    //da implementare
-  }
-  async SendNotification(message : string): Promise<void> {
-    //da implementare
-  }
-  async RequestDistanceWarehouse(warehouseId: WarehouseId): Promise<void> {
-    //da implementare
-  }
-    */
 }
