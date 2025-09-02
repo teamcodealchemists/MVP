@@ -24,10 +24,6 @@ export class LocalSupervisorDTO {
     authentication: AuthenticationDTO;
 
     @IsNotEmpty()
-    @IsEnum({ "GLOBAL":0, "LOCAL":1 })
-    role: number;
-
-    @IsNotEmpty()
     @IsArray()
     @ValidateNested({ each: true })
     @Type(() => WarehouseIdDTO)

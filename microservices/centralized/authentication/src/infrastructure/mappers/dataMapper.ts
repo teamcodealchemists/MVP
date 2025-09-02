@@ -27,7 +27,7 @@ export const DataMapper = {
         );
     },
 
-    LocalSupervisorToDomain(LocalSupervisorDTO: LocalSupervisorDTO) : LocalSupervisor {
+    localSupervisorToDomain(LocalSupervisorDTO: LocalSupervisorDTO) : LocalSupervisor {
         return new LocalSupervisor(
             LocalSupervisorDTO.name,
             LocalSupervisorDTO.surname,
@@ -36,7 +36,7 @@ export const DataMapper = {
                 LocalSupervisorDTO.authentication.email,
                 LocalSupervisorDTO.authentication.password
             ),
-            LocalSupervisorDTO.role,
+            Role.LOCAL,
             LocalSupervisorDTO.warehouseAssigned.map(
                 (warehouseDTO) => new WarehouseId(warehouseDTO.warehouseId)
             )
@@ -77,7 +77,6 @@ export const DataMapper = {
                 email: localSupervisor.getAuthentication().getEmail().toString(),
                 password: localSupervisor.getAuthentication().getPassword().toString()
             },
-            role: localSupervisor.getRole(),
             warehouseAssigned: localSupervisor.getWarehouseAssigned().map(warehouse => ({
                 warehouseId: warehouse.getId()
             }))

@@ -1,9 +1,7 @@
-import { UserId } from './userId.entity'
 import { Authentication } from './authentication.entity';
 import { Role } from './role.entity';
 
 export abstract class User {
-    private readonly id: UserId;
     private readonly name: string;
     private readonly surname: string;
     private readonly phone: string;

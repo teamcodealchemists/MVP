@@ -21,7 +21,7 @@ export class AuthService {
     private readonly logger = new Logger(AuthService.name);
 
     public async login(authentication: Authentication): Promise<string> {
-        this.logger.log(`User ${authentication.getEmail()} logging in with ${authentication.getPassword()}.`);
+        this.logger.log(`User ${authentication.getEmail()} logging in.`);
 
         // Set JWT for client session as a token and check for login
         try {
@@ -31,7 +31,7 @@ export class AuthService {
                 throw new Error('Email does not exist');
             }
             if (user.getAuthentication().getPassword() !== authentication.getPassword()) { //Check password
-                throw new Error(`Password is not valid, the password is ${user.getAuthentication().getPassword()}`);
+                throw new Error(`Password is not valid`);
             }
             // Both email and password are correct
 
@@ -86,7 +86,7 @@ export class AuthService {
             return Promise.resolve(JSON.stringify({
                 error: {
                     code: "system.internalError",
-                    message: "Token has already been logged out"
+                    message: "Token has already been Revoked"
                 }
             }));
         }
@@ -115,7 +115,8 @@ export class AuthService {
             else {
                 const decoded = this.jwtService.verify(jwt);
                 if (decoded) {
-                    if (await this.authRepository.getToken(decoded.sub) !== null && (await this.authRepository.getToken(decoded.sub))?.getStatus() === TokenStatus.ACTIVE) {
+                    const listToken = await this.authRepository.getToken(decoded.sub);
+                    if (listToken !== null && listToken?.getStatus() === TokenStatus.ACTIVE) {
 
                         this.logger.debug(`JWT verified successfully: ${JSON.stringify(decoded)}`);
 
@@ -165,6 +166,7 @@ export class AuthService {
         try {
             if (!await this.isGlobalSet()) {
                 const newGlobalId = await this.authRepository.newProfile(globalSupervisor);
+                await this.authRepository.storeToken(new Token(newGlobalId, TokenStatus.REVOKED));
                 return Promise.resolve(JSON.stringify({
                     result: "Global Supervisor registered successfully, with id: " + newGlobalId,
                 }));
@@ -174,6 +176,24 @@ export class AuthService {
             }
         } catch (error) {
             this.logger.error(`Failed to Register GlobalSupervisor`);
+            return Promise.resolve(JSON.stringify({
+                error: {
+                    code: "system.accessDenied",
+                    message: error.message
+                }
+            }));
+        }
+    }
+
+    public async registerLocalSupervisor(LocalSupervisor: LocalSupervisor): Promise<string> {
+        try {
+            const newLocalId = await this.authRepository.newProfile(LocalSupervisor);
+            await this.authRepository.storeToken(new Token(newLocalId, TokenStatus.REVOKED));
+            return Promise.resolve(JSON.stringify({
+                result: "Local Supervisor registered successfully, with id: " + newLocalId,
+            }));
+        } catch (error) {
+            this.logger.error(`Failed to Register LocalSupervisor`);
             return Promise.resolve(JSON.stringify({
                 error: {
                     code: "system.accessDenied",

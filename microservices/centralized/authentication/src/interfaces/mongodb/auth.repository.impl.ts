@@ -66,11 +66,12 @@ export class AuthRepositoryMongo implements AuthRepository {
         return Promise.resolve(user.id);
     }
 
-    async existsByAuth(auth: Authentication): Promise<boolean> { 
-        return Promise.resolve(false);
-    }
-    
     async newProfile(user: User): Promise<string> {
+        const existingUser = await this.authenticationModel.findOne({ email: user.getAuthentication().getEmail() }).exec();
+        if (existingUser) {
+            throw new Error('Profile with this email already exists');
+        }
+
         if (user.getRole() == Role.GLOBAL) {
             const newGlobalSupervisor = new this.authenticationModel({
                 name: user.getName(),
@@ -82,8 +83,7 @@ export class AuthRepositoryMongo implements AuthRepository {
             });
             await newGlobalSupervisor.save();
             return Promise.resolve(newGlobalSupervisor.id);
-        }
-        else {
+        } else {
             const newLocalSupervisor = new this.authenticationModel({
                 name: user.getName(),
                 surname: user.getSurname(),
@@ -96,10 +96,6 @@ export class AuthRepositoryMongo implements AuthRepository {
             await newLocalSupervisor.save();
             return Promise.resolve(newLocalSupervisor.id);
         }
-    }
-
-    async deleteById(id: string): Promise<void> {
-        return Promise.resolve();
     }
 
     async getGlobalSupervisor(): Promise<GlobalSupervisor | null> {

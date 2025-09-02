@@ -10,6 +10,7 @@ import { AuthenticationDTO } from './dto/authentication.dto';
 import { GlobalSupervisorDTO } from './dto/globalSupervisor.dto';
 import { SubDTO } from './dto/sub.dto';
 import { CidDTO } from './dto/cid.dto';
+import { LocalSupervisorDTO } from './dto/localSupervisor.dto';
 
 const logger = new Logger('AuthController');
 
@@ -51,16 +52,6 @@ export class AuthController {
         }
     }
 
-    @MessagePattern('call.authTest.ping')
-    async ping(): Promise<string> {
-        try {
-            return await this.inboundPortsAdapter.ping();
-        } catch (error) {
-            logger.error('AuthController - ping error:', error);
-            return JSON.stringify({ error: { code: 'system.internalError', message: error?.message || 'Unknown error' } });
-        }
-    }
-
     @MessagePattern('call.auth.register.globalSupervisor')
     async registerGlobalSupervisor(@Payload('params') globalSupervisorDTO: GlobalSupervisorDTO): Promise<string> {
         try {
@@ -71,5 +62,16 @@ export class AuthController {
             return Promise.resolve(JSON.stringify({ error: { code: 'system.internalError', message: error?.message || 'Unknown error' } }));
         }
     }
+
+    @MessagePattern('call.auth.register.localSupervisor')
+    async registerLocalSupervisor(@Payload('params') localSupervisorDTO: LocalSupervisorDTO): Promise<string> {
+        try {
+            logger.log('RegisterLocalSupervisor called with DTO:', localSupervisorDTO);
+            return await this.inboundPortsAdapter.registerLocalSupervisor(localSupervisorDTO);
+        } catch (error) {
+            logger.error('RegisterLocalSupervisor error:', error);
+            return Promise.resolve(JSON.stringify({ error: { code: 'system.internalError', message: error?.message || 'Unknown error' } }));
+        }
+    }   
 
 }

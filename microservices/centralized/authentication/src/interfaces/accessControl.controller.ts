@@ -11,23 +11,6 @@ export class AccessControlController {
         private readonly authService: AuthService
     ) { }
 
-    @MessagePattern('access.authTest')
-    async testAccess(@Payload() data: any): Promise<string> {
-        logger.debug('TestAccess called with RESTOKEN:', data);
-
-        if (!data.token.error) {
-            if (data.token && data.token.isGlobal) {
-                return JSON.stringify({ result: { get: false, call: "ping" } });
-            }
-            else {
-                return JSON.stringify({ result: { get: false } });
-            }
-        }
-        else {
-            return JSON.stringify({ error: { code: 'system.accessDenied', message: data.token.error } });
-        }
-    }
-
     @MessagePattern('access.auth')
     async loginAccess(@Payload() data: any): Promise<string> {
         if (await this.authService.isGlobalSet()) {
@@ -52,11 +35,16 @@ export class AccessControlController {
             return JSON.stringify({ result: { get: false, call: "globalSupervisor" } });
         }
         else {
-            if (data.token && !data.token.error && data.token.isGlobal) {
-                return JSON.stringify({ result: { get: false, call: "localSupervisor,globalSupervisor" } });
+            if (!data.token.error) {
+                if (data.token && data.token.isGlobal) {
+                    return JSON.stringify({ result: { get: false, call: "localSupervisor,globalSupervisor" } });
+                }
+                else {
+                    return JSON.stringify({ result: { get: false } });
+                }
             }
             else {
-                return JSON.stringify({ result: { get: false } });
+                return JSON.stringify({ error: { code: 'system.accessDenied', message: data.token.error } });
             }
         }
     }
