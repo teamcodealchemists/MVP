@@ -8,6 +8,8 @@ import { Role } from 'src/domain/role.entity';
 import { LocalSupervisor } from 'src/domain/localSupervisior.entity';
 import { GlobalSupervisor } from 'src/domain/globalSupervisor.entity';
 import { UserId } from 'src/domain/userId.entity';
+import { TokenStatus } from 'src/domain/tokenStatus.entity';
+import { Token } from 'src/domain/token.entity';
 
 @Injectable()
 export class AuthService {
@@ -33,6 +35,21 @@ export class AuthService {
             }
             // Both email and password are correct
 
+            
+            const id = await this.authRepository.getIdByEmail(user.getAuthentication().getEmail());
+            const token = await this.authRepository.getToken(id as string);
+            if (token) {
+                if (token.getStatus() === TokenStatus.REVOKED) {
+                    await this.authRepository.updateToken(new Token(id as string, TokenStatus.ACTIVE));
+                }
+                else {
+                    throw new Error('You are already logged in');
+                }                
+            }
+            else {
+                await this.authRepository.storeToken(new Token(id as string, TokenStatus.ACTIVE));
+            }
+
             const JWT = await this.generateJWT(user);
             this.logger.log(`Generated JWT token for user ${authentication.getEmail()}: ${JWT}`);
 
@@ -55,9 +72,29 @@ export class AuthService {
         }
     }
 
-    public async logout(): Promise<string> {
-        //TODO: Implement logout logic here
-        return Promise.resolve('User logged out successfully');
+    public async logout(sub: string): Promise<string> {
+        let token = await this.authRepository.getToken(sub);
+        if (token == null) {
+            return Promise.resolve(JSON.stringify({
+                error: {
+                    code: "system.internalError",
+                    message: "Token has already been logged out"
+                }
+            }));
+        }
+        else if (token.getStatus() == TokenStatus.REVOKED) {
+            return Promise.resolve(JSON.stringify({
+                error: {
+                    code: "system.internalError",
+                    message: "Token has already been logged out"
+                }
+            }));
+        }
+        else {
+            await this.authRepository.updateToken(new Token(sub, TokenStatus.REVOKED));
+            this.logger.debug(`Token with sub ${sub} has been revoked.`);
+            return Promise.resolve(JSON.stringify({ result: 'Logout successful' }));
+        }
     }
 
     public async ping(): Promise<string> {
@@ -78,20 +115,29 @@ export class AuthService {
             else {
                 const decoded = this.jwtService.verify(jwt);
                 if (decoded) {
+                    if (await this.authRepository.getToken(decoded.sub) !== null && (await this.authRepository.getToken(decoded.sub))?.getStatus() === TokenStatus.ACTIVE) {
 
-                    //TODO: Fare altri controlli <-- Vedere se fare altri controlli
+                        this.logger.debug(`JWT verified successfully: ${JSON.stringify(decoded)}`);
 
-                    this.logger.debug(`JWT verified successfully: ${JSON.stringify(decoded)}`);
+                        const token = { token: decoded };
 
-                    const token = { token: decoded };
+                        // Call the emit function to notify RESGATE of the token
+                        await this.outboundPortsAdapter.emitAccessToken(JSON.stringify(token), cid);
 
-                    // Call the emit function to notify RESGATE of the token
-                    await this.outboundPortsAdapter.emitAccessToken(JSON.stringify(token), cid);
-
-                    return Promise.resolve(JSON.stringify({
-                        result: null
-                    }));
-
+                        return Promise.resolve(JSON.stringify({
+                            result: null
+                        }));
+                    }
+                    else {
+                        this.logger.warn('Token has been logged out');
+                        await this.outboundPortsAdapter.emitAccessToken(JSON.stringify({ token: { error: "Token has been logged out" } }), cid);
+                        return Promise.resolve(JSON.stringify({
+                            error: {
+                                code: "system.accessDenied",
+                                message: "Token has been logged out"
+                            }
+                        }));
+                    }
                 }
                 else {
                     this.logger.warn('JWT verification failed');
@@ -117,7 +163,7 @@ export class AuthService {
 
     public async registerGlobalSupervisor(globalSupervisor: GlobalSupervisor): Promise<string> {
         try {
-            if (!(await this.isGlobalSet())) {
+            if (!await this.isGlobalSet()) {
                 const newGlobalId = await this.authRepository.newProfile(globalSupervisor);
                 return Promise.resolve(JSON.stringify({
                     result: "Global Supervisor registered successfully, with id: " + newGlobalId,

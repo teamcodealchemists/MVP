@@ -1,3 +1,4 @@
+import { SubDTO } from './../../../interfaces/dto/sub.dto';
 import { Injectable } from "@nestjs/common";
 import { AuthService } from "src/application/authentication.service";
 
@@ -28,8 +29,8 @@ RegisterGlobalSupervisorEventListener {
         return await this.authService.login(DataMapper.authenticationToDomain(authenticationDTO));
     }
 
-    async logout(): Promise<string> {
-        return await this.authService.logout();
+    async logout(subDTO: SubDTO): Promise<string> {
+        return await this.authService.logout(subDTO.sub);
     }
 
     async authenticate(jwtDTO: JwtDTO, cidDTO: CidDTO): Promise<string> {

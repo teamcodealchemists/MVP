@@ -17,10 +17,10 @@ export class AccessControlController {
 
         if (!data.token.error) {
             if (data.token && data.token.isGlobal) {
-                return JSON.stringify({ result: { get: false, call: "ping" }});
+                return JSON.stringify({ result: { get: false, call: "ping" } });
             }
             else {
-                return JSON.stringify({ result: { get: false }});
+                return JSON.stringify({ result: { get: false } });
             }
         }
         else {
@@ -30,10 +30,16 @@ export class AccessControlController {
 
     @MessagePattern('access.auth')
     async loginAccess(@Payload() data: any): Promise<string> {
-        if(await this.authService.isGlobalSet()) {
-            return JSON.stringify({ result: { get: false, call: "login,logout" }});
+        if (await this.authService.isGlobalSet()) {
+            //if (data.token && !data.token.error) { 
+            //    return JSON.stringify({ result: { get: false, call: "logout,login" } });
+            //}
+            //else {
+            //    return JSON.stringify({ result: { get: false, call: "login" } });
+            //}
+            return JSON.stringify({ result: { get: false, call: "login,logout" } });
         }
-        else { 
+        else {
             return JSON.stringify({ error: { code: 'system.accessDenied', message: 'You must Sign In a Global Supervisor' } });
         }
     }
@@ -43,14 +49,14 @@ export class AccessControlController {
         logger.debug('Register called with RESTOKEN:', data);
 
         if (!await this.authService.isGlobalSet()) {
-            return JSON.stringify({ result: { get: false, call: "globalSupervisor" }});
+            return JSON.stringify({ result: { get: false, call: "globalSupervisor" } });
         }
         else {
             if (data.token && !data.token.error && data.token.isGlobal) {
-                return JSON.stringify({ result: { get: false, call: "localSupervisor,globalSupervisor" }});
+                return JSON.stringify({ result: { get: false, call: "localSupervisor,globalSupervisor" } });
             }
             else {
-                return JSON.stringify({ result: { get: false }});
+                return JSON.stringify({ result: { get: false } });
             }
         }
     }

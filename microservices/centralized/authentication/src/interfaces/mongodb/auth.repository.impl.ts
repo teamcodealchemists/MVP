@@ -1,13 +1,22 @@
-import { AuthRepository } from "src/domain/mongodb/auth.repository";
-import { User } from "src/domain/user.entity";
-import { AuthenticationModel } from "src/infrastructure/adapters/mongdb/models/auth.model";
-import { Authentication } from "src/domain/authentication.entity";
+import { validate } from 'class-validator';
+// NestJS & Framework Imports
 import { Injectable, Logger } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
+
+// Domain Entities & Interfaces
+import { AuthRepository } from "src/domain/mongodb/auth.repository";
+import { User } from "src/domain/user.entity";
+import { Authentication } from "src/domain/authentication.entity";
 import { GlobalSupervisor } from "src/domain/globalSupervisor.entity";
-import { Role } from "src/domain/role.entity";
 import { LocalSupervisor } from "src/domain/localSupervisior.entity";
+import { Role } from "src/domain/role.entity";
 import { WarehouseId } from "src/domain/warehouseId.entity";
+
+// Infrastructure / Mongoose Models
+import { AuthenticationModel } from "src/infrastructure/adapters/mongodb/models/auth.model";
+import { TokenListModel } from "src/infrastructure/adapters/mongodb/models/tokenList.schema";
+import { Token } from "src/domain/token.entity";
+import { TokenStatus } from 'src/domain/tokenStatus.entity';
 
 const logger = new Logger('AuthRepositoryMongo');
 
@@ -15,7 +24,8 @@ const logger = new Logger('AuthRepositoryMongo');
 @Injectable()
 export class AuthRepositoryMongo implements AuthRepository {
     constructor(
-        @InjectModel('Authentication') private readonly authenticationModel: AuthenticationModel
+        @InjectModel('Authentication') private readonly authenticationModel: AuthenticationModel,
+        @InjectModel('TokenList') private readonly tokenListModel: TokenListModel
     ) {}
 
     async findByEmail(email: string): Promise<User | null> {
@@ -116,5 +126,26 @@ export class AuthRepositoryMongo implements AuthRepository {
                 return new LocalSupervisor(auth.name, auth.surname, auth.phone, new Authentication(auth.email, auth.password), Role.LOCAL, warehouseIds);
             }
         }));
+    }
+
+    async storeToken(token: Token): Promise<void> {
+        const newToken = new this.tokenListModel({
+            sub: token.getSub(),
+            status: token.getStatus()
+        });
+        await newToken.save();
+    }
+
+    async getToken(sub: string): Promise<Token | null> {
+        const token = await this.tokenListModel.findOne({ sub: sub }).exec();
+        if (!token) {
+            return Promise.resolve(null);
+        }
+        return Promise.resolve(new Token(token.sub, token.status ? TokenStatus.ACTIVE : TokenStatus.REVOKED));
+    }
+
+    async updateToken(token: Token): Promise<void> {
+        await this.tokenListModel.updateOne({ sub: token.getSub() }, { status: token.getStatus() }).exec();
+        return Promise.resolve();
     }
 }

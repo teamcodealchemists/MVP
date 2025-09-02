@@ -1,13 +1,16 @@
+import { TokenListSchemaFactory } from 'src/infrastructure/adapters/mongodb/schemas/tokenList.schema';
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthRepositoryMongo } from './auth.repository.impl';
-import { AuthenticationSchema } from "src/infrastructure/adapters/mongdb/schemas/auth.schema";
+import { AuthenticationSchema } from "src/infrastructure/adapters/mongodb/schemas/auth.schema";
 
 @Module({
     imports: [
-        MongooseModule.forFeature([{ name: 'Authentication', schema: AuthenticationSchema }]),
+        MongooseModule.forFeature([
+            { name: 'Authentication', schema: AuthenticationSchema },
+            { name: 'TokenList', schema: TokenListSchemaFactory }
+        ]),
         MongooseModule.forRoot('mongodb://host.docker.internal:27017/authentication')
-        
     ],
     providers: [
         {
@@ -17,7 +20,7 @@ import { AuthenticationSchema } from "src/infrastructure/adapters/mongdb/schemas
     ],
     exports: [
         'AUTHREPOSITORY',
-        MongooseModule, 
+        MongooseModule
     ],
 })
 export class AuthRepositoryModule {}
