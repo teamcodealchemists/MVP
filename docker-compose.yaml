@@ -30,6 +30,22 @@ services:
       - nats
       - mongodb    
 
+  orders-aggregated:
+    build:
+      context: ./microservices/warehouse/orders-aggregated
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=development
+      - MONGO_URI=mongodb://mongodb:27017/orders_aggregated_db
+      - NATS_URL=nats://nats:4222
+    volumes:
+      - ./microservices/warehouse/orders-aggregated/src:/usr/src/app/src
+    networks:
+      - shared-warehouses
+    depends_on:
+      - nats
+      - mongodb
+
   resgate:
     image: resgateio/resgate
     container_name: resgate
