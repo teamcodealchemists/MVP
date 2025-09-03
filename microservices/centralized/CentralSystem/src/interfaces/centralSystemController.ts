@@ -2,14 +2,14 @@ import { Controller, Logger } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { InboundPortsAdapter } from 'src/infrastructure/adapters/InboundPortsAdapter';
 
-import { OrderQuantityDTO } from './http/dto/orderQuantity.dto';
-import { productDto } from './http/dto/product.dto';
-import { warehouseIdDto } from './http/dto/warehouseId.dto';
-import { WarehouseStateDTO } from './http/dto/WarehouseState.dto';
-import { OrderIdDTO } from './http/dto/orderId.dto';
-import { OrderItemDTO } from './http/dto/orderItem.dto';
+import { OrderQuantityDTO } from 'src/interfaces/http/dto/orderQuantity.dto';
+import { productDto } from 'src/interfaces/http/dto/product.dto';
+import { warehouseIdDto } from 'src/interfaces/http/dto/warehouseId.dto';
+import { WarehouseStateDTO } from 'src/interfaces/http/dto/WarehouseState.dto';
+import { OrderIdDTO } from 'src/interfaces/http/dto/orderId.dto';
+import { OrderItemDTO } from 'src/interfaces/http/dto/orderItem.dto';
 import { validateOrReject } from 'class-validator';
-import { productIdDto } from './http/dto/productId.dto';
+import { productIdDto } from 'src/interfaces/http/dto/productId.dto';
 
 const logger = new Logger('centralSystemController');
 
