@@ -5,7 +5,7 @@ import { InboundPortsAdapter } from 'src/infrastructure/adapters/InboundPortsAda
 import { OrderQuantityDTO } from './http/dto/orderQuantity.dto';
 import { productDto } from './http/dto/product.dto';
 import { warehouseIdDto } from './http/dto/warehouseId.dto';
-import { WarehouseStateDTO } from './http/dto/warehouseState.dto';
+import { WarehouseStateDTO } from './http/dto/WarehouseState.dto';
 import { OrderIdDTO } from './http/dto/orderId.dto';
 import { OrderItemDTO } from './http/dto/orderItem.dto';
 import { validateOrReject } from 'class-validator';
