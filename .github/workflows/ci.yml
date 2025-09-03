@@ -44,7 +44,7 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: inventory
-          directory: microservices/warehouse/inventory
+          files: MVP/coverage/warehouse/inventory/coverage-summary.json
           name: inventory
 
       # Orders
@@ -61,7 +61,7 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: orders
-          directory: microservices/warehouse/orders
+          files: MVP/coverage/warehouse/orders/coverage-summary.json
           name: orders
 
       # CentralSystem
@@ -76,13 +76,13 @@ jobs:
       - name: Run CentralSystem tests
         working-directory: microservices/centralized/CentralSystem
         run: npm run test:cov || echo "No tests for centralSystem"
-
+        
       - name: Upload CentralSystem coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: centralSystem
-          directory: microservices/centralized/CentralSystem
+          files: MVP/coverage/centralized/centralSystem/coverage-summary.json
           name: centralSystem
 
       # Authentication
