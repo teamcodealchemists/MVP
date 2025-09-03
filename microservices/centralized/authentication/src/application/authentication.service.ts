@@ -98,10 +98,6 @@ export class AuthService {
         }
     }
 
-    public async ping(): Promise<string> {
-        return Promise.resolve(JSON.stringify({ result: 'pong' }));
-    }
-
     public async authenticate(jwt: string, cid: string): Promise<string> {
         try {
             if (!jwt) {

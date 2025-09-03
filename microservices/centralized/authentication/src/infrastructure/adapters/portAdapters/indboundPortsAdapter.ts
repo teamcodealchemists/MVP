@@ -47,8 +47,4 @@ RegisterLocalSupervisorEventListener {
     async registerLocalSupervisor(localSupervisorDTO: LocalSupervisorDTO): Promise<string> {
         return await this.authService.registerLocalSupervisor(DataMapper.localSupervisorToDomain(localSupervisorDTO));
     }
-
-    async ping(): Promise<string> {
-        return await Promise.resolve(this.authService.ping());
-    }
 }

@@ -5,7 +5,7 @@ import { ConsumerDeserializer } from '@nestjs/microservices';
 export class InboundResponseDeserializer
   implements ConsumerDeserializer {
   private readonly logger = new Logger('InboundResponseDeserializer');
-  deserialize(value: any, options?: Record<string, any>) {
+  public deserialize(value: any, options?: Record<string, any>) {
     this.logger.verbose(
       `<<-- Deserializing inbound response message:\n${value}
       \nwith options: ${JSON.stringify(options)}`,

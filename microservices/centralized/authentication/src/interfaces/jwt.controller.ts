@@ -24,6 +24,16 @@ export class JwtController {
 
         logger.log(`Extracted JWT: ${token}`);
 
+        if (!token) {
+            logger.error('No Bearer token found');
+            return JSON.stringify({
+                error: {
+                    code: "system.accessDenied",
+                    message: "No Bearer token found"
+                }
+            });
+        }
+
         const jwtDto = new JwtDTO();
         jwtDto.jwt = token;
 
