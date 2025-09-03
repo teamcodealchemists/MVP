@@ -38,10 +38,10 @@ jobs:
         run: cd microservices/warehouse/orders && npm install || echo "No tests for orders"
 
       - name: Install centralSystem dependencies
-        run: cd microservices/centralized/centralSystem && npm install && npm install --save-dev jest || echo "No tests for centralSystem"
+        run: cd microservices/centralized/CentralSystem && npm install || echo "No tests for centralSystem"
 
       - name: Install Auth dependencies
-        run: cd microservices/centralized/authentication && npm install && npm install --save-dev jest || echo "No tests for authentication"
+        run: cd microservices/centralized/authentication && npm install || echo "No tests for authentication"
 
       - name: Run all tests
         working-directory: microservices
