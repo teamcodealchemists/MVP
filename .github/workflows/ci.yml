@@ -38,10 +38,10 @@ jobs:
         run: cd microservices/warehouse/orders && npm install || echo "No tests for orders"
 
       - name: Install centralSystem dependencies
-        run: cd microservices/centralized/centralSystem && npm install || echo "No tests for centralSystem"
+        run: cd microservices/centralized/centralSystem && npm install && npm install --save-dev jest || echo "No tests for centralSystem"
 
       - name: Install Auth dependencies
-        run: cd microservices/centralized/authentication && npm install || echo "No tests for authentication"
+        run: cd microservices/centralized/authentication && npm install && npm install --save-dev jest || echo "No tests for authentication"
 
       - name: Run all tests
         working-directory: microservices
@@ -66,6 +66,14 @@ jobs:
           flags: orders
           directory: microservices/warehouse/orders
           name: orders
+
+      - name: Upload CentralSystem coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: centralSystem
+          directory: microservices/centralized/centralSystem
+          name: centralSystem
 
       - name: Commit updated README
         run: |
