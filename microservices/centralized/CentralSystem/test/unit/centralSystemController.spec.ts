@@ -68,7 +68,7 @@ describe('centralSystemController', () => {
       expect(inboundAdapter.handleCriticalQuantityMin).toHaveBeenCalled();
       const mockFn = inboundAdapter.handleCriticalQuantityMin as jest.MockedFunction<typeof inboundAdapter.handleCriticalQuantityMin>;
       const [productDTO] =mockFn.mock.calls[0];
-      expect(productDTO.id).toBe(payload.product.id);
+      expect(productDTO.id.id).toBe(payload.product.id);
       expect(productDTO.warehouseId.warehouseId).toBe(payload.product.warehouseId);
     });
   });
@@ -92,7 +92,7 @@ describe('centralSystemController', () => {
       expect(inboundAdapter.handleCriticalQuantityMax).toHaveBeenCalled();
       const mockFn = inboundAdapter.handleCriticalQuantityMax as jest.MockedFunction<typeof inboundAdapter.handleCriticalQuantityMax>;
       const [productDTO] =  mockFn.mock.calls[0];
-      expect(productDTO.id).toBe(payload.product.id);
+      expect(productDTO.id.id).toBe(payload.product.id);
       expect(productDTO.warehouseId.warehouseId).toBe(payload.product.warehouseId);
     });
   });

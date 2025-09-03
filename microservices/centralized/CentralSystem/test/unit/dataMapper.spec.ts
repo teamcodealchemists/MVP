@@ -18,10 +18,12 @@ import { OrderId } from "../../src/domain/orderId.entity";
 import { ItemId } from "../../src/domain/itemId.entity";
 describe('DataMapper specific methods', () => {
   it('toDomainProduct should map productDto to Product', () => {
+    const pDto = new productIdDto();
+    pDto.id = "1";
     const wDto = new warehouseIdDto();
     wDto.warehouseId = 99;
     const dto = {
-      id: "1" ,
+      id: pDto ,
       name: 'Test Product',
       unitPrice: 10,
       quantity: 5,
@@ -130,8 +132,10 @@ describe('DataMapper specific methods', () => {
   });
 
   it("toDomainProduct should map productDto to Product", () => {
+    const pDto = new productIdDto();
+    pDto.id = "1";
     const dto = {
-      id: "1",
+      id: pDto,
       name: "Test Product",
       unitPrice: 10,
       quantity: 5,
@@ -157,7 +161,7 @@ describe('DataMapper specific methods', () => {
       new WarehouseId(77)
     );
     const dto = DataMapper.toDtoProduct(product);
-    expect(dto.id).toBe("p1");
+    expect(dto.id.id).toBe("p1");
     expect(dto.name).toBe("Prodotto A");
     expect(dto.unitPrice).toBe(20);
     expect(dto.quantity).toBe(10);

@@ -28,15 +28,15 @@ export class CentralSystemService {
   private readonly logger = new Logger("CentralSystemService");
   // === Metodi applicativi ===
   async RequestAllNeededData(warehouseId : WarehouseId): Promise<{ inv: Inventory; order: Orders; dist: WarehouseState[] }> {
-    /*
+ 
     const invDto = await this.outboundPortsAdapter.CloudInventoryRequest();  
     const orderDto = await this.outboundPortsAdapter.CloudOrderRequest();    
     const distDto = await this.outboundPortsAdapter.RequestDistanceWarehouse(warehouseId);
     const inv = DataMapper.toDomainInventory(invDto);
     const order = await DataMapper.ordersToDomain(orderDto); 
     const dist: WarehouseState[] = distDto.map(dto => DataMapper.warehouseStatetoDomain(dto));
-    return Promise.resolve({ inv, order, dist });*/
-
+    return Promise.resolve({ inv, order, dist });
+    /*
     // --- Mock Inventory Products statici ---
     const warehouseIds: WarehouseId[] = [
       new WarehouseId(2),
@@ -109,7 +109,7 @@ export class CentralSystemService {
       return new WarehouseState("Good", new WarehouseId(wh.getId())); // esempio statico
     });
     //console.log("Questo è dist: " + JSON.stringify(dist, null, 2));
-    return Promise.resolve({ inv, order, dist }); 
+    return Promise.resolve({ inv, order, dist }); */
   }
 
   async ManageCriticalMinThres(
