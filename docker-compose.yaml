@@ -1,90 +1,65 @@
-version: '3.8'
-
 services:
-  mongodb:
+  mongo:
     image: mongo:latest
     container_name: mongo
     ports:
       - "27017:27017"
-    networks:
-      - shared-warehouses
     volumes:
-      - ./microservizi/mongo_db:/docker-entrypoint-initdb.d
+      - mongo-data:/data/db
 
   nats:
     image: nats:latest
     container_name: nats
     ports:
-      - "4222:4222"
-    command:
-      - "--jetstream"
-      - "--debug"
-      - "--trace"
-    networks:
-      - shared-warehouses
-
-  inventory:
-    build:
-      context: ./microservices/warehouse/inventory
-      dockerfile: Dockerfile
-    environment:
-      - NODE_ENV=development
-      - WAREHOUSE_ID=1
-      - MONGO_URI=mongodb://mongodb:27017/inventory_db
-      - NATS_URL=nats://nats:4222
-    volumes:
-      - ./microservices/warehouse/inventory/src:/usr/src/app/src
-    networks:
-      - shared-warehouses
-    depends_on:
-      - nats
-      - mongodb
-
-  inventory-aggregated:
-    build:
-      context: ./microservices/warehouse/inventory-aggregated
-      dockerfile: Dockerfile
-    environment:
-      - NODE_ENV=development
-      - MONGO_URI=mongodb://mongodb:27017/inventory_aggregated_db
-      - NATS_URL=nats://nats:4222
-    volumes:
-      - ./microservices/warehouse/inventory-aggregated/src:/usr/src/app/src
-    networks:
-      - shared-warehouses
-    depends_on:
-      - nats
-      - mongodb
-
-  orders:
-    build:
-      context: ./microservices/warehouse/orders
-      dockerfile: Dockerfile
-    environment:
-      - NODE_ENV=development
-      - WAREHOUSE_ID=1
-      - NATS_URL=nats://nats:4222
-    volumes:
-      - ./microservices/warehouse/orders/src:/usr/src/app/src
-    networks:
-      - shared-warehouses
-    depends_on:
-      - nats
+      - "4222:4222"   # porta client
+      - "6222:6222"   # cluster
+      - "8222:8222"   # monitoring
+    command: >
+      -js
 
   resgate:
     image: resgateio/resgate
     container_name: resgate
     ports:
       - "8080:8080"
-    command:
-      - "-n"
-      - "nats://nats:4222"
-      - "-DV"
-    networks:
-      - shared-warehouses
+    command: >
+      -n nats://nats:4222
+
+  mvp-inventory:
+    build:
+      context: ./microservices/warehouse/inventory
+      dockerfile: Dockerfile
+    container_name: mvp-inventory-1
+    ports:
+      - "3001:3000"   
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/inventory
+      - NATS_URL=nats://nats:4222
+    volumes:
+      - ./microservices/warehouse/inventory:/usr/src/app
+      - /usr/src/app/node_modules
+    command: npm run start:dev
     depends_on:
+      - mongo
       - nats
 
-networks:
-  shared-warehouses:
-    driver: bridge
+  mvp-inventory-aggregated:
+    build:
+      context: ./microservices/warehouse/inventory-aggregated
+      dockerfile: Dockerfile
+    container_name: mvp-inventory-aggregated-1
+    ports:
+      - "3002:3000"
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/inventory-aggregated
+      - NATS_URL=nats://nats:4222
+    volumes:
+      - ./microservices/warehouse/inventory-aggregated:/app
+      - /app/node_modules
+    command: npm run start:dev
+    depends_on:
+      - mongo
+      - nats
+
+volumes:
+  mongo-data:
