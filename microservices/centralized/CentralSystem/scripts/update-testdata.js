@@ -13,11 +13,9 @@ function runCommand(command, args, options = {}) {
 
 async function main() {
   try {
-    // Imposta il path alla cartella che contiene tutti i coverage-summary.json
     const coverageRoot = path.resolve(process.cwd(), 'coverage');
 
     console.log('📤 Uploading coverage to Codecov...');
-    // Usa bash uploader di Codecov e passa la root coverage
     await runCommand('bash', [
       '-c',
       `bash <(curl -s https://codecov.io/bash) -d ${coverageRoot}`

@@ -1,7 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { centralSystemController } from 'src/interfaces/centralSystemController';
 import { InboundPortsAdapter } from 'src/infrastructure/adapters/InboundPortsAdapter';
-
+import { WarehouseStateDTO } from 'src/interfaces/http/dto/WarehouseState.dto';
+import { plainToInstance } from 'class-transformer';
 describe('centralSystemController', () => {
   let controller: centralSystemController;
   let inboundAdapter: InboundPortsAdapter;
@@ -93,22 +94,28 @@ describe('centralSystemController', () => {
     });
   });
 
-  describe('getWarehouseState', () => {
-    it('should transform payload and call getWarehouseState', async () => {
-      const payload = [
-        { state: 'ACTIVE', warehouseId: { id: 1 } },
-        { state: 'INACTIVE', warehouseId: { id: 2 } },
-      ];
+describe('getWarehouseState', () => {
+  it('should transform payload and call getWarehouseState', async () => {
+    const payload = [
+      { state: 'ACTIVE', warehouseId: { id: 1 } },
+      { state: 'INACTIVE', warehouseId: { id: 2 } },
+    ];
+    const dtoPayload = plainToInstance(WarehouseStateDTO, payload);
 
-      await controller.getWarehouseState(payload);
+    await controller.getWarehouseState(dtoPayload);
 
-      expect(inboundAdapter.getWarehouseState).toHaveBeenCalled();
-      const mockFn = inboundAdapter.getWarehouseState as jest.MockedFunction<typeof inboundAdapter.getWarehouseState>;
-      const [warehouseDTOs] = mockFn.mock.calls[0];
-      expect(warehouseDTOs.length).toBe(2);
-      expect(warehouseDTOs[0].state).toBe('ACTIVE');
-      expect(warehouseDTOs[1].state).toBe('INACTIVE');
-      expect(warehouseDTOs[0].warehouseId.warehouseId).toBe(1);
-    });
+    expect(inboundAdapter.getWarehouseState).toHaveBeenCalled();
+    const mockFn = inboundAdapter.getWarehouseState as jest.MockedFunction<
+      typeof inboundAdapter.getWarehouseState
+    >;
+    const [warehouseDTOs] = mockFn.mock.calls[0];
+
+    expect(warehouseDTOs.length).toBe(2);
+    expect(warehouseDTOs[0]).toBeInstanceOf(WarehouseStateDTO);
+    expect(warehouseDTOs[0].state).toBe('ACTIVE');
+    expect(warehouseDTOs[1].state).toBe('INACTIVE');
+    expect(warehouseDTOs[0].warehouseId.warehouseId).toBe(1); 
   });
+});
+
 });
