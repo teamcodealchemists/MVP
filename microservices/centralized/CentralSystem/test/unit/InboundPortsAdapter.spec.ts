@@ -5,7 +5,7 @@ import { DataMapper } from 'src/infrastructure/mappers/dataMapper';
 import { OrderQuantityDTO } from 'src/interfaces/http/dto/orderQuantity.dto';
 import { productDto } from 'src/interfaces/http/dto/product.dto';
 import { warehouseIdDto } from 'src/interfaces/http/dto/warehouseId.dto';
-import { WarehouseStateDTO } from 'src/interfaces/http/dto/WarehouseState.dto';
+import { WarehouseStateDTO } from 'src/interfaces/http/dto/warehouseState.dto';
 import { OrderQuantity } from 'src/domain/orderQuantity.entity';
 import { WarehouseState } from 'src/domain/warehouseState.entity';
 import { Product } from 'src/domain/product.entity';

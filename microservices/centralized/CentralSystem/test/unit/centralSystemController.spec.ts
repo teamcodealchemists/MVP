@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { centralSystemController } from 'src/interfaces/centralSystemController';
 import { InboundPortsAdapter } from 'src/infrastructure/adapters/InboundPortsAdapter';
-import { WarehouseStateDTO } from 'src/interfaces/http/dto/WarehouseState.dto';
+import { WarehouseStateDTO } from 'src/interfaces/http/dto/warehouseState.dto';
 import { plainToInstance } from 'class-transformer';
 describe('centralSystemController', () => {
   let controller: centralSystemController;

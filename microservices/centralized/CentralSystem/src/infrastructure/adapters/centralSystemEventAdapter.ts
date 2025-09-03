@@ -15,12 +15,11 @@ import { Inventory } from "src/domain/inventory.entity";
 import { Orders } from "src/domain/orders.entity";
 import { WarehouseId } from "src/domain/warehouseId.entity";
 import { WarehouseState } from "src/domain/warehouseState.entity";
-
 // DTO
 import { DataMapper } from "src/infrastructure/mappers/dataMapper";
 import { inventoryDto } from "src/interfaces/http/dto/inventory.dto";
 import { OrdersDTO } from "src/interfaces/http/dto/orders.dto";
-import { WarehouseStateDTO } from "src/interfaces/http/dto/WarehouseState.dto";
+import { WarehouseStateDTO } from "src/interfaces/http/dto/warehouseState.dto";
 import { InternalOrderDTO } from "src/interfaces/http/dto/internalOrder.dto";
 
 @Injectable()
