@@ -43,11 +43,13 @@ services:
 #==========================================================================#
 
   authentication:
+    container_name: authentication
     build:
       context: ./microservices/centralized/authentication
       dockerfile: Dockerfile
     environment:
       - MONGO_DB=mongodb://mongo:27017/authentication
+      - JWT_SECRET=IREALLYLOVEM31!!!!!!!!!!!!!!!!!!
     volumes:
       - ./microservices/centralized/authentication/src:/usr/src/app/src
     networks:
@@ -74,6 +76,8 @@ services:
       - "-n"
       - "nats://nats:4222"
       - "-DV"
+      - "--headauth"
+      - "auth.jwtHeader"
     networks:
       - shared-warehouses
 
@@ -84,8 +88,8 @@ services:
       - "27017:27017"
     networks:
       - shared-warehouses
-    volumes:
-      - ./microservizi/mongo_db:/docker-entrypoint-initdb.d
+    #volumes:
+    #  - ./microservizi/mongo_db:/docker-entrypoint-initdb.d
 
   nats:
      container_name: nats
