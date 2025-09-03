@@ -74,6 +74,7 @@ export class AuthService {
 
     public async logout(sub: string): Promise<string> {
         let token = await this.authRepository.getToken(sub);
+        this.logger.log(`User with sub ${sub} logging out: `, token);
         if (token == null) {
             return Promise.resolve(JSON.stringify({
                 error: {
@@ -142,6 +143,7 @@ export class AuthService {
                 }
                 else {
                     this.logger.warn('JWT verification failed');
+                    await this.authRepository.updateToken(new Token((this.jwtService.decode(jwt) as { sub: string }).sub, TokenStatus.REVOKED));
                     return Promise.resolve(JSON.stringify({
                         error: {
                             code: "system.invalidParams",
@@ -151,8 +153,9 @@ export class AuthService {
                 }
             }
         } catch (error) {
-            this.logger.error(`JWT verification failed: ${error.message}`);
+            this.logger.error(`JWT verification failed: ${error.message}, with ${(this.jwtService.decode(jwt) as { sub: string }).sub}`);
             await this.outboundPortsAdapter.emitAccessToken(JSON.stringify({ token: { error: error.message } }), cid);
+            await this.authRepository.updateToken(new Token((this.jwtService.decode(jwt) as { sub: string }).sub, TokenStatus.REVOKED));
             return Promise.resolve(JSON.stringify({
                 error: {
                     code: "system.invalidParams",
