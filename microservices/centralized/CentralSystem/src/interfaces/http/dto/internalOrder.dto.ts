@@ -1,13 +1,13 @@
-import { IsNotEmpty, IsString, Min, IsInt, IsDate, IsArray } from 'class-validator';
-
+import { IsNotEmpty, IsString, ValidateNested, IsInt, IsDate, IsArray } from 'class-validator';
+import { Type } from 'class-transformer';
 import { OrderIdDTO } from "./orderId.dto";
 import { OrderItemDTO } from "./orderItem.dto";
 import { OrderStateDTO } from "./orderState.dto";
 
 export class InternalOrderDTO {
         @IsNotEmpty()
-        @IsString()
-        @Min(0)
+        @ValidateNested()
+        @Type(() => OrderIdDTO)
         orderId: OrderIdDTO;
 
         @IsNotEmpty()

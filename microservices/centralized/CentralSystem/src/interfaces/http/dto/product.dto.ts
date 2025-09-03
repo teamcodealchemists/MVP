@@ -1,9 +1,13 @@
-import { IsUUID, IsNotEmpty, IsString, IsNumber, Min } from 'class-validator';
+import { ValidateNested, IsNotEmpty, IsString, IsNumber, Min } from 'class-validator';
 import { warehouseIdDto } from './warehouseId.dto';
+import { productIdDto } from './productId.dto';
+import { Type } from 'class-transformer';
 
 export class productDto {
-  @IsUUID()
-  id: string;
+  @IsNotEmpty()
+  @ValidateNested()
+  @Type(() =>productIdDto)
+  id: productIdDto;
 
   @IsNotEmpty()
   @IsString()
@@ -23,6 +27,8 @@ export class productDto {
   @Min(0)
   maxThres: number;
 
-  @IsNumber()
+  @IsNotEmpty()
+  @ValidateNested()
+  @Type(() =>warehouseIdDto)
   warehouseId : warehouseIdDto;
 }
