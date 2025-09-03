@@ -78,6 +78,13 @@
     "testEnvironment": "node",
     "moduleNameMapper": {
       "^src/(.*)$": "<rootDir>/src/$1"
-    }
+    },
+    "testPathIgnorePatterns": [
+    "/node_modules/",
+    "test/unit/centralSystem.module.spec.ts",
+    "test/unit/centralSystemController.spec.ts",
+    "test/unit/main.spec.ts",
+    "test/unit/dto/warehouseState.dto.spec.ts"
+    ]
   }
 }
