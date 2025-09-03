@@ -13,8 +13,6 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
-        with:
-          path: .
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -27,25 +25,19 @@ jobs:
           echo "Waiting for MongoDB and NATS to be ready..."
           sleep 10
 
+      # Install root dependencies
       - name: Install root dependencies
         working-directory: microservices
         run: npm install
 
+      # Inventory
       - name: Install Inventory dependencies
-        run: cd microservices/warehouse/inventory && npm install || echo "No tests for inventory"
+        working-directory: microservices/warehouse/inventory
+        run: npm install || echo "No tests for inventory"
 
-      - name: Install Orders dependencies
-        run: cd microservices/warehouse/orders && npm install || echo "No tests for orders"
-
-      - name: Install centralSystem dependencies
-        run: cd microservices/centralized/CentralSystem && npm install || echo "No tests for centralSystem"
-
-      - name: Install Auth dependencies
-        run: cd microservices/centralized/authentication && npm install || echo "No tests for authentication"
-
-      - name: Run and merge code coverage
-        working-directory: microservices/centralized/CentralSystem
-        run: npm run test:cov
+      - name: Run Inventory tests
+        working-directory: microservices/warehouse/inventory
+        run: npm run test:cov || echo "No tests for inventory"
 
       - name: Upload Inventory coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -55,6 +47,15 @@ jobs:
           directory: microservices/warehouse/inventory
           name: inventory
 
+      # Orders
+      - name: Install Orders dependencies
+        working-directory: microservices/warehouse/orders
+        run: npm install || echo "No tests for orders"
+
+      - name: Run Orders tests
+        working-directory: microservices/warehouse/orders
+        run: npm run test:cov || echo "No tests for orders"
+
       - name: Upload Orders coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
@@ -63,14 +64,45 @@ jobs:
           directory: microservices/warehouse/orders
           name: orders
 
+      # CentralSystem
+      - name: Install CentralSystem dependencies
+        working-directory: microservices/centralized/CentralSystem
+        run: npm install || echo "No tests for centralSystem"
+
+      - name: Debug file names
+        run: ls -R microservices/centralized/CentralSystem/src/interfaces/http/dto
+
+
+      - name: Run CentralSystem tests
+        working-directory: microservices/centralized/CentralSystem
+        run: npm run test:cov || echo "No tests for centralSystem"
+
       - name: Upload CentralSystem coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: centralSystem
-          directory: microservices/centralized/centralSystem
+          directory: microservices/centralized/CentralSystem
           name: centralSystem
 
+      # Authentication
+      - name: Install Auth dependencies
+        working-directory: microservices/centralized/authentication
+        run: npm install || echo "No tests for authentication"
+
+      - name: Run Auth tests
+        working-directory: microservices/centralized/authentication
+        run: npm run test:cov || echo "No tests for authentication"
+
+      - name: Upload Auth coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: auth
+          directory: microservices/centralized/authentication
+          name: auth
+
+      # Commit updated README
       - name: Commit updated README
         run: |
           git config --global user.name 'github-actions'
