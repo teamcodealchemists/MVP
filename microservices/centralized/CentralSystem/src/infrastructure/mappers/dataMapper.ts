@@ -20,7 +20,7 @@ import { OrderState } from "src/domain/orderState.enum";
 import { OrderId } from "src/domain/orderId.entity";
 import { Orders } from "src/domain/orders.entity";
 import { ItemId } from "src/domain/itemId.entity";
-import { WarehouseStateDTO } from "src/interfaces/http/dto/warehouseStatedto";
+import { WarehouseStateDTO } from "src/interfaces/http/dto/warehouseState.dto";
 import { WarehouseState } from "src/domain/warehouseState.entity";
 import { InternalOrderDTO } from "src/interfaces/http/dto/internalOrder.dto";
 import { SellOrderDTO } from "src/interfaces/http/dto/sellOrder.dto";

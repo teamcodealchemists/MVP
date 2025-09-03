@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { validate } from 'class-validator';
-import { WarehouseStateDTO } from 'src/interfaces/http/dto/warehouseStatedto';
+import { WarehouseStateDTO } from 'src/interfaces/http/dto/warehouseState.dto';
 import { warehouseIdDto } from 'src/interfaces/http/dto/warehouseId.dto';
 
 describe('WarehouseStateDTO Validation', () => {
