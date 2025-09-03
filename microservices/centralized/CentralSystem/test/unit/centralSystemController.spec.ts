@@ -1,10 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { centralSystemController } from 'src/interfaces/centralSystemController';
 import { InboundPortsAdapter } from 'src/infrastructure/adapters/InboundPortsAdapter';
-import { OrderQuantityDTO } from 'src/interfaces/http/dto/orderQuantity.dto';
-import { productDto } from 'src/interfaces/http/dto/product.dto';
-import { warehouseIdDto } from 'src/interfaces/http/dto/warehouseId.dto';
-import { WarehouseStateDTO } from 'src/interfaces/http/dto/warehouseState.dto';
 
 describe('centralSystemController', () => {
   let controller: centralSystemController;

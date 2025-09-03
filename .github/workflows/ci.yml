@@ -43,10 +43,6 @@ jobs:
       - name: Install Auth dependencies
         run: cd microservices/centralized/authentication && npm install || echo "No tests for authentication"
 
-      - name: Run all tests
-        working-directory: microservices
-        run: npm run test
-
       - name: Run and merge code coverage
         working-directory: microservices
         run: npm run test:cov

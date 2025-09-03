@@ -1,17 +1,13 @@
 import { Controller, Logger } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
-import { OrderQuantity } from 'src/domain/orderQuantity.entity';
-import { WarehouseId } from 'src/domain/warehouseId.entity';
-
 import { InboundPortsAdapter } from 'src/infrastructure/adapters/InboundPortsAdapter';
 
-import { OrderQuantityDTO } from 'src/interfaces/http/dto/orderQuantity.dto';
-import { productDto } from 'src/interfaces/http/dto/product.dto';
-import { warehouseIdDto } from 'src/interfaces/http/dto/warehouseId.dto';
-import { WarehouseStateDTO } from 'src/interfaces/http/dto/warehouseState.dto';
+import { OrderQuantityDTO } from './http/dto/orderQuantity.dto';
+import { productDto } from './http/dto/product.dto';
+import { warehouseIdDto } from './http/dto/warehouseId.dto';
+import { WarehouseStateDTO } from './http/dto/warehouseState.dto';
 import { OrderIdDTO } from './http/dto/orderId.dto';
 import { OrderItemDTO } from './http/dto/orderItem.dto';
-import { WarehouseState } from 'src/domain/warehouseState.entity';
 import { validateOrReject } from 'class-validator';
 import { productIdDto } from './http/dto/productId.dto';
 

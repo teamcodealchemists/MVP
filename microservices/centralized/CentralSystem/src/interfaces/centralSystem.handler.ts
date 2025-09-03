@@ -1,8 +1,8 @@
 import { Inject, Injectable, OnModuleInit } from "@nestjs/common";
 import { ClientProxy } from "@nestjs/microservices";
-import { Inventory } from "src/domain/inventory.entity";
-import { Orders } from "src/domain/orders.entity";
-import { WarehouseState } from "src/domain/warehouseState.entity";
+import { Inventory } from "../../src/domain/inventory.entity";
+import { Orders } from "../../src/domain/orders.entity";
+import { WarehouseState } from "../../src/domain/warehouseState.entity";
 import { firstValueFrom } from "rxjs";
 import { InternalOrderDTO } from "./http/dto/internalOrder.dto";
 import { warehouseIdDto } from "./http/dto/warehouseId.dto";
