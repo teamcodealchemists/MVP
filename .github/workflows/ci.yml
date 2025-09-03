@@ -44,7 +44,7 @@ jobs:
         run: cd microservices/centralized/authentication && npm install || echo "No tests for authentication"
 
       - name: Run and merge code coverage
-        working-directory: microservices
+        working-directory: microservices/centralized/CentralSystem
         run: npm run test:cov
 
       - name: Upload Inventory coverage to Codecov
