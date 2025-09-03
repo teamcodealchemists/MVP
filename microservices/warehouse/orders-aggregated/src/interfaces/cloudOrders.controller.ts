@@ -47,7 +47,7 @@ SyncSellOrderEventListener, SyncUpdateOrderStateUseCase {
 
 // MODIFICA I MESSAGE ****************************
 
-  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.stock.reserved`)
+  @MessagePattern(`call.aggregate.orders.stock.reserved`)
   // Metodo per aggiornare il n° di quantità di prodotto riservata dal magazzino.
   // Corrisponde in PUB a publishStockRepl()
   async stockReserved(@Payload() orderQuantityDTO: SyncOrderQuantityDTO): Promise<void> {
@@ -65,59 +65,53 @@ SyncSellOrderEventListener, SyncUpdateOrderStateUseCase {
       // Chiama il service per aggiornare lo stock riservato
       await this.ordersService.syncUpdateReservedStock(orderId, orderItems);
       
-      console.log(`Quantità riservata aggiornata per l'ordine: ${orderQuantityDTO.id.id}`);
+      console.log(`[AggregateO] Quantità riservata aggiornata per l'ordine: ${orderQuantityDTO.id.id}`);
       
     } catch (error) {
-      console.error('Errore nel sync di stockReserved:', error);
+      console.error('[AggregateO] Errore nel sync di stockReserved:', error);
       throw error;
     }
 }
 
-  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.sell.new`)
+  @MessagePattern(`call.aggregate.orders.sell.new`)
   async syncAddSellOrder(@Payload() payload: any): Promise<void>  { 
-    try {
-      // Separa il payload in due DTO
-    const orderIdDTO: SyncOrderIdDTO = {
-        id: payload.orderId.id
-    };
-  
+    try { 
     const sellOrderDTO: SyncSellOrderDTO = {
-        items: payload.items,
-        orderState: payload.orderState,
-        creationDate: payload.creationDate,
-        warehouseDeparture: payload.warehouseDeparture,
-        destinationAddress: payload.destinationAddress
+        orderId: { id: payload.orderIdDTO.id },
+        items: payload.sellOrderDTO.items,
+        orderState: payload.sellOrderDTO.orderState,
+        creationDate: payload.sellOrderDTO.creationDate,
+        warehouseDeparture: payload.sellOrderDTO.warehouseDeparture,
+        destinationAddress: payload.sellOrderDTO.destinationAddress
     };
-
-    const sellOrderDomain = await this.dataMapper.syncSellOrderToDomain(orderIdDTO, sellOrderDTO);
-
+    
+    console.log("[AggregateO] Ricevuto nuovo SellOrder,", JSON.stringify(sellOrderDTO, null, 2));
+    const sellOrderDomain = await this.dataMapper.syncSellOrderToDomain(sellOrderDTO);
     await this.ordersService.syncCreateSellOrder(sellOrderDomain);
 
     } catch (error) {
-      console.error('Errore nel sync della creazione di un SellOrder:', error);
+      console.error('[AggregateO] Errore nel sync della creazione di un SellOrder:', error);
       throw error;
     }
   }
 
-  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.internal.new`)
+  @MessagePattern(`call.aggregate.orders.internal.new`)
   async syncAddInternalOrder(@Payload() payload: any): Promise<void> {    
-    // Separa il payload in due DTO
     try {
-      const orderIdDTO: SyncOrderIdDTO = {
-          id: payload.orderId.id
-      };
       const internalOrderDTO: SyncInternalOrderDTO = {
-          items: payload.items,
-          orderState: payload.orderState,
-          creationDate: payload.creationDate,
-          warehouseDeparture: payload.warehouseDeparture,
-          warehouseDestination: payload.warehouseDestination
-      };
+          orderId: { id: payload.orderIdDTO.id },
+          items: payload.internalOrderDTO.items,
+          orderState: payload.internalOrderDTO.orderState,
+          creationDate: payload.internalOrderDTO.creationDate,
+          warehouseDeparture: payload.internalOrderDTO.warehouseDeparture,
+          warehouseDestination: payload.internalOrderDTO.warehouseDestination
+      };   
+      console.log("[AggregateO] Ricevuto nuovo InternalOrder,", JSON.stringify(internalOrderDTO, null, 2));
+      const internalOrderDomain = await this.dataMapper.syncInternalOrderToDomain(internalOrderDTO);
+      await this.ordersService.syncCreateInternalOrder(internalOrderDomain);
 
-      const internalOrderDomain = await this.dataMapper.syncInternalOrderToDomain(orderIdDTO, internalOrderDTO);
-      const addedInternalOrder = await this.ordersService.syncCreateInternalOrder(internalOrderDomain);
     } catch (error) {
-        console.error('Errore nel sync della creazione di un InternalOrder:', error);
+        console.error('[AggregateO] Errore nel sync della creazione di un InternalOrder:', error);
         throw error;
     }
   }
@@ -144,10 +138,10 @@ SyncSellOrderEventListener, SyncUpdateOrderStateUseCase {
     
       await this.ordersService.syncUpdateOrderState(orderIdDomain, orderStateDomain);
       
-      console.log(`Lo stato dell'ordine con ID ${orderId} è stato aggiornato con successo a ${orderState}`);
+      console.log(`[AggregateO] Lo stato dell'ordine con ID ${orderId} è stato aggiornato con successo a ${orderState}`);
       
     } catch (error) {
-      console.error('Errore nell\'aggiornamento dello stato dell\'ordine:', error);
+      console.error('[AggregateO] Errore nell\'aggiornamento dello stato dell\'ordine:', error);
       throw error;
     }  
   }
@@ -167,7 +161,7 @@ SyncSellOrderEventListener, SyncUpdateOrderStateUseCase {
         await this.ordersService.syncUpdateOrderState(orderIdDomain, SyncOrderState.CANCELED);
           
       } catch (error) {
-          console.error('Errore nel sync della cancellazione dell\'ordine:', error);
+          console.error('[AggregateO] Errore nel sync della cancellazione dell\'ordine:', error);
           throw error;
       }  
   }
@@ -186,7 +180,7 @@ SyncSellOrderEventListener, SyncUpdateOrderStateUseCase {
           
           await this.ordersService.syncUpdateOrderState(orderIdDomain, SyncOrderState.COMPLETED);
       } catch (error) {
-          console.error('Errore nel sync del completamento dell\'ordine:', error);
+          console.error('[AggregateO] Errore nel sync del completamento dell\'ordine:', error);
           throw error;
       }  
   }
@@ -209,12 +203,12 @@ SyncSellOrderEventListener, SyncUpdateOrderStateUseCase {
       return response;
       
     } catch (error) {
-      throw new Error ('Errore nel get dello stato dell\'ordine:', error);
+      throw new Error ('[AggregateO] Errore nel get dello stato dell\'ordine:', error);
     }  
   }
 
   @MessagePattern(`get.warehouse.${process.env.WAREHOUSE_ID}.order.*`)
-  async getOrder(@Ctx() context: any): Promise<{SyncOrderIdDTO, SyncInternalOrderDTO} | {SyncOrderIdDTO, SyncSellOrderDTO}> {
+  async getOrder(@Ctx() context: any): Promise<SyncInternalOrderDTO |  SyncSellOrderDTO> {
     // ESTRAZIONE SUBJECT
     const orderIdStr = context.getSubject().split('.').pop();
 
@@ -226,15 +220,15 @@ SyncSellOrderEventListener, SyncUpdateOrderStateUseCase {
     const receivedOrder = await this.ordersRepository.getById(orderIdDomain);
 
     if (receivedOrder instanceof SyncInternalOrder) {
-        const { orderIdDTO, internalOrderDTO } = await this.dataMapper.syncInternalOrderToDTO(receivedOrder);
-        return { SyncOrderIdDTO: orderIdDTO, SyncInternalOrderDTO: internalOrderDTO };      
+        const internalOrderDTO = await this.dataMapper.syncInternalOrderToDTO(receivedOrder);
+        return internalOrderDTO;      
     }
     if (receivedOrder instanceof SyncSellOrder) {
-      const { orderIdDTO, sellOrderDTO } = await this.dataMapper.syncSellOrderToDTO(receivedOrder);
-      return { SyncOrderIdDTO: orderIdDTO, SyncSellOrderDTO: sellOrderDTO };      
+      const sellOrderDTO = await this.dataMapper.syncSellOrderToDTO(receivedOrder);
+      return sellOrderDTO;      
     }
     throw new Error(
-      `Tipo di ordine non riconosciuto per l'ordine: ${orderId}`
+      `[AggregateO] Tipo di ordine non riconosciuto per l'ordine: ${orderId}`
     );  
   }
 
@@ -245,11 +239,11 @@ SyncSellOrderEventListener, SyncUpdateOrderStateUseCase {
           const ordersDomain: SyncOrders = await this.ordersRepository.getAllOrders();          
           const ordersDTO: SyncOrdersDTO = await this.dataMapper.syncOrdersToDTO(ordersDomain);
           
-          console.log('SyncOrders convertiti a DTO correttamente', ordersDTO);
+          console.log('[AggregateO] SyncOrders convertiti a DTO correttamente', ordersDTO);
           return ordersDTO;
           
       } catch (error) {
-          throw new Error('Non è stato possibile prelevare tutti gli ordini presenti nel magazzino.');
+          throw new Error('[AggregateO] Non è stato possibile prelevare tutti gli ordini presenti nel magazzino.');
       }
   }
 

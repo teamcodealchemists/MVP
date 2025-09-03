@@ -24,6 +24,7 @@ SellOrderEventPublisher, ShipStockCommandPublisher {
   constructor(private readonly natsService: NatsService,
       private readonly dataMapper: DataMapper) {}
 
+      
   // (Deduco) Corrisponde in PUB a replenishmentReceived()
   async publishReserveStock(orderId: OrderId, items: OrderItem[]) {
       await this.natsService.publish(
@@ -33,6 +34,7 @@ SellOrderEventPublisher, ShipStockCommandPublisher {
           }
       );
   }
+
 
   // Corrisponde in SUB a stockShipped()
   async publishShipment(orderId: OrderId, items: OrderItem[]) {
@@ -44,6 +46,7 @@ SellOrderEventPublisher, ShipStockCommandPublisher {
       );
   }
 
+
   // Corrisponde in SUB a stockReceived()
   async receiveShipment(orderId: OrderId, items: OrderItem[], destination: number) {
       await this.natsService.publish(
@@ -53,6 +56,8 @@ SellOrderEventPublisher, ShipStockCommandPublisher {
           }
       );
   }
+
+
   // Corrisponde in SUB a stockReserved()
   async publishStockRepl(orderId: OrderId, items: OrderItem[]) {
       // Converti gli OrderItem in formato DTO per il payload
@@ -70,9 +75,11 @@ SellOrderEventPublisher, ShipStockCommandPublisher {
       );
   }
 
+
 /* async orderUpdated(order: Order) {
     await this.natsService.publish('orders.updated', order);
   } */
+
 
   async orderCancelled(orderId: OrderId, warehouse: number) {
    try {
@@ -90,6 +97,7 @@ SellOrderEventPublisher, ShipStockCommandPublisher {
     }
   }
 
+
   async orderCompleted(orderId: OrderId, warehouse: number) {
    try {
       const orderIdStr = orderId.getId();
@@ -106,13 +114,14 @@ SellOrderEventPublisher, ShipStockCommandPublisher {
     }
   }
 
+
   async publishInternalOrder(internalOrder: InternalOrder, context: { destination: 'aggregate' | 'warehouse', warehouseId?: number }) {
 
     const { orderIdDTO, internalOrderDTO }  = await this.dataMapper.internalOrderToDTO(internalOrder);
     let subject: string;
 
     if (context.destination === 'aggregate') {
-      subject = `call.aggregate.${context.destination}.order.internal.new`;
+      subject = `call.aggregate.orders.internal.new`;
       await this.natsService.publish( subject, { orderIdDTO, internalOrderDTO });
     } 
       else if (context.destination === 'warehouse' && context.warehouseId) {
@@ -122,13 +131,14 @@ SellOrderEventPublisher, ShipStockCommandPublisher {
     
   }
 
+
   async publishSellOrder(sellOrder: SellOrder, context: { destination: 'aggregate' | 'warehouse', warehouseId?: number } ) {
 
     const { orderIdDTO, sellOrderDTO }  = await this.dataMapper.sellOrderToDTO(sellOrder);
     let subject: string;
 
     if (context.destination === 'aggregate') {
-      subject = `call.aggregate.${context.destination}.order.sell.new`;
+      subject = `call.aggregate.orders.sell.new`;
       
       await this.natsService.publish( subject, { orderIdDTO, sellOrderDTO });
     } 

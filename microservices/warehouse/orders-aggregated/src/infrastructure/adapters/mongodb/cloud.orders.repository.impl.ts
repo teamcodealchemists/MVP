@@ -20,9 +20,9 @@ import { SyncSellOrder } from "src/domain/syncSellOrder.entity";
 @Injectable()
 export class CloudOrdersRepositoryMongo implements CloudOrdersRepository {
   constructor(
-    @InjectModel("InternalOrder") private readonly syncInternalOrderModel: SyncInternalOrderModel,
-    @InjectModel("SellOrder") private readonly syncSellOrderModel: SyncSellOrderModel,
-    @InjectModel("OrderItemDetail") private readonly syncOrderItemDetailModel: SyncOrderItemDetailModel,
+    @InjectModel("SyncInternalOrder") private readonly syncInternalOrderModel: SyncInternalOrderModel,
+    @InjectModel("SyncSellOrder") private readonly syncSellOrderModel: SyncSellOrderModel,
+    @InjectModel("SyncOrderItemDetail") private readonly syncOrderItemDetailModel: SyncOrderItemDetailModel,
     @Inject(CloudDataMapper)
     private readonly mapper: CloudDataMapper
   ) {}
@@ -240,9 +240,8 @@ export class CloudOrdersRepositoryMongo implements CloudOrdersRepository {
 
             const createdOrder = new this.syncInternalOrderModel(orderData);
             await createdOrder.save();
-            
-            console.log('Aggiunto con successo l\'InternalOrder con ID:', newOrder.getOrderId());
-            
+            console.log('[Aggregate] Sincronizzato il nuovo InternalOrder con ID:', newOrder.getOrderId());
+                        
         } catch (error) {
             console.error("Errore durante l'aggiunta dell'InternalOrder:", error);
             throw error;
@@ -339,28 +338,28 @@ export class CloudOrdersRepositoryMongo implements CloudOrdersRepository {
             if (internalDoc) {
                 model = this.syncInternalOrderModel;
                 mapper = async (doc) => {
-                    const orderIdDTO = doc.orderId;
                     const internalOrderDTO = {
+                        orderId: doc.orderId,
                         items: doc.items,
                         orderState: doc.orderState,
                         creationDate: doc.creationDate,
                         warehouseDeparture: doc.warehouseDeparture,
                         warehouseDestination: doc.warehouseDestination
                     };
-                    return this.mapper.syncInternalOrderToDomain(orderIdDTO, internalOrderDTO);
+                    return this.mapper.syncInternalOrderToDomain(internalOrderDTO);
                 };
             } else {
                 model = this.syncSellOrderModel;
                 mapper = async (doc) => {
-                    const orderIdDTO = doc.orderId;
                     const sellOrderDTO = {
+                        orderId: doc.orderId,
                         items: doc.items,
                         orderState: doc.orderState,
                         creationDate: doc.creationDate,
                         warehouseDeparture: doc.warehouseDeparture,
                         destinationAddress: doc.destinationAddress
                     };
-                    return this.mapper.syncSellOrderToDomain(orderIdDTO, sellOrderDTO);
+                    return this.mapper.syncSellOrderToDomain(sellOrderDTO);
                 };
             }
 

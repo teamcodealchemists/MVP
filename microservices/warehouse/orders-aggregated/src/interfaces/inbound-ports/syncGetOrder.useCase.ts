@@ -4,6 +4,6 @@ import { SyncSellOrderDTO } from '../dto/syncSellOrder.dto';
 
 export interface SyncGetOrderUseCase {
 
-getOrder(SyncOrderIdDTO): Promise<{SyncOrderIdDTO, SyncInternalOrderDTO} | {SyncOrderIdDTO, SyncSellOrderDTO}>;
+getOrder(SyncOrderIdDTO): Promise<SyncInternalOrderDTO | SyncSellOrderDTO>;
 
 }

@@ -9,7 +9,7 @@ import { CloudOutboundEventAdapter } from 'src/infrastructure/adapters/cloudOutb
 
 @Module({
   imports: [
-    MongooseModule.forRoot(process.env.MONGODB_URI || 'mongodb://mongo:27017/orders_aggregated_db'),
+    MongooseModule.forRoot(process.env.MONGODB_URI || 'mongodb://mongo:27017/orders-aggregated'),
     NatsModule, 
     CloudOrdersRepositoryModule],
   controllers: [CloudOrdersController],

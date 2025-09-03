@@ -18,4 +18,4 @@ export interface CloudOrdersRepository {
     syncUpdateReservedStock(id: SyncOrderId, items: SyncOrderItem[]): Promise<SyncInternalOrder | SyncSellOrder> 
 }
 
-export const OrdersRepository = Symbol("CLOUDORDERSREPOSITORY");
+export const CloudOrdersRepository = Symbol("CLOUDORDERSREPOSITORY");

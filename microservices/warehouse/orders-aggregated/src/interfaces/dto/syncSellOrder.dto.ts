@@ -5,6 +5,10 @@ import { SyncOrderItemDetailDTO } from "./syncOrderItemDetail.dto";
 import { SyncOrderStateDTO } from "./syncOrderState.dto";
 
 export class SyncSellOrderDTO {
+
+        @IsString()
+        orderId: SyncOrderIdDTO;
+
         @IsNotEmpty()
         @IsArray()
         items: SyncOrderItemDetailDTO[];

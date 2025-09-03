@@ -18,6 +18,7 @@ export class OrdersService {
     private readonly outboundEventAdapter: OutboundEventAdapter
     ) {}
 
+    
     async checkOrderExistence(id: OrderId): Promise<boolean>{
         const order = await this.ordersRepositoryMongo.getById(id);
         if(!order) {
@@ -26,9 +27,6 @@ export class OrdersService {
         return Promise.resolve(true);   
     }
 
-/*     async updateOrderState(id: OrderId, state: OrderState): Promise<void> {
-        await this.ordersRepositoryMongo.updateOrderState(id, state);
-    } */
 
     async updateOrderState(id: OrderId, state: OrderState): Promise<void> {
         // Aggiorna lo stato nella repository
@@ -47,9 +45,11 @@ export class OrdersService {
         }
     }    
     
+
     async checkOrderState(id: OrderId): Promise<void> {
         await this.ordersRepositoryMongo.getState(id);
     }
+
 
     async createSellOrder(order: SellOrder): Promise<void>{
         const uniqueOrderId = await this.ordersRepositoryMongo.genUniqueId('S');
@@ -66,8 +66,11 @@ export class OrdersService {
 
         await this.ordersRepositoryMongo.addSellOrder(orderWithUniqueId);
         // fare check ResQ così da far partire saga?
-       
+
+        // Sincronizza il nuovo ordine nell'aggregato Orders
+        await this.outboundEventAdapter.publishSellOrder(orderWithUniqueId, { destination: 'aggregate' });
     }
+
 
     async createInternalOrder(order: InternalOrder): Promise<void>{
         const uniqueOrderId = await this.ordersRepositoryMongo.genUniqueId('I');
@@ -84,12 +87,16 @@ export class OrdersService {
 
         await this.ordersRepositoryMongo.addInternalOrder(orderWithUniqueId);
         // fare check ResQ così da far partire saga?
-    
+
+        // Sincronizza il nuovo ordine nell'aggregato Orders
+        await this.outboundEventAdapter.publishInternalOrder(orderWithUniqueId, { destination: 'aggregate' });
     }
+
 
     async cancelOrder(id: OrderId): Promise<void> {
         await this.ordersRepositoryMongo.removeById(id);
     }
+
 
     async updateReservedStock(id: OrderId, items: OrderItem[]): Promise<void> {
         await this.ordersRepositoryMongo.updateReservedStock(id, items);
@@ -97,19 +104,23 @@ export class OrdersService {
 
     }
 
+
     async checkReservedQuantityForSellOrder(sellOrder: SellOrder): Promise<void> {
         await this.ordersRepositoryMongo.checkReservedQuantityForSellOrder(sellOrder);
     }
+
 
     async checkReservedQuantityForInternalOrder(internalOrder: InternalOrder): Promise<void> {
         await this.ordersRepositoryMongo.checkReservedQuantityForInternalOrder(internalOrder);
     }
 
+
     async shipOrder(id: OrderId): Promise<void> {
         await this.ordersRepositoryMongo.updateOrderState(id, OrderState.SHIPPED);
 
-        console.log(`Order n° ${id} shipped!`);
+        console.log(`L'ordine ${id} è stato spedito!`);
     }
+
 
     async receiveOrder(id: OrderId): Promise<void> {
 /*         await this.ordersRepositoryMongo.getById(id);        
@@ -118,9 +129,10 @@ export class OrdersService {
         console.log(`Order n° ${id} received!`); */
     }
 
+
     async completeOrder(id: OrderId): Promise<void> {
         await this.ordersRepositoryMongo.updateOrderState(id, OrderState.COMPLETED);
-        console.log(`Replenishment order n° ${id} completed!`);
+        console.log(`L'ordine di rifornimento ${id} è stato completato!`);
     }
 
 }

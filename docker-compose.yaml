@@ -36,7 +36,7 @@ services:
       dockerfile: Dockerfile
     environment:
       - NODE_ENV=development
-      - MONGO_URI=mongodb://mongodb:27017/orders_aggregated_db
+      - MONGODB_URI=mongodb://mongodb:27017/orders-aggregated
       - NATS_URL=nats://nats:4222
     volumes:
       - ./microservices/warehouse/orders-aggregated/src:/usr/src/app/src

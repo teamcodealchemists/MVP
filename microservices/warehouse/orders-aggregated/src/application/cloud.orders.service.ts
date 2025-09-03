@@ -34,7 +34,7 @@ export class CloudOrdersService {
             order.getWarehouseDeparture(),
             order.getDestinationAddress()
         );
-
+        console.log("[Aggregate] Creato SellOrder,", orderWithUniqueId);
         await this.cloudOrdersRepositoryMongo.syncAddSellOrder(orderWithUniqueId);       
     }
 
@@ -48,7 +48,7 @@ export class CloudOrdersService {
             order.getWarehouseDeparture(),
             order.getWarehouseDestination()
         );
-
+        console.log("[Aggregate] Creato InternalOrder,", orderWithUniqueId);
         await this.cloudOrdersRepositoryMongo.syncAddInternalOrder(orderWithUniqueId);
     }
 
