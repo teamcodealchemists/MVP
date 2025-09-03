@@ -18,7 +18,12 @@ export class InboundPortsAdapter
   async handleInsufficientQuantity(oQ: OrderQuantityDTO, id : warehouseIdDto): Promise<void> {
     const domainOrderQuantity = await DataMapper.orderQuantityToDomain(oQ);
     const domainWarehouseId = DataMapper.warehouseIdToDomain(id);
-    await this.service.CheckInsufficientQuantity(domainOrderQuantity,domainWarehouseId);
+    try {
+      await this.service.CheckInsufficientQuantity(domainOrderQuantity,domainWarehouseId);
+    } catch (error) {
+      console.error("Error handling insufficient quantity:", error);
+      throw error;
+    }
   }
 
   async handleCriticalQuantityMin(product: productDto): Promise<void> {

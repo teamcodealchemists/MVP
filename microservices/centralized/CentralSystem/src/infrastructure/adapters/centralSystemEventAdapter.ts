@@ -47,28 +47,34 @@ NotificationPublisher
     async createInternalOrder(order: InternalOrder): Promise<void> {
         const dto: InternalOrderDTO = await DataMapper.internalOrderToDTO(order);
         console.log("adapter : Magazzino mandato! \n"+ dto);
-        await this.centralSystemHandler.handleOrder(dto);
+        try{
+            await this.centralSystemHandler.handleOrder(dto);
+        }catch(err){
+            console.error("Errore nell’invio ordine:", err);
+        };
+        return Promise.resolve();
     }
 
     async CloudInventoryRequest(): Promise<inventoryDto> {
         const domainInventory: Inventory = await this.centralSystemHandler.handleCloudInventoryRequest();
-        return DataMapper.toDtoInventory(domainInventory);
+        return Promise.resolve(DataMapper.toDtoInventory(domainInventory));
     }
 
     async CloudOrderRequest(): Promise<OrdersDTO> {
         const domainOrders: Orders = await this.centralSystemHandler.handleCloudOrdersRequest();
-        return DataMapper.ordersToDTO(domainOrders);
+        return Promise.resolve(DataMapper.ordersToDTO(domainOrders));
     }
 
     async RequestDistanceWarehouse(warehouseId: WarehouseId): Promise<WarehouseStateDTO[]> {
         const dtoId = DataMapper.warehouseIdToDto(warehouseId);
         const warehouseStatesDomain: WarehouseState[] = await this.centralSystemHandler.handleWarehouseDistance(dtoId);
         const warehouseStatesDTO: WarehouseStateDTO[] = warehouseStatesDomain.map(ws => DataMapper.warehouseStatetoDto(ws));
-        return warehouseStatesDTO;
+        return Promise.resolve(warehouseStatesDTO);
     }
 
     async RequestWarehouseState(id: WarehouseId): Promise<void> {
         const dtoId = DataMapper.warehouseIdToDto(id);
         await this.centralSystemHandler.handleWarehouseState(dtoId);
+        return Promise.resolve();
     }
 }

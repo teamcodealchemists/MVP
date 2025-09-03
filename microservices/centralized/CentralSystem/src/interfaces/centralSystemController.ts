@@ -12,8 +12,10 @@ import { WarehouseStateDTO } from 'src/interfaces/http/dto/warehouseState.dto';
 import { OrderIdDTO } from './http/dto/orderId.dto';
 import { OrderItemDTO } from './http/dto/orderItem.dto';
 import { WarehouseState } from 'src/domain/warehouseState.entity';
+import { validateOrReject } from 'class-validator';
+import { productIdDto } from './http/dto/productId.dto';
 
-const logger = new Logger('InventoryController');
+const logger = new Logger('centralSystemController');
 
 @Controller()
 export class centralSystemController {
@@ -35,38 +37,41 @@ export class centralSystemController {
         return orderItem;
       }) || [];
 
-
+      await validateOrReject(oQ);
       const id = new warehouseIdDto();
       id.warehouseId = data.warehouseId;
       logger.log(`Received insufficientQuantity event with payload: ${JSON.stringify(oQ)}`);
       await this.inboundPortsAdapter.handleInsufficientQuantity(oQ,id);
     } catch (error) {
-      logger.error(`Error handling insufficientQuantity event: ${error?.message}`, error?.stack);
+      logger.error(`Error handling insufficientQuantity event: ` + error );
     }
+    return Promise.resolve();
   }
 
   @MessagePattern('event.inventory.criticalQuantity.min')
   async handleCriticalQuantityMin(@Payload() data: any): Promise<void> {
     try {
       const productDtoInstance = new productDto();
-      productDtoInstance.id = data.product?.id;
+      productDtoInstance.id = new productIdDto();
+      productDtoInstance.id.id = data.product?.id;
       productDtoInstance.name = data.product?.name;
       productDtoInstance.unitPrice = data.product?.unitPrice;
       productDtoInstance.quantity = data.product?.quantity;
       productDtoInstance.minThres = data.product?.minThres;
       productDtoInstance.maxThres = data.product?.maxThres;
 
-      // Trasformazione warehouseId in DTO
       const warehouseDtoInstance = new warehouseIdDto();
-      warehouseDtoInstance.warehouseId = data.product?.warehouseId; // assegni il numero al campo id
+      warehouseDtoInstance.warehouseId = data.product?.warehouseId;
 
       productDtoInstance.warehouseId = warehouseDtoInstance;
-      
+      await validateOrReject(productDtoInstance);
       logger.log(`Received criticalQuantity.min event with payload: ${JSON.stringify(productDtoInstance)}`);
       
       await this.inboundPortsAdapter.handleCriticalQuantityMin(productDtoInstance);
+      return Promise.resolve();
     } catch (error) {
-      logger.error(`Error handling criticalQuantity.min event: ${error?.message}`, error?.stack);
+      logger.error(`Error handling criticalQuantity.min event:` + error);
+      return Promise.resolve();
     }
   }
 
@@ -75,7 +80,8 @@ export class centralSystemController {
   async handleCriticalQuantityMax(@Payload() data: any): Promise<void> {
     try {
       const productDtoInstance = new productDto();
-      productDtoInstance.id = data.product?.id;
+      productDtoInstance.id = new productIdDto();
+      productDtoInstance.id.id = data.product?.id;
       productDtoInstance.name = data.product?.name;
       productDtoInstance.unitPrice = data.product?.unitPrice;
       productDtoInstance.quantity = data.product?.quantity;
@@ -87,10 +93,13 @@ export class centralSystemController {
       warehouseDtoInstance.warehouseId = data.product?.warehouseId; // assegni il numero al campo id
 
       productDtoInstance.warehouseId = warehouseDtoInstance;
+      await validateOrReject(productDtoInstance);
       logger.log(`Received criticalQuantity.max event with payload: ${JSON.stringify(data)}`);
       await this.inboundPortsAdapter.handleCriticalQuantityMax(productDtoInstance);
+      return Promise.resolve();
     } catch (error) {
-      logger.error(`Error handling criticalQuantity.max event: ${error?.message}`, error?.stack);
+      logger.error(`Error handling criticalQuantity.max event: ` + error);
+      return Promise.resolve();
     }
   }
 
@@ -105,10 +114,14 @@ export class centralSystemController {
       dto.state = p?.state;
       return dto;
       });
+      for (const dto of warehouseDtos) {
+        await validateOrReject(dto);
+      }
       logger.log(`Received getWarehouseState request with payload: ${JSON.stringify(warehouseDtos)}`);
       await this.inboundPortsAdapter.getWarehouseState(warehouseDtos);
     } catch (error) {
-      logger.error(`Error handling getWarehouseState event: ${error?.message}`, error?.stack);
+      logger.error(`Error handling getWarehouseState event:` + error);
     }
+    return Promise.resolve();
   }
 }

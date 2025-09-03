@@ -1,4 +1,4 @@
-import { IsNotEmpty,Matches , IsString } from 'class-validator';
+import { IsNotEmpty,Matches , IsString, IsUUID } from 'class-validator';
 
 export class OrderIdDTO {
     @IsNotEmpty()

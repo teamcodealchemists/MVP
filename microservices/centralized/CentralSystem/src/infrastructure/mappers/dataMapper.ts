@@ -39,7 +39,7 @@ export const DataMapper = {
   },
   toDomainProduct(productDTO: productDto): Product {
     return new Product(
-      new ProductId(productDTO.id),
+      new ProductId(productDTO.id.id),
       productDTO.name,
       productDTO.unitPrice,
       productDTO.quantity,
@@ -55,7 +55,7 @@ export const DataMapper = {
   },
   toDtoProduct(product: Product): productDto {
     return {
-      id: product.getId(),
+      id: {id : product.getId()},
       name: product.getName(),
       unitPrice: product.getUnitPrice(),
       quantity: product.getQuantity(),

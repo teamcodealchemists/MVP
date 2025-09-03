@@ -28,25 +28,30 @@ export class centralSystemHandler implements OnModuleInit {
 
   async handleOrder(order: InternalOrderDTO): Promise<void> {
     console.log("handler : Magazzino mandato! \n"+ order);
-    this.natsClient.emit("order.internal.create", order);
+    try {
+      this.natsClient.emit("order.internal.create", order);
+    } catch (error) {
+      console.error("Error creating internal order:", error);
+      throw error;
+    }
   }
 
   async handleCloudInventoryRequest(): Promise<Inventory> {
-    return await firstValueFrom(
+    return Promise.resolve(await firstValueFrom(
         this.natsClient.send("cloud.inventory.request", {})
-    );
+    ));
   }
 
   async handleCloudOrdersRequest(): Promise<Orders> {
-    return await firstValueFrom(
+    return Promise.resolve(await firstValueFrom(
         this.natsClient.send("cloud.orders.request", {})
-    );
+    ));
   }
 
   async handleWarehouseDistance(warehouseId: warehouseIdDto): Promise<WarehouseState[]> {
-    return await firstValueFrom(
+    return Promise.resolve(await firstValueFrom(
         this.natsClient.send("warehouse.distance.request", warehouseId)
-    );
+    ));
   }
 
   async handleWarehouseState(warehouseId: warehouseIdDto): Promise<void> {

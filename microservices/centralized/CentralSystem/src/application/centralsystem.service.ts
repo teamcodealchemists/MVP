@@ -28,15 +28,20 @@ export class CentralSystemService {
   private readonly logger = new Logger("CentralSystemService");
   // === Metodi applicativi ===
   async RequestAllNeededData(warehouseId : WarehouseId): Promise<{ inv: Inventory; order: Orders; dist: WarehouseState[] }> {
+    /*
     const invDto = await this.outboundPortsAdapter.CloudInventoryRequest();  
     const orderDto = await this.outboundPortsAdapter.CloudOrderRequest();    
     const distDto = await this.outboundPortsAdapter.RequestDistanceWarehouse(warehouseId);
     const inv = DataMapper.toDomainInventory(invDto);
     const order = await DataMapper.ordersToDomain(orderDto); 
     const dist: WarehouseState[] = distDto.map(dto => DataMapper.warehouseStatetoDomain(dto));
-    return { inv, order, dist };
-    /*
+    return Promise.resolve({ inv, order, dist });*/
+
     // --- Mock Inventory Products statici ---
+    const warehouseIds: WarehouseId[] = [
+      new WarehouseId(2),
+    ];
+    const productsPerWarehouse = 1;
     const mockInventoryProducts: Product[] = [];
     warehouseIds.forEach((wh) => {
       for (let i = 1; i <= productsPerWarehouse; i++) {
@@ -104,8 +109,7 @@ export class CentralSystemService {
       return new WarehouseState("Good", new WarehouseId(wh.getId())); // esempio statico
     });
     //console.log("Questo è dist: " + JSON.stringify(dist, null, 2));
-      return { inv, order, dist }; 
-    */
+    return Promise.resolve({ inv, order, dist }); 
   }
 
   async ManageCriticalMinThres(
@@ -168,12 +172,12 @@ export class CentralSystemService {
         let internalOrders = new InternalOrder(new OrderId(""),[oID],OrderState.PENDING, new Date(), whId,warehouseId.getId());
         //console.log("service : Magazzino mandato! \n"+ JSON.stringify(internalOrders, null, 2));
         this.outboundPortsAdapter.createInternalOrder(internalOrders);
-        return;
       }else {
         //console.log("Magazzino : "+whId+"\nresidualQty >= product.getMinThres()\n availableQty : " + availableQty + "\n pendingQtyInternal : "+ pendingQtyInternal + "\n pendingQtySell : "+ pendingQtySell + "\n residualQty : "+ residualQty);
       }
     }
     //console.log("Nessun magazzino ha quantità sufficiente per il prodotto");
+    return Promise.resolve()
   }
 
 async CheckInsufficientQuantity(
@@ -298,18 +302,20 @@ async CheckInsufficientQuantity(
   }
 
   if (productsToAllocate.length > 0) {
-    console.log(
-      "Alcuni prodotti non hanno quantità sufficiente nei magazzini:",
-      productsToAllocate.map((p) => p.getItemId())
-      //messaggio per annullare ordine
-    );
+    console.log("Alcuni prodotti non hanno quantità sufficiente nei magazzini:", productsToAllocate.map((p) => p.getItemId()));
+    return Promise.resolve();
   }else{
     //this.logger.log(`Received orderQuantity: ${JSON.stringify(internalOrdersToCreate)}`);
     for (const internalOrder of internalOrdersToCreate) {
-      await this.outboundPortsAdapter.createInternalOrder(internalOrder);
+      try {
+        await this.outboundPortsAdapter.createInternalOrder(internalOrder);
+      } catch (err) {
+        console.error("Errore invio InternalOrder:", err);
+      }
     }
     //console.log("service : Magazzino mandato! \n"+ JSON.stringify(internalOrdersToCreate, null, 2));
   }
+  return Promise.resolve();
 }
 
 
@@ -344,6 +350,7 @@ async CheckInsufficientQuantity(
       //Chiamata ad observability?
       this.sendNotification(JSON.stringify(notJson));
     }
+    return Promise.resolve()
   }
 
   async ManageOverMaxThres(
@@ -400,5 +407,7 @@ async CheckInsufficientQuantity(
       }//else console.log("!residualQty <= productInInv.getMaxThres()");
     }
     //console.log("Attualmente non ci sono magazzini disponibili");
+    return Promise.resolve()
   }
+  
 }
