@@ -5,7 +5,7 @@ import { ReceiveWarehouseState } from "src/domain/inbound-ports/receiveWarehouse
 import { OrderQuantityDTO } from "src/interfaces/http/dto/orderQuantity.dto";
 import { productDto } from "src/interfaces/http/dto/product.dto";
 import { warehouseIdDto } from "src/interfaces/http/dto/warehouseId.dto";
-import { WarehouseStateDTO } from "src/interfaces/http/dto/warehouseState.dto";
+import { WarehouseStateDTO } from "src/interfaces/http/dto/warehouseStatedto";
 import { CentralSystemService } from "src/application/centralsystem.service";
 import { DataMapper } from "src/infrastructure/mappers/dataMapper";
 import { WarehouseState } from "src/domain/warehouseState.entity";

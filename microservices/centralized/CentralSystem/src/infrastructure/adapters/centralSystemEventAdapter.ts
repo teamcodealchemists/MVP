@@ -19,7 +19,7 @@ import { WarehouseState } from "src/domain/warehouseState.entity";
 import { DataMapper } from "src/infrastructure/mappers/dataMapper";
 import { inventoryDto } from "src/interfaces/http/dto/inventory.dto";
 import { OrdersDTO } from "src/interfaces/http/dto/orders.dto";
-import { WarehouseStateDTO } from "src/interfaces/http/dto/warehouseState.dto";
+import { WarehouseStateDTO } from "src/interfaces/http/dto/warehouseStatedto";
 import { InternalOrderDTO } from "src/interfaces/http/dto/internalOrder.dto";
 
 @Injectable()
