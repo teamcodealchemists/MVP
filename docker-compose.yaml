@@ -28,6 +28,8 @@ services:
       - "8080:8080"
     command: >
       -n nats://nats:4222
+    depends_on:
+      - nats
     networks:
        - shared-warehouses
 
