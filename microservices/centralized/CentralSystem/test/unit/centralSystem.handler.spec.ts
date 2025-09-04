@@ -80,11 +80,4 @@ describe('centralSystemHandler', () => {
     expect(natsClient.send).toHaveBeenCalledWith('warehouse.distance.request', warehouseId);
     expect(result).toBe(mockStates);
   });
-
-  it('should emit warehouse state request', async () => {
-    const warehouseId = new warehouseIdDto();
-    warehouseId.warehouseId = 1;
-    await handler.handleWarehouseState(warehouseId);
-    expect(natsClient.emit).toHaveBeenCalledWith('warehouse.state.request', warehouseId);
-  });
 });

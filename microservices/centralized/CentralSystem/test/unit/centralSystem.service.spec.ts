@@ -62,7 +62,9 @@ describe('CentralSystemService', () => {
             new WarehouseState('ACTIVE', new WarehouseId(2)),
         ]),
           createInternalOrder: jest.fn(),
-          SendNotification: jest.fn()
+          SendNotification: jest.fn(),
+          sendOrder: jest.fn(),     
+          sendInventory: jest.fn(), 
         }
       }
     ]

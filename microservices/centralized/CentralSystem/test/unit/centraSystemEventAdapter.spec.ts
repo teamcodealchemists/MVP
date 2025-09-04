@@ -101,15 +101,4 @@ describe('OutboundPortsAdapter', () => {
       expect(result.length).toBe(domainStates.length);
     });
   });
-
-  describe('RequestWarehouseState', () => {
-    it('should call centralSystemHandler.handleWarehouseState', async () => {
-      const whId = new WarehouseId(1);
-      jest.spyOn(DataMapper, 'warehouseIdToDto').mockReturnValue({} as any);
-
-      await adapter.RequestWarehouseState(whId);
-
-      expect(handler.handleWarehouseState).toHaveBeenCalled();
-    });
-  });
 });

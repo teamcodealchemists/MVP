@@ -2,9 +2,9 @@ name: CI Monorepo
 
 on:
   push:
-    branches: [ main, feature/Central-System-Microservice ]
+    branches: [ main, develop , feature/Central-System-Microservice ]
   pull_request:
-    branches: [ main, feature/Central-System-Microservice ]
+    branches: [ main, develop , feature/Central-System-Microservice ]
 
 jobs:
   test:
