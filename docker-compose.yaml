@@ -59,6 +59,20 @@ services:
       - mongodb
       - resgate
 
+  centralsystem:
+    container_name: CentralSystem
+    build:
+        context: ./microservices/centralized/CentralSystem
+        dockerfile: Dockerfile
+    environment:
+        - MONGO_DB=mongodb://mongo:27017/centralsystem
+    volumes:
+        - ./microservices/centralized/CentralSystem/src:/usr/src/app/src
+    networks:
+        - shared-warehouses
+    depends_on:
+        - nats
+
 #==========================================================================#
 #                         Infrastructure Microservices                     #
 #==========================================================================#

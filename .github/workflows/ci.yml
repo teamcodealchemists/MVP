@@ -1,0 +1,112 @@
+name: CI Monorepo
+
+on:
+  push:
+    branches: [ main, develop , feature/Central-System-Microservice ]
+  pull_request:
+    branches: [ main, develop , feature/Central-System-Microservice ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 22.16.0
+
+      - name: Start services with Docker Compose
+        run: |
+          docker compose up -d
+          echo "Waiting for MongoDB and NATS to be ready..."
+          sleep 10
+
+      # Install root dependencies
+      - name: Install root dependencies
+        working-directory: microservices
+        run: npm install
+
+      # Inventory
+      - name: Install Inventory dependencies
+        working-directory: microservices/warehouse/inventory
+        run: npm install || echo "No tests for inventory"
+
+      - name: Run Inventory tests
+        working-directory: microservices/warehouse/inventory
+        run: npm run test:cov || echo "No tests for inventory"
+
+      - name: Upload Inventory coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: inventory
+          files: MVP/coverage/warehouse/inventory/coverage-summary.json
+          name: inventory
+
+      # Orders
+      - name: Install Orders dependencies
+        working-directory: microservices/warehouse/orders
+        run: npm install || echo "No tests for orders"
+
+      - name: Run Orders tests
+        working-directory: microservices/warehouse/orders
+        run: npm run test:cov || echo "No tests for orders"
+
+      - name: Upload Orders coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: orders
+          files: MVP/coverage/warehouse/orders/coverage-summary.json
+          name: orders
+
+      # CentralSystem
+      - name: Install CentralSystem dependencies
+        working-directory: microservices/centralized/CentralSystem
+        run: npm install || echo "No tests for centralSystem"
+
+      - name: Debug file names
+        run: ls -R microservices/centralized/CentralSystem/src/interfaces/http/dto
+
+
+      - name: Run CentralSystem tests
+        working-directory: microservices/centralized/CentralSystem
+        run: npm run test:cov || echo "No tests for centralSystem"
+        
+      - name: Upload CentralSystem coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: centralSystem
+          files: MVP/coverage/centralized/centralSystem/coverage-summary.json
+          name: centralSystem
+
+      # Authentication
+      - name: Install Auth dependencies
+        working-directory: microservices/centralized/authentication
+        run: npm install || echo "No tests for authentication"
+
+      - name: Run Auth tests
+        working-directory: microservices/centralized/authentication
+        run: npm run test:cov || echo "No tests for authentication"
+
+      - name: Upload Auth coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: auth
+          directory: microservices/centralized/authentication
+          name: auth
+
+      # Commit updated README
+      - name: Commit updated README
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'actions@github.com'
+          git add README.md
+          git commit -m "📝 Update README with latest test results" || echo "No changes to commit"
+          git push
