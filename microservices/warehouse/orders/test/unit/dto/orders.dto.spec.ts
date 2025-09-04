@@ -6,64 +6,91 @@ import { SellOrderDTO } from 'src/interfaces/dto/sellOrder.dto';
 import { InternalOrderDTO } from 'src/interfaces/dto/internalOrder.dto';
 
 describe('OrdersDTO Validation', () => {
-it('should validate a correct OrdersDTO', async () => {
-  const dtoPlain = {
-    sellOrders: [
-      {
-        orderId: { id: 'S933dcc2d-6637-4120-b80c-199f18e0ff2b' },
-        items: [],
-        orderState: { orderState: 'PENDING' },
-        creationDate: new Date(),
-        warehouseDeparture: 1,
-        destinationAddress: 'Via Padova, 12',
-      }
-    ],
-    internalOrders: [
-      {
-        orderId: { id: 'I933dcc2d-6637-4120-b80c-199f18e0ff2b' },
-        items: [],
-        orderState: { orderState: 'PENDING' },
-        creationDate: new Date(),
-        warehouseDeparture: 1,
-        warehouseDestination: 2,
-      }
-    ],
-  };
+  it('should validate a correct OrdersDTO', async () => {
+    const dtoPlain = {
+      sellOrders: [
+        {
+          orderId: { id: 'S933dcc2d-6637-4120-b80c-199f18e0ff2b' },
+          items: [{ 
+            item: {
+              itemId: { id: 1 }, 
+              quantity: 5 
+            }, 
+            quantityReserved: 5, 
+            unitPrice: 29.99 
+          }],        
+          orderState: { orderState: "PENDING" },
+          creationDate: new Date(),
+          warehouseDeparture: 1,
+          destinationAddress: 'Via Padova, 12',
+        }
+      ],
+      internalOrders: [
+        {
+          orderId: { id: 'I933dcc2d-6637-4120-b80c-199f18e0ff2b' },
+          items: [{ 
+            item: { 
+              itemId: { id: 1 }, 
+              quantity: 5 
+            }, 
+            quantityReserved: 5, 
+            unitPrice: 29.99 
+          }],
+          orderState: { orderState: "PENDING" },
+          creationDate: new Date(),
+          warehouseDeparture: 1,
+          warehouseDestination: 2,
+        }
+      ],
+    };
 
-  // Converti prima gli oggetti interni
-  const sellOrders = dtoPlain.sellOrders.map(item => 
-    plainToInstance(SellOrderDTO, item)
-  );
-  const internalOrders = dtoPlain.internalOrders.map(item => 
-    plainToInstance(InternalOrderDTO, item)
-  );
+    // Debug: validiamo ogni parte separatamente
+    console.log('=== VALIDATING SELL ORDER ===');
+    const sellOrder = plainToInstance(SellOrderDTO, dtoPlain.sellOrders[0]);
+    const sellErrors = await validate(sellOrder);
+    console.log('Sell order errors:', JSON.stringify(sellErrors, null, 2));
 
-  const dto = plainToInstance(OrdersDTO, {
-    sellOrders,
-    internalOrders
+    console.log('=== VALIDATING INTERNAL ORDER ===');
+    const internalOrder = plainToInstance(InternalOrderDTO, dtoPlain.internalOrders[0]);
+    const internalErrors = await validate(internalOrder);
+    console.log('Internal order errors:', JSON.stringify(internalErrors, null, 2));
+
+    console.log('=== VALIDATING ORDERS DTO ===');
+    const dto = plainToInstance(OrdersDTO, dtoPlain);
+    const errors = await validate(dto);
+    
+    // Debug dettagliato degli errori di OrdersDTO
+    if (errors.length > 0) {
+      console.log('OrdersDTO validation errors:');
+      errors.forEach((error, index) => {
+        console.log(`\nError ${index + 1}:`);
+        console.log('Property:', error.property);
+        console.log('Constraints:', error.constraints);
+        console.log('Value type:', typeof error.value);
+        
+        if (error.children && error.children.length > 0) {
+          console.log('Children:');
+          error.children.forEach((child, childIndex) => {
+            console.log(`  Child ${childIndex + 1}:`);
+            console.log('    Property:', child.property);
+            console.log('    Constraints:', child.constraints);
+            console.log('    Value:', child.value);
+            
+            if (child.children && child.children.length > 0) {
+              console.log('    Nested children:');
+              child.children.forEach((nested, nestedIndex) => {
+                console.log(`      Nested ${nestedIndex + 1}:`);
+                console.log('        Property:', nested.property);
+                console.log('        Constraints:', nested.constraints);
+              });
+            }
+          });
+        }
+      });
+    }
+
+    expect(errors.length).toBe(0);
   });
-
-  const errors = await validate(dto, { 
-    forbidUnknownValues: true,
-    whitelist: true 
-  });
-
-  // Debug degli errori
-  if (errors.length > 0) {
-    errors.forEach(error => {
-      console.log(`Field: ${error.property}`);
-      console.log(`Constraints: ${JSON.stringify(error.constraints)}`);
-      if (error.children && error.children.length > 0) {
-        error.children.forEach(child => {
-          console.log(`  Child: ${child.property}`);
-          console.log(`  Constraints: ${JSON.stringify(child.constraints)}`);
-        });
-      }
-    });
-  }
-
-  expect(errors.length).toBe(0);
-});
 
 
   it('should fail if sellOrders is not an array', async () => {

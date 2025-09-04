@@ -12,6 +12,7 @@ import { OrderState } from "src/domain/orderState.enum";
 import { Test } from "@nestjs/testing";
 
 import { OrdersRepositoryMongo } from '../../src/infrastructure/adapters/mongodb/orders.repository.impl';
+import { OutboundEventAdapter } from 'src/infrastructure/adapters/outboundEvent.adapter';
 
 /*const id = new OrderId("12345");
 const itemId = new ItemId(2);
@@ -40,19 +41,32 @@ const mockOrdersRepository = {
     updateReservedStock(id: OrderId, items: OrderItem[]): Promise<InternalOrder | SellOrder>*/
 }
 
+const mockOutboundEventAdapter = {
+    publishInternalOrder: jest.fn(),
+    publishSellOrder: jest.fn(),
+    orderStateUpdated: jest.fn(), 
+    orderCancelled: jest.fn(),
+    orderCompleted: jest.fn()
+}
+
 
 describe("Test per Orders Service", () => {
 let service: any;
 
     beforeEach( async () => {
-        jest.clearAllMocks();   //ripulisce lo stato dei mock tra un test e l’altro
+        jest.clearAllMocks();   // Ripulisce lo stato dei mock tra un test e l’altro
         const moduleA = await Test.createTestingModule ({
             providers: [
                 OrdersService,
                 {
                     provide: 'ORDERSREPOSITORY',//OrdersRepositoryMongo,
                     useValue: mockOrdersRepository,
-                }]
+                },
+                {
+                    provide: OutboundEventAdapter,
+                    useValue: mockOutboundEventAdapter,
+                }
+            ]
         }).compile();
         service = moduleA.get(OrdersService);
     })

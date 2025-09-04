@@ -36,7 +36,7 @@ describe('Orders Entity - set methods', () => {
     initialSellOrders = [sellOrder];
     initialInternalOrders = [internalOrder];
 
-    orders = new Orders(initialInternalOrders, initialSellOrders);
+    orders = new Orders(initialSellOrders, initialInternalOrders);
   });
 
   it('should update sellOrders when setSellOrders is called', () => {

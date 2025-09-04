@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/7</span>
+                <span class='fraction'>7/7</span>
             </div>
         
             
@@ -37,16 +37,16 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/5</span>
+                <span class='fraction'>5/5</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/7</span>
+                <span class='fraction'>7/7</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -88,46 +88,46 @@
 <a name='L23'></a><a href='#L23'>23</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { SellOrder } from "./sellOrder.entity";
 import { InternalOrder } from "./internalOrder.entity";
 &nbsp;
-<span class="cstat-no" title="statement not covered" >export class O</span>rders {
-<span class="fstat-no" title="function not covered" >    constructor(</span>
-        private <span class="cstat-no" title="statement not covered" >sellOrders: SellOrder[],</span>
-        private <span class="cstat-no" title="statement not covered" >internalOrders: InternalOrder[],</span>
+export class Orders {
+    constructor(
+        private sellOrders: SellOrder[],
+        private internalOrders: InternalOrder[],
     ) { }
 &nbsp;
-<span class="fstat-no" title="function not covered" >    getSellOrders(</span>): SellOrder[] {
-<span class="cstat-no" title="statement not covered" >    return this.sellOrders;</span>
+    getSellOrders(): SellOrder[] {
+    return this.sellOrders;
     }
-<span class="fstat-no" title="function not covered" >    getInternalOrders(</span>): InternalOrder[] {
-<span class="cstat-no" title="statement not covered" >        return this.internalOrders;</span>
+    getInternalOrders(): InternalOrder[] {
+        return this.internalOrders;
     }
 &nbsp;
-<span class="fstat-no" title="function not covered" >    setSellOrders(</span>newSellOrders: SellOrder[]): void {
-<span class="cstat-no" title="statement not covered" >        this.sellOrders = newSellOrders;</span>
+    setSellOrders(newSellOrders: SellOrder[]): void {
+        this.sellOrders = newSellOrders;
     }
-<span class="fstat-no" title="function not covered" >    setInternalOrders(</span>newInternalOrders: InternalOrder[]): void {
-<span class="cstat-no" title="statement not covered" >        this.internalOrders = newInternalOrders;</span>
+    setInternalOrders(newInternalOrders: InternalOrder[]): void {
+        this.internalOrders = newInternalOrders;
     } 
 }</pre></td></tr></table></pre>
 
@@ -136,7 +136,7 @@ import { InternalOrder } from "./internalOrder.entity";
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-20T18:35:45.607Z
+                at 2025-09-04T22:21:01.837Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

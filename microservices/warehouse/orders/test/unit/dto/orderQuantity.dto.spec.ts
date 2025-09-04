@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
 import { OrderQuantityDTO } from 'src/interfaces/dto/orderQuantity.dto';
@@ -7,13 +8,20 @@ describe('OrderQuantityDTO Validation', () => {
     const dtoPlain = {
       id: { id: "I17823131574457569" },
       items: [
-        { itemId: { id: 1 }, quantity: 5 },
-        { itemId: { id: 2 }, quantity: 10 }
+            {  
+                itemId: { id: 1 }, 
+                quantity: 5 
+            },
+            { 
+                itemId: { id: 2 }, 
+                quantity: 10 
+              }
       ]
     };
 
     const dto = plainToInstance(OrderQuantityDTO, dtoPlain);
     const errors = await validate(dto);
+    
     expect(errors.length).toBe(0);
   });
 
@@ -42,6 +50,7 @@ describe('OrderQuantityDTO Validation', () => {
     expect(errors.some(e => e.property === 'items')).toBe(true);
   });
 
+
   it('should fail if item quantity is negative', async () => {
     const dtoPlain = {
       id: { id: "I17823131574457569" },
@@ -55,6 +64,7 @@ describe('OrderQuantityDTO Validation', () => {
     expect(errors.length).toBeGreaterThan(0);
   });
 
+
   it('should fail if itemId is missing', async () => {
     const dtoPlain = {
       id: { id: "I17823131574457569" },
@@ -65,6 +75,7 @@ describe('OrderQuantityDTO Validation', () => {
 
     const dto = plainToInstance(OrderQuantityDTO, dtoPlain);
     const errors = await validate(dto);
+    
     expect(errors.length).toBeGreaterThan(0);
   });
 });

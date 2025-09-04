@@ -179,7 +179,7 @@ SellOrderEventListener, ShipmentEventListener, UpdateOrderStateUseCase {
       let orderState: string = orderStateStr;
 
       const orderIdDTO: OrderIdDTO = { id: orderId };
-      const orderStateDTO: OrderStateDTO = { orderState: orderState };
+      const orderStateDTO: OrderStateDTO = { orderState: orderState } as OrderStateDTO ;
       
       const orderIdDomain = await this.dataMapper.orderIdToDomain(orderIdDTO);
       const orderStateDomain = await this.dataMapper.orderStateToDomain(orderStateDTO);
