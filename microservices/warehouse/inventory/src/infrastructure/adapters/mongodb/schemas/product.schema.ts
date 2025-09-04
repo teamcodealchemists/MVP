@@ -18,7 +18,7 @@ export class Product {
   quantity: number;
 
   @Prop({ required: false })
-  reservedQuantity: number;
+  quantityReserved: number;
 
   @Prop({ required: true })
   minThres: number;
