@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ProductAddQuantityUseCase } from 'src/domain/use-cases/product-add-quantity.usecase';
 import { OrderRequestUseCase } from 'src/domain/use-cases/order-request.usecase';
-import { productQuantityDto } from 'src/interfaces/dto/productQuantity.dto';
+import { ProductQuantityDto } from 'src/interfaces/dto/productQuantity.dto';
 import { productQuantityArrayDto } from 'src/interfaces/dto/productQuantityArray.dto';
 import { InventoryService } from 'src/application/inventory.service';
 
@@ -14,7 +14,7 @@ export class InboundEventListener implements OrderRequestUseCase, ProductAddQuan
     return Promise.resolve(result); 
   }
 
-  addQuantity(dto: productQuantityDto): void {
+  addQuantity(dto: ProductQuantityDto): void {
     console.log('Aggiunta quantità prodotto:', dto);
     this.service.addProductQuantity(dto);
     return Promise.resolve();
