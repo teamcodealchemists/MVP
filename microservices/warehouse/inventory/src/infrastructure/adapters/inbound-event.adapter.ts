@@ -1,11 +1,9 @@
-import { Injectable } from '@nestjs/common';
 import { ProductAddQuantityUseCase } from 'src/domain/use-cases/product-add-quantity.usecase';
 import { OrderRequestUseCase } from 'src/domain/use-cases/order-request.usecase';
 import { ProductQuantityDto } from 'src/interfaces/dto/productQuantity.dto';
 import { productQuantityArrayDto } from 'src/interfaces/dto/productQuantityArray.dto';
 import { InventoryService } from 'src/application/inventory.service';
 
-@Injectable()
 export class InboundEventListener implements OrderRequestUseCase, ProductAddQuantityUseCase{
   constructor(private readonly service : InventoryService ) {}
   async orderRequest(dto: productQuantityArrayDto): Promise<boolean> {
