@@ -1,29 +1,57 @@
 import { Controller, Logger } from '@nestjs/common';
 import { MessagePattern } from '@nestjs/microservices';
-import { InventoryService } from 'src/application/inventory.service';
-import { productDto } from './dto/product.dto';
-import { productIdDto } from './dto/productId.dto';
-import { DataMapper } from '../infrastructure/mappers/dataMapper';
 import { plainToInstance } from 'class-transformer';
-import { Product } from 'src/domain/product.entity';
-import { Inventory } from 'src/domain/inventory.entity';
-import { Payload } from '@nestjs/microservices';
-import { OutboundEventAdapter } from 'src/infrastructure/adapters/outbound-event.adapter';
-import { WarehouseId } from 'src/domain/warehouseId.entity';
 import { InboundEventListener } from 'src/infrastructure/adapters/inbound-event.adapter';
+import { ProductQuantityDto } from './dto/productQuantity.dto';
+import { productQuantityArrayDto } from './dto/productQuantityArray.dto';
+import { validateOrReject } from 'class-validator';
 
 const logger = new Logger('InboundEventController');
 @Controller()
 export class InboundEventController {
   constructor(private readonly inboundEventListener : InboundEventListener) { }
-  @MessagePattern(`api.warehouse.1.newStock`)
+  @MessagePattern(``)
   async handleAddQuantity(payload: any): Promise<void> {
+    const data =
+      typeof payload === 'string'
+        ? payload
+        : payload?.data
+        ? payload.data.toString()
+        : payload;
 
-  };
+    try {
+      const productObj = JSON.parse(data);
 
-  @MessagePattern(`api.warehouse.1.newStock`)
+      const dto: ProductQuantityDto = {
+        productId :  productObj.id,
+        quantity: productObj.quantity,
+      };
+      this.inboundEventListener.addQuantity(dto);
+      logger.log(`Ricevuto evento addQuantity: ${JSON.stringify(dto)}`);
+    }catch (err) {
+      logger.error('Errore parsing addQuantity payload', err);
+    }
+};
+
+  @MessagePattern(``)
   async handleOrderRequest(payload: any): Promise<void> {
-
+    const data =
+        typeof payload === 'string'
+            ? payload
+            : payload?.data
+            ? payload.data.toString()
+            : payload;
+        try {
+            const parsed = JSON.parse(data);
+            const dto = plainToInstance(productQuantityArrayDto, {
+                productQuantityArray: parsed,
+            });
+            const errors = await validateOrReject(dto);
+            logger.error('Validation failed for orderRequest:', errors);
+            this.inboundEventListener.orderRequest(dto);
+        } catch (err) {
+            logger.error('Errore parsing orderRequest payload', err);
+        }
   }
 
 }
