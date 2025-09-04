@@ -2,8 +2,8 @@ import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { connect, NatsConnection, StringCodec, Subscription } from 'nats';
 import { ProductAddQuantityUseCase } from 'src/domain/use-cases/product-add-quantity.usecase';
 import { OrderRequestUseCase } from 'src/domain/use-cases/order-request.usecase';
-import { productQuantityDto } from 'src/interfaces/http/dto/productQuantity.dto';
-import { productQuantityArrayDto } from 'src/interfaces/http/dto/productQuantityArray.dto';
+import { productQuantityDto } from 'src/interfaces/dto/productQuantity.dto';
+import { productQuantityArrayDto } from 'src/interfaces/dto/productQuantityArray.dto';
 
 @Injectable()
 export class InboundEventListener implements OnModuleInit, OnModuleDestroy {

@@ -1,8 +1,8 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern } from '@nestjs/microservices';
 import { InventoryService } from 'src/application/inventory.service';
-import { productDto } from '../interfaces/http/dto/product.dto';
-import { productIdDto } from '../interfaces/http/dto/productId.dto';
+import { productDto } from './dto/product.dto';
+import { productIdDto } from './dto/productId.dto';
 import { DataMapper } from '../infrastructure/mappers/dataMapper';
 import { plainToInstance } from 'class-transformer';
 import { Product } from 'src/domain/product.entity';
