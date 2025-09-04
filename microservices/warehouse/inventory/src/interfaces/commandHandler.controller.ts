@@ -27,9 +27,7 @@ export class CommandHandler {
       maxThres: productObj.maxThres,
       warehouseId : productObj.warehouseId
     };
-
-    const product = DataMapper.toDomainProduct(productDTO);
-    this.inboundEventListener.newStock()
+    this.inboundEventListener.newStock(productDTO);
     return Promise.resolve();
   }
 
@@ -50,9 +48,7 @@ export class CommandHandler {
       id: productObj.id
     };
 
-
-    const productId = DataMapper.toDomainProductId(productIdDTO);
-     //this.inventoryService.removeProduct(productId);
+    this.inboundEventListener.removeStock(productIdDTO);
     return Promise.resolve();
   }
 
@@ -81,10 +77,7 @@ export class CommandHandler {
       maxThres: productObj.maxThres,
       warehouseId : productObj.warehouseId
     };
-
-    const product = DataMapper.toDomainProduct(productDTO);
-    console.log(product);
-   //this.inventoryService.editProduct(product)
+    this.inboundEventListener.editStock(productDTO);
     return Promise.resolve();
   }
 
@@ -114,13 +107,13 @@ export class CommandHandler {
     };
 
     const productId = DataMapper.toDomainProductId(productIdDTO);
-    return //this.inventoryService.getProduct(productId);
+    return Promise.resolve(await this.inboundEventListener.handleGetProduct(productId));
   }
 
 
   @MessagePattern(`api.warehouse.${process.env.WAREHOUSE_ID}.getInventory`)
   async handleGetInventory(): Promise<Inventory> {
-    return //this.inventoryService.getInventory();
+    return Promise.resolve(await this.inboundEventListener.getInventory());
   }
 
 }

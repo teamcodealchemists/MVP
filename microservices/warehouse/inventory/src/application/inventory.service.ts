@@ -32,11 +32,11 @@ export class InventoryService {
     //this.natsAdapter.stockRemoved(id.getId(), this.warehouseId.getId());
   }
 
-  async editProduct(editedProduct: Product): Promise<string> {
+  async editProduct(editedProduct: Product): Promise<void> {
     await this.inventoryRepository.updateProduct(editedProduct);
     //this.natsAdapter.stockUpdated(editedProduct, this.warehouseId.getId());
     //Implementare l'outbound adapter per l'edit
-    return Promise.resolve('Product updated successfully');
+    return Promise.resolve();
   }
 
   async getProduct(id: ProductId): Promise<Product> {
