@@ -1,6 +1,6 @@
-import { productQuantityArrayDto } from 'src/interfaces/dto/productQuantityArray.dto';
+import { ProductQuantityArrayDto } from 'src/interfaces/dto/productQuantityArray.dto';
 
 export interface OrderRequestUseCase {
-  orderRequest(dto: productQuantityArrayDto): Promise<void>;
-  shipOrderRequest(dto : productQuantityArrayDto) : Promise<void>;
+  orderRequest(dto: ProductQuantityArrayDto): Promise<void>;
+  shipOrderRequest(dto : ProductQuantityArrayDto) : Promise<void>;
 }
