@@ -22,14 +22,14 @@ export class DataMapper {
 
 // DTO ===> DOMAIN
 
-async internalOrderToDomain(orderIdDTO: OrderIdDTO, orderDTO: InternalOrderDTO): Promise<InternalOrder> {
+async internalOrderToDomain(orderDTO: InternalOrderDTO): Promise<InternalOrder> {
   // Validazione: Non si può partire e arrivare allo stesso magazzino
   if (orderDTO.warehouseDeparture === orderDTO.warehouseDestination) {
     throw new Error(`Il magazzino di partenza (${orderDTO.warehouseDeparture}) non può essere uguale alla destinazione`);
   }
 
   return new InternalOrder(
-    await this.orderIdToDomain(orderIdDTO), 
+    await this.orderIdToDomain(orderDTO.orderId), 
     await Promise.all(orderDTO.items.map(i => this.orderItemDetailToDomain(i))), 
     await this.orderStateToDomain(orderDTO.orderState),
     orderDTO.creationDate,
@@ -38,10 +38,9 @@ async internalOrderToDomain(orderIdDTO: OrderIdDTO, orderDTO: InternalOrderDTO):
   );
 }
 
-async sellOrderToDomain(orderIdDTO: OrderIdDTO, orderDTO: SellOrderDTO): Promise<SellOrder> {
-  // TODO: Verifica che l'indirizzo "destinationAddress" sia nel formato giusto
+async sellOrderToDomain(orderDTO: SellOrderDTO): Promise<SellOrder> {
   return new SellOrder(
-    await this.orderIdToDomain(orderIdDTO),
+    await this.orderIdToDomain(orderDTO.orderId),
     await Promise.all(orderDTO.items.map(i => this.orderItemDetailToDomain(i))),
     await this.orderStateToDomain(orderDTO.orderState),
     orderDTO.creationDate,
@@ -58,9 +57,7 @@ async orderItemToDomain(dto: OrderItemDTO): Promise<OrderItem> {
 }
 
 async orderIdToDomain(dto: OrderIdDTO): Promise<OrderId> {
-  const id = dto.id;
-  
-   return new OrderId(id);
+  return new OrderId(dto.id);
 }
 
 async orderStateToDomain(dto: OrderStateDTO): Promise<OrderState> {
@@ -87,10 +84,10 @@ async orderItemDetailToDomain(dto: OrderItemDetailDTO): Promise<OrderItemDetail>
 
 // DOMAIN ===> DTO
 
-async internalOrderToDTO(entity: InternalOrder): Promise<{orderIdDTO: OrderIdDTO; internalOrderDTO: InternalOrderDTO;}> {
-    const orderIdDTO = await this.orderIdToDTO(entity['orderId']);
-    
+async internalOrderToDTO(entity: InternalOrder): Promise<InternalOrderDTO> {
+
     const internalOrderDTO: InternalOrderDTO = {
+        orderId: await this.orderIdToDTO(entity['orderId']),
         items: await Promise.all(
             entity.getItemsDetail().map(d => this.orderItemDetailToDTO(d))
         ),
@@ -100,13 +97,12 @@ async internalOrderToDTO(entity: InternalOrder): Promise<{orderIdDTO: OrderIdDTO
         warehouseDestination: entity.getWarehouseDestination()
     };
 
-    return {orderIdDTO, internalOrderDTO};
+    return internalOrderDTO;
 }
 
-async sellOrderToDTO(entity: SellOrder): Promise<{orderIdDTO: OrderIdDTO; sellOrderDTO: SellOrderDTO;}> {
-    const orderIdDTO = await this.orderIdToDTO(entity['orderId']);
-    
+async sellOrderToDTO(entity: SellOrder): Promise<SellOrderDTO> {
     const sellOrderDTO: SellOrderDTO = {
+        orderId: await this.orderIdToDTO(entity['orderId']),
         items: await Promise.all(
             entity.getItemsDetail().map(d => this.orderItemDetailToDTO(d))
         ),
@@ -116,7 +112,7 @@ async sellOrderToDTO(entity: SellOrder): Promise<{orderIdDTO: OrderIdDTO; sellOr
         destinationAddress: entity.getDestinationAddress()
     };
 
-    return {orderIdDTO, sellOrderDTO};
+    return sellOrderDTO;
 }
 
 async orderItemToDTO(entity: OrderItem): Promise<OrderItemDTO> {
@@ -194,34 +190,26 @@ async orderQuantityToDTO(orderId: OrderId, items: OrderItem[]): Promise<OrderQua
 
 async ordersToDTO(orders: Orders): Promise<OrdersDTO> {
     try {
-        // Conversione SellOrder a SellOrderDTO Array
-        const sellOrdersArray = await Promise.all(
+        // Conversione SellOrder a SellOrderDTO
+        const sellOrders = await Promise.all(
             orders.getSellOrders().map(async (order, index) => {
                 try {
                     const result = await this.sellOrderToDTO(order);
                     console.log(`SellOrder ${index + 1} convertito a DTO`);
-                    
-                    return {
-                        orderId: result.orderIdDTO,
-                        order: result.sellOrderDTO
-                    };
+                    return result;
                 } catch (error) {
                     console.error(`Errore conversione SellOrder ${index} a DTO:`, error);
                     throw error;
                 }
             })
         );
-        // Conversione InternalOrder a InternalOrderDTO Array
-        const internalOrdersArray = await Promise.all(
+        // Conversione InternalOrder a InternalOrderDTO
+        const internalOrders = await Promise.all(
             orders.getInternalOrders().map(async (order, index) => {
                 try {
                     const result = await this.internalOrderToDTO(order);
                     console.log(`InternalOrder ${index + 1} convertito a DTO`);
-                    
-                    return {
-                        orderId: result.orderIdDTO,
-                        order: result.internalOrderDTO
-                    };
+                    return result;
                 } catch (error) {
                     console.error(`Errore conversione InternalOrder ${index} a DTO:`, error);
                     throw error;
@@ -231,8 +219,8 @@ async ordersToDTO(orders: Orders): Promise<OrdersDTO> {
 
         console.log('Conversione Orders a DTO completata');
         return {
-            sellOrders: sellOrdersArray,
-            internalOrders: internalOrdersArray
+            sellOrders: sellOrders,
+            internalOrders: internalOrders
         };
         
     } catch (error) {

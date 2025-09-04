@@ -75,12 +75,8 @@ SellOrderEventListener, ShipmentEventListener, UpdateOrderStateUseCase {
   @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.sell.new`)
   async addSellOrder(@Payload() payload: any): Promise<void>  { 
     try {
-      // Separa il payload in due DTO
-    const orderIdDTO: OrderIdDTO = {
-        id: payload.orderId.id
-    };
-  
     const sellOrderDTO: SellOrderDTO = {
+        orderId: payload.orderId,
         items: payload.items,
         orderState: payload.orderState,
         creationDate: payload.creationDate,
@@ -88,8 +84,7 @@ SellOrderEventListener, ShipmentEventListener, UpdateOrderStateUseCase {
         destinationAddress: payload.destinationAddress
     };
 
-    const sellOrderDomain = await this.dataMapper.sellOrderToDomain(orderIdDTO, sellOrderDTO);
-
+    const sellOrderDomain = await this.dataMapper.sellOrderToDomain(sellOrderDTO);
     await this.ordersService.createSellOrder(sellOrderDomain);
 
     } catch (error) {
@@ -100,33 +95,31 @@ SellOrderEventListener, ShipmentEventListener, UpdateOrderStateUseCase {
 
   @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.internal.new`)
   async addInternalOrder(@Payload() payload: any): Promise<void> {    
-    // Separa il payload in due DTO
-    try {
-      const orderIdDTO: OrderIdDTO = {
-          id: payload.orderId.id
-      };
-      const internalOrderDTO: InternalOrderDTO = {
+     try {
+        const internalOrderDTO: InternalOrderDTO = {
+          orderId: payload.orderId,
           items: payload.items,
           orderState: payload.orderState,
           creationDate: payload.creationDate,
           warehouseDeparture: payload.warehouseDeparture,
           warehouseDestination: payload.warehouseDestination
-      };
+        };
 
-      const internalOrderDomain = await this.dataMapper.internalOrderToDomain(orderIdDTO, internalOrderDTO);
-      const addedInternalOrder = await this.ordersService.createInternalOrder(internalOrderDomain);
+        const internalOrderDomain = await this.dataMapper.internalOrderToDomain(internalOrderDTO);
+        await this.ordersService.createInternalOrder(internalOrderDomain);
+
     } catch (error) {
         console.error('Errore nella creazione di un InternalOrder:', error);
         throw error;
     }
   }
-
+  
   @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.*.waiting.stock`)  
   // Metodo per comunicare al magazzino di partenza che il magazzino di destinazione 
   // ha inserito l’ordine e sta attendendo che la merce venga inviata.
   async waitingForStock(@Ctx() context: any) : Promise<void> {
     
-/*     // ESTRAZIONE TOKEN DAL SUBJECT
+/*  // ESTRAZIONE TOKEN DAL SUBJECT
     const tokens = context.getSubject().split('.');
     const orderIdStr = tokens[tokens.length - 3]; // ID = Terzultimo token
           
@@ -263,7 +256,7 @@ SellOrderEventListener, ShipmentEventListener, UpdateOrderStateUseCase {
   }
 
   @MessagePattern(`get.warehouse.${process.env.WAREHOUSE_ID}.order.*`)
-  async getOrder(@Ctx() context: any): Promise<{OrderIdDTO, InternalOrderDTO} | {OrderIdDTO, SellOrderDTO}> {
+  async getOrder(@Ctx() context: any): Promise<InternalOrderDTO | SellOrderDTO> {
     // ESTRAZIONE SUBJECT
     const orderIdStr = context.getSubject().split('.').pop();
 
@@ -275,12 +268,12 @@ SellOrderEventListener, ShipmentEventListener, UpdateOrderStateUseCase {
     const receivedOrder = await this.ordersRepository.getById(orderIdDomain);
 
     if (receivedOrder instanceof InternalOrder) {
-        const { orderIdDTO, internalOrderDTO } = await this.dataMapper.internalOrderToDTO(receivedOrder);
-        return { OrderIdDTO: orderIdDTO, InternalOrderDTO: internalOrderDTO };      
+        const internalOrderDTO = await this.dataMapper.internalOrderToDTO(receivedOrder);
+        return internalOrderDTO;      
     }
     if (receivedOrder instanceof SellOrder) {
-      const { orderIdDTO, sellOrderDTO } = await this.dataMapper.sellOrderToDTO(receivedOrder);
-      return { OrderIdDTO: orderIdDTO, SellOrderDTO: sellOrderDTO };      
+        const sellOrderDTO = await this.dataMapper.sellOrderToDTO(receivedOrder);
+        return sellOrderDTO;      
     }
     throw new Error(
       `Tipo di ordine non riconosciuto per l'ordine: ${orderId}`

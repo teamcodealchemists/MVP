@@ -77,12 +77,12 @@ SyncSellOrderEventListener, SyncUpdateOrderStateUseCase {
   async syncAddSellOrder(@Payload() payload: any): Promise<void>  { 
     try { 
     const sellOrderDTO: SyncSellOrderDTO = {
-        orderId: { id: payload.orderIdDTO.id },
-        items: payload.sellOrderDTO.items,
-        orderState: payload.sellOrderDTO.orderState,
-        creationDate: payload.sellOrderDTO.creationDate,
-        warehouseDeparture: payload.sellOrderDTO.warehouseDeparture,
-        destinationAddress: payload.sellOrderDTO.destinationAddress
+        orderId: payload.orderId,
+        items: payload.items,
+        orderState: payload.orderState,
+        creationDate: payload.creationDate,
+        warehouseDeparture: payload.warehouseDeparture,
+        destinationAddress: payload.destinationAddress
     };
     
     console.log("[AggregateO] Ricevuto nuovo SellOrder,", JSON.stringify(sellOrderDTO, null, 2));
@@ -99,12 +99,12 @@ SyncSellOrderEventListener, SyncUpdateOrderStateUseCase {
   async syncAddInternalOrder(@Payload() payload: any): Promise<void> {    
     try {
       const internalOrderDTO: SyncInternalOrderDTO = {
-          orderId: { id: payload.orderIdDTO.id },
-          items: payload.internalOrderDTO.items,
-          orderState: payload.internalOrderDTO.orderState,
-          creationDate: payload.internalOrderDTO.creationDate,
-          warehouseDeparture: payload.internalOrderDTO.warehouseDeparture,
-          warehouseDestination: payload.internalOrderDTO.warehouseDestination
+          orderId: payload.orderId,
+          items: payload.items,
+          orderState: payload.orderState,
+          creationDate: payload.creationDate,
+          warehouseDeparture: payload.warehouseDeparture,
+          warehouseDestination: payload.warehouseDestination
       };   
       console.log("[AggregateO] Ricevuto nuovo InternalOrder,", JSON.stringify(internalOrderDTO, null, 2));
       const internalOrderDomain = await this.dataMapper.syncInternalOrderToDomain(internalOrderDTO);
@@ -207,7 +207,7 @@ SyncSellOrderEventListener, SyncUpdateOrderStateUseCase {
     }  
   }
 
-  @MessagePattern(`get.warehouse.${process.env.WAREHOUSE_ID}.order.*`)
+  @MessagePattern(`get.aggregate.order.*`)
   async getOrder(@Ctx() context: any): Promise<SyncInternalOrderDTO |  SyncSellOrderDTO> {
     // ESTRAZIONE SUBJECT
     const orderIdStr = context.getSubject().split('.').pop();
@@ -232,7 +232,7 @@ SyncSellOrderEventListener, SyncUpdateOrderStateUseCase {
     );  
   }
 
-  @MessagePattern(`get.warehouse.${process.env.WAREHOUSE_ID}.orders`) 
+  @MessagePattern(`get.aggregate.orders`) 
   async getAllOrders(): Promise<SyncOrdersDTO> {
       try {
           

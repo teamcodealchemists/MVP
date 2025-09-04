@@ -70,14 +70,14 @@ let service: any;
            //expect(result).toBe(true);
         });*/
         it("Dovrebbe restituire true quando l'ordine esiste", async () => {
-            const id = new OrderId('I-012345');
+            const id = new OrderId('I012345');
             mockOrdersRepository.getById.mockResolvedValueOnce({} as any);  
             await expect(service.checkOrderExistence(id)).resolves.toBe(true);
             expect(mockOrdersRepository.getById).toHaveBeenCalledWith(id);
         });
 
         it("Dovrebbe restituire false quando l'ordine NON esiste", async () => {
-            const id = new OrderId('I-012346');
+            const id = new OrderId('I012346');
             mockOrdersRepository.getById.mockResolvedValueOnce(null);             //simuli che db non c'è nessun codice con quell'ID quindi deve ritornare null
             await expect(service.checkOrderExistence(id)).resolves.toBe(false);
             expect(mockOrdersRepository.getById).toHaveBeenCalledWith(id);

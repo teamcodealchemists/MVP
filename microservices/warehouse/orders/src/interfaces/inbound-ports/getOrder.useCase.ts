@@ -4,6 +4,6 @@ import { SellOrderDTO } from '../dto/sellOrder.dto';
 
 export interface GetOrderUseCase {
 
-getOrder(OrderIdDTO): Promise<{OrderIdDTO, InternalOrderDTO} | {OrderIdDTO, SellOrderDTO}>;
+getOrder(OrderIdDTO): Promise<InternalOrderDTO | SellOrderDTO>;
 
 }

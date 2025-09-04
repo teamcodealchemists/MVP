@@ -41,7 +41,7 @@ export class OrdersRepositoryMongo implements OrdersRepository {
                         internalDoc.items.map(item => 
                             new OrderItemDetail(
                                     new OrderItem(
-                                        new ItemId(item.item.itemId),
+                                        new ItemId(item.item.id),
                                         item.item.quantity), 
                                 item.quantityReserved,
                                 item.unitPrice
@@ -65,7 +65,7 @@ export class OrdersRepositoryMongo implements OrdersRepository {
                     sellDoc.items.map(item => 
                         new OrderItemDetail(
                                 new OrderItem(
-                                    new ItemId(item.item.itemId),
+                                    new ItemId(item.item.id),
                                     item.item.quantity), 
                             item.quantityReserved,
                             item.unitPrice
@@ -117,7 +117,7 @@ export class OrdersRepositoryMongo implements OrdersRepository {
                         (doc.items || []).map(item => 
                             new OrderItemDetail(
                                 new OrderItem(
-                                    new ItemId(item.item.itemId),
+                                    new ItemId(item.item.id),
                                     item.item.quantity
                                 ), 
                                 item.quantityReserved,
@@ -142,7 +142,7 @@ export class OrdersRepositoryMongo implements OrdersRepository {
                         (doc.items || []).map(item => 
                             new OrderItemDetail(
                                 new OrderItem(
-                                    new ItemId(item.item.itemId),
+                                    new ItemId(item.item.id),
                                     item.item.quantity
                                 ), 
                                 item.quantityReserved,
@@ -365,28 +365,28 @@ export class OrdersRepositoryMongo implements OrdersRepository {
             if (internalDoc) {
                 model = this.internalOrderModel;
                 mapper = async (doc) => {
-                    const orderIdDTO = doc.orderId;
                     const internalOrderDTO = {
+                        orderId: doc.orderId,
                         items: doc.items,
                         orderState: doc.orderState,
                         creationDate: doc.creationDate,
                         warehouseDeparture: doc.warehouseDeparture,
                         warehouseDestination: doc.warehouseDestination
                     };
-                    return this.mapper.internalOrderToDomain(orderIdDTO, internalOrderDTO);
+                    return this.mapper.internalOrderToDomain(internalOrderDTO);
                 };
             } else {
                 model = this.sellOrderModel;
                 mapper = async (doc) => {
-                    const orderIdDTO = doc.orderId;
                     const sellOrderDTO = {
+                        orderId: doc.orderId,
                         items: doc.items,
                         orderState: doc.orderState,
                         creationDate: doc.creationDate,
                         warehouseDeparture: doc.warehouseDeparture,
                         destinationAddress: doc.destinationAddress
                     };
-                    return this.mapper.sellOrderToDomain(orderIdDTO, sellOrderDTO);
+                    return this.mapper.sellOrderToDomain(sellOrderDTO);
                 };
             }
 
