@@ -50,7 +50,7 @@ EditStockUseCase {
   }
 
   async addQuantity(dto: ProductQuantityDto): Promise<void> {
-    const product = DataMapper.toDTOProductQuantity(dto);
+    const product = DataMapper.toDTOProductQuantity(dto.productId, dto.quantity);
     await this.service.addProductQuantity(product);
   }
   
