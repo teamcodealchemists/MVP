@@ -5,7 +5,7 @@ import { OrderPublisher } from "src/domain/outbound-ports/orderPublisher";
 import { RequestCloudInventoryPublisher } from "src/domain/outbound-ports/requestCloudInventoryPublisher";
 import { RequestCloudOrdersPublisher } from "src/domain/outbound-ports/requestCloudOrdersPublisher";
 import { WarehouseRoutingPublisher } from "src/domain/outbound-ports/warehouseRoutingPublisher";
-import { WarehouseStatePublisher } from "src/domain/outbound-ports/warehouseStatePublisher";
+import { RequestResultPublisher } from "src/domain/outbound-ports/RequestResultPublisher";
 import { NotificationPublisher } from "src/domain/outbound-ports/notificationPublisher";
 import { centralSystemHandler } from "src/interfaces/centralSystem.handler";
 
@@ -28,7 +28,7 @@ OrderPublisher,
 RequestCloudInventoryPublisher,
 RequestCloudOrdersPublisher,
 WarehouseRoutingPublisher,
-WarehouseStatePublisher,
+RequestResultPublisher,
 NotificationPublisher
 {   
     constructor(private readonly centralSystemHandler: centralSystemHandler) {}
@@ -71,9 +71,14 @@ NotificationPublisher
         return Promise.resolve(warehouseStatesDTO);
     }
 
-    async RequestWarehouseState(id: WarehouseId): Promise<void> {
-        const dtoId = DataMapper.warehouseIdToDto(id);
-        await this.centralSystemHandler.handleWarehouseState(dtoId);
+    async sendOrder(message : string): Promise<void> {
+        await this.centralSystemHandler.handleRequestOrdResult(message);
         return Promise.resolve();
     }
+
+    async sendInventory(message : string): Promise<void> {
+        await this.centralSystemHandler.handleRequestInvResult(message);
+        return Promise.resolve();
+    }
+
 }

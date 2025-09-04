@@ -24,6 +24,7 @@ export class centralSystemHandler implements OnModuleInit {
     console.log("----------------------------------------------------------------------------------------------");
     */
     this.natsClient.emit("notification.send", { message });
+    return Promise.resolve();
   }
 
   async handleOrder(order: InternalOrderDTO): Promise<void> {
@@ -54,7 +55,24 @@ export class centralSystemHandler implements OnModuleInit {
     ));
   }
 
-  async handleWarehouseState(warehouseId: warehouseIdDto): Promise<void> {
-    this.natsClient.emit("warehouse.state.request", warehouseId);
+   async handleRequestInvResult(message: string): Promise<void> {
+    /*
+    console.log("----------------------------------------------------------------------------------------------");
+    console.log("|Handler announcement|");
+    console.log(message);
+    console.log("----------------------------------------------------------------------------------------------");
+    */
+    this.natsClient.emit("send.InvRequestResult", { message });
+    return Promise.resolve();
+  }
+    async handleRequestOrdResult(message: string): Promise<void> {
+    /*
+    console.log("----------------------------------------------------------------------------------------------");
+    console.log("|Handler announcement|");
+    console.log(message);
+    console.log("----------------------------------------------------------------------------------------------");
+    */
+    this.natsClient.emit("send.OrdRequestResult", { message });
+    return Promise.resolve();
   }
 }

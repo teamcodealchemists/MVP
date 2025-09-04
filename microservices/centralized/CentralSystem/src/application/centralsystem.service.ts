@@ -176,7 +176,7 @@ export class CentralSystemService {
         //console.log("Magazzino : "+whId+"\nresidualQty >= product.getMinThres()\n availableQty : " + availableQty + "\n pendingQtyInternal : "+ pendingQtyInternal + "\n pendingQtySell : "+ pendingQtySell + "\n residualQty : "+ residualQty);
       }
     }
-    //console.log("Nessun magazzino ha quantità sufficiente per il prodotto");
+    this.outboundPortsAdapter.sendInventory("MIN - Non disponibile");
     return Promise.resolve()
   }
 
@@ -303,6 +303,7 @@ async CheckInsufficientQuantity(
 
   if (productsToAllocate.length > 0) {
     console.log("Alcuni prodotti non hanno quantità sufficiente nei magazzini:", productsToAllocate.map((p) => p.getItemId()));
+    this.outboundPortsAdapter.sendOrder("CANCELORDER");
     return Promise.resolve();
   }else{
     //this.logger.log(`Received orderQuantity: ${JSON.stringify(internalOrdersToCreate)}`);
@@ -406,7 +407,7 @@ async CheckInsufficientQuantity(
         return;
       }//else console.log("!residualQty <= productInInv.getMaxThres()");
     }
-    //console.log("Attualmente non ci sono magazzini disponibili");
+    this.outboundPortsAdapter.sendInventory("MAX - Non disponibile");
     return Promise.resolve()
   }
   
