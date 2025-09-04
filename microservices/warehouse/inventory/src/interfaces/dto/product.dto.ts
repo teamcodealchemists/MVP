@@ -18,7 +18,11 @@ export class ProductDto {
   @IsNotEmpty()
   @IsNumber()
   quantity: number;
-  
+
+  @IsNotEmpty()
+  @IsNumber()
+  quantityReserved : number;
+
   @IsNumber()
   @Min(0)
   minThres: number;

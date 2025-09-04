@@ -23,7 +23,7 @@ export class InventoryService {
   async addProduct(newProduct: Product): Promise<void> {
     await this.inventoryRepository.addProduct(newProduct);
      console.log('Publishing stockAdded event', newProduct);
-    this.natsAdapter.stockAdded(newProduct, this.warehouseId);
+    //this.natsAdapter.stockAdded(newProduct, this.warehouseId.getId());
      console.log('pUBBLICATO stockAdded event');
   }
 
@@ -35,7 +35,8 @@ export class InventoryService {
 
   async editProduct(editedProduct: Product): Promise<void> {
     await this.inventoryRepository.updateProduct(editedProduct);
-    this.natsAdapter.stockUpdated(editedProduct, this.warehouseId);
+    //this.natsAdapter.stockUpdated(editedProduct, this.warehouseId.getId());
+    //Implementare l'outbound adapter per l'edit
     return Promise.resolve();
   }
 

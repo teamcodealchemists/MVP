@@ -1,5 +1,5 @@
 import { ProductDto } from 'src/interfaces/dto/product.dto';
 
-export interface editStockUseCase {
+export interface EditStockUseCase {
   editStock(dto: ProductDto): Promise<void>;
 }
