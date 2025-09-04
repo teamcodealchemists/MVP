@@ -28,7 +28,7 @@ export class OrdersService {
     }
 
 
-    async updateOrderState(id: OrderId, state: OrderState): Promise<void> {
+/*     async updateOrderState(id: OrderId, state: OrderState): Promise<void> {
         // Aggiorna lo stato nella repository
         await this.ordersRepositoryMongo.updateOrderState(id, state);
         
@@ -39,12 +39,24 @@ export class OrdersService {
         const reqReceiver = { destination: 'aggregate' as const};
 
         if (updatedOrder instanceof SellOrder) {
-            await this.outboundEventAdapter.publishSellOrder(updatedOrder, reqReceiver);
+            await this.outboundEventAdapter.orderState(updatedOrder, reqReceiver);
         } else if (updatedOrder instanceof InternalOrder) {
             await this.outboundEventAdapter.publishInternalOrder(updatedOrder, reqReceiver);
         }
-    }    
+    }     */
     
+    async updateOrderState(id: OrderId, state: OrderState): Promise<void> {
+        // Aggiorna lo stato nella repository
+        await this.ordersRepositoryMongo.updateOrderState(id, state);
+        
+/*         // Recupera l'ordine aggiornato
+        const updatedOrder = await this.ordersRepositoryMongo.getById(id);
+ */        
+        // Invia sync all'aggregato Orders
+        const reqReceiver = { destination: 'aggregate' as const};
+
+        await this.outboundEventAdapter.orderStateUpdated(id, state);
+    }    
 
     async checkOrderState(id: OrderId): Promise<void> {
         await this.ordersRepositoryMongo.getState(id);
@@ -52,6 +64,7 @@ export class OrdersService {
 
 
     async createSellOrder(order: SellOrder): Promise<void>{
+        // Genera ID univoco
         const uniqueOrderId = await this.ordersRepositoryMongo.genUniqueId('S');
         
         // Creo un nuovo SellOrder con stesso contenuto ma nuovo ID
@@ -73,6 +86,7 @@ export class OrdersService {
 
 
     async createInternalOrder(order: InternalOrder): Promise<void>{
+        // Genera ID univoco
         const uniqueOrderId = await this.ordersRepositoryMongo.genUniqueId('I');
         
         // Creo un nuovo InternalOrder con stesso contenuto ma nuovo ID
@@ -95,6 +109,7 @@ export class OrdersService {
 
     async cancelOrder(id: OrderId): Promise<void> {
         await this.ordersRepositoryMongo.removeById(id);
+        await this.outboundEventAdapter.orderCancelled(id);
     }
 
 
@@ -119,6 +134,7 @@ export class OrdersService {
         await this.ordersRepositoryMongo.updateOrderState(id, OrderState.SHIPPED);
 
         console.log(`L'ordine ${id} è stato spedito!`);
+        
     }
 
 
@@ -132,7 +148,8 @@ export class OrdersService {
 
     async completeOrder(id: OrderId): Promise<void> {
         await this.ordersRepositoryMongo.updateOrderState(id, OrderState.COMPLETED);
-        console.log(`L'ordine di rifornimento ${id} è stato completato!`);
+        console.log(`L'ordine interno di rifornimento ${id} è stato completato!`);
+        await this.outboundEventAdapter.orderCompleted(id);
     }
 
 }

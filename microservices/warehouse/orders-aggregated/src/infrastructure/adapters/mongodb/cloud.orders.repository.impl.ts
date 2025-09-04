@@ -240,7 +240,7 @@ export class CloudOrdersRepositoryMongo implements CloudOrdersRepository {
 
             const createdOrder = new this.syncInternalOrderModel(orderData);
             await createdOrder.save();
-            console.log('[Aggregate] Sincronizzato il nuovo InternalOrder con ID:', newOrder.getOrderId());
+            console.log('[AggregateO] Sincronizzato il nuovo InternalOrder con ID:', newOrder.getOrderId());
                         
         } catch (error) {
             console.error("Errore durante l'aggiunta dell'InternalOrder:", error);
@@ -316,6 +316,8 @@ export class CloudOrdersRepositoryMongo implements CloudOrdersRepository {
                     sellDoc.destinationAddress
                 );
             }
+            console.log("[AggregateO] Aggiornato lo stato dell'ordine ", id.getId(), " a ", state );
+
             // Fallback
             throw new Error(`Impossibile aggiornare lo stato: ordine con ID ${id.getId()} non trovato`);
         } catch (error) {

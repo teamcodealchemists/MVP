@@ -16,6 +16,7 @@ import { OrderItem } from "src/domain/orderItem.entity";
 import { OrderId } from "src/domain/orderId.entity";
 import { InternalOrder } from "src/domain/internalOrder.entity";
 import { SellOrder } from "src/domain/sellOrder.entity";
+import { OrderState } from "src/domain/orderState.enum";
 
 @Injectable()
 export class OutboundEventAdapter implements InternalOrderEventPublisher, OrderStatusEventPublisher, RequestStockReplenishmentPublisher, ReserveStockCommandPublisher, 
@@ -79,17 +80,25 @@ SellOrderEventPublisher, ShipStockCommandPublisher {
 /* async orderUpdated(order: Order) {
     await this.natsService.publish('orders.updated', order);
   } */
-
-
-  async orderCancelled(orderId: OrderId, warehouse: number) {
+  async orderStateUpdated (orderId: OrderId, orderState: OrderState) {
    try {
       const orderIdStr = orderId.getId();
+      // Sincronizza con l'aggregato
+      let aggregateSubject  = `call.aggregate.order.${orderIdStr}.state.update.${orderState}`;
+      await this.natsService.publish(aggregateSubject, "");
 
-      let aggregateSubject  = `call.aggregate.order.cancel`;
-      let warehouseSubject  = `call.warehouse.${warehouse}.order.${orderIdStr}.cancel`;
+    } catch (error) {
+        console.error('Errore in orderStateUpdated:', error);
+        throw error;
+    }
+  }
 
-      await this.natsService.publish( aggregateSubject, { orderId: orderIdStr });
-      await this.natsService.publish( warehouseSubject, { orderId: orderIdStr });
+  async orderCancelled(orderId: OrderId) {
+   try {
+      const orderIdStr = orderId.getId();
+      // Sincronizza con l'aggregato
+      let aggregateSubject  = `call.aggregate.order.${orderIdStr}.cancel`;
+      await this.natsService.publish(aggregateSubject, "");
 
     } catch (error) {
         console.error('Errore in orderCancelled:', error);
@@ -98,15 +107,12 @@ SellOrderEventPublisher, ShipStockCommandPublisher {
   }
 
 
-  async orderCompleted(orderId: OrderId, warehouse: number) {
+  async orderCompleted(orderId: OrderId) {
    try {
       const orderIdStr = orderId.getId();
-
-      let aggregateSubject  = `call.aggregate.order.complete`;
-      let warehouseSubject  = `call.warehouse.${warehouse}.order.${orderIdStr}.complete`;
-
-      await this.natsService.publish( aggregateSubject, { orderId: orderIdStr });
-      await this.natsService.publish( warehouseSubject, { orderId: orderIdStr });
+      // Sincronizza con l'aggregato
+      let aggregateSubject  = `call.aggregate.order.${orderIdStr}.complete`;
+      await this.natsService.publish(aggregateSubject, "");
 
     } catch (error) {
         console.error('Errore in orderCompleted:', error);
@@ -121,14 +127,13 @@ SellOrderEventPublisher, ShipStockCommandPublisher {
     let subject: string;
 
     if (context.destination === 'aggregate') {
-      subject = `call.aggregate.orders.internal.new`;
+      subject = `call.aggregate.order.internal.new`;
       await this.natsService.publish( subject, { orderIdDTO, internalOrderDTO });
     } 
       else if (context.destination === 'warehouse' && context.warehouseId) {
         subject = `call.warehouse.${context.warehouseId}.order.internal.new`;
         await this.natsService.publish( subject, { orderIdDTO, internalOrderDTO });
       }
-    
   }
 
 
@@ -138,8 +143,7 @@ SellOrderEventPublisher, ShipStockCommandPublisher {
     let subject: string;
 
     if (context.destination === 'aggregate') {
-      subject = `call.aggregate.orders.sell.new`;
-      
+      subject = `call.aggregate.order.sell.new`;
       await this.natsService.publish( subject, { orderIdDTO, sellOrderDTO });
     } 
       else if (context.destination === 'warehouse' && context.warehouseId) {

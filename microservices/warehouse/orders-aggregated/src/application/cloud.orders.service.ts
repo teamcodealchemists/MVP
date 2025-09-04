@@ -19,6 +19,7 @@ export class CloudOrdersService {
     ) {}
 
     async syncUpdateOrderState(id: SyncOrderId, state: SyncOrderState): Promise<void> {
+        console.log("[AggregateO] Ricevuto segnale di updateState per l'ordine ", id.getId());
         // Aggiorna lo stato nella repository
         await this.cloudOrdersRepositoryMongo.syncUpdateOrderState(id, state);
 
@@ -53,7 +54,11 @@ export class CloudOrdersService {
     }
 
     async syncCancelOrder(id: SyncOrderId): Promise<void> {
-        await this.cloudOrdersRepositoryMongo.syncRemoveById(id);
+        const result = await this.cloudOrdersRepositoryMongo.syncRemoveById(id);
+        if (result) { // Se true, è stato aggiornato
+        console.log("[Aggregate] Cancellato l'ordine ", id);
+        } else 
+            console.error("[Aggregate] Errore: l'ordine ", id, " è già in stato CANCELED.");
     }
 
     async syncUpdateReservedStock(id: SyncOrderId, items: SyncOrderItem[]): Promise<void> {

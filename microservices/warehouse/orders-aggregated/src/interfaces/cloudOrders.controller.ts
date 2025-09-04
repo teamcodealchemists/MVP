@@ -73,7 +73,7 @@ SyncSellOrderEventListener, SyncUpdateOrderStateUseCase {
     }
 }
 
-  @MessagePattern(`call.aggregate.orders.sell.new`)
+  @MessagePattern(`call.aggregate.order.sell.new`)
   async syncAddSellOrder(@Payload() payload: any): Promise<void>  { 
     try { 
     const sellOrderDTO: SyncSellOrderDTO = {
@@ -95,7 +95,7 @@ SyncSellOrderEventListener, SyncUpdateOrderStateUseCase {
     }
   }
 
-  @MessagePattern(`call.aggregate.orders.internal.new`)
+  @MessagePattern(`call.aggregate.order.internal.new`)
   async syncAddInternalOrder(@Payload() payload: any): Promise<void> {    
     try {
       const internalOrderDTO: SyncInternalOrderDTO = {
@@ -117,14 +117,14 @@ SyncSellOrderEventListener, SyncUpdateOrderStateUseCase {
   }
 
 
-  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.*.state.update.*`) 
+  @MessagePattern(`call.aggregate.order.*.state.update.*`) 
   async updateOrderState(@Ctx() context: any): Promise<void> {  
     try {
       // ESTRAZIONE TOKEN DAL SUBJECT
       const tokens = context.getSubject().split('.');
 
-      const orderIdStr = tokens[4]; // Token 5 (es. I1001)
-      const orderStateStr = tokens[7]; // Token 8 (es. PROCESSING)
+      const orderIdStr = tokens[3]; // Token 4 (es. Sf8ad4c1f-f47a-482e-9e03-648751d93185)
+      const orderStateStr = tokens[6]; // Token 7 (es. PROCESSING)
       
       // VALIDAZIONE DEL DTO ed ESECUZIONE UPDATE
       let orderId: string = orderIdStr;
@@ -158,7 +158,7 @@ SyncSellOrderEventListener, SyncUpdateOrderStateUseCase {
         const orderIdDTO: SyncOrderIdDTO = { id: orderId };
         const orderIdDomain = await this.dataMapper.syncOrderIdToDomain(orderIdDTO);
         
-        await this.ordersService.syncUpdateOrderState(orderIdDomain, SyncOrderState.CANCELED);
+        await this.ordersService.syncCancelOrder(orderIdDomain);
           
       } catch (error) {
           console.error('[AggregateO] Errore nel sync della cancellazione dell\'ordine:', error);

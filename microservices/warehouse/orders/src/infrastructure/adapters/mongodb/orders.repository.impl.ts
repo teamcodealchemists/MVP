@@ -167,12 +167,9 @@ export class OrdersRepositoryMongo implements OrdersRepository {
     }
 
     async addSellOrder(order: SellOrder): Promise<void> {
-        try {
-            // Genera ID univoco 
-            const uniqueOrderId = await this.genUniqueId('S');
-            
+        try {          
             const newOrder = new SellOrder(
-                uniqueOrderId,
+                new OrderId(order.getOrderId()),
                 order.getItemsDetail(),
                 order.getOrderState(),
                 order.getCreationDate(),
@@ -211,13 +208,10 @@ export class OrdersRepositoryMongo implements OrdersRepository {
     }
 
     async addInternalOrder(order: InternalOrder): Promise<void> {
-        try {
-            // Genera ID univoco
-            const uniqueOrderId = await this.genUniqueId('I');
-            
+        try {          
             // Crea il nuovo ordine con l'ID unico
             const newOrder = new InternalOrder(
-                uniqueOrderId,
+                new OrderId(order.getOrderId()),
                 order.getItemsDetail(),
                 order.getOrderState(),
                 order.getCreationDate(),

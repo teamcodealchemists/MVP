@@ -178,7 +178,7 @@ SellOrderEventListener, ShipmentEventListener, UpdateOrderStateUseCase {
       // ESTRAZIONE TOKEN DAL SUBJECT
       const tokens = context.getSubject().split('.');
 
-      const orderIdStr = tokens[4]; // Token 5 (es. I1001)
+      const orderIdStr = tokens[4]; // Token 5 (es. Sf8ad4c1f-f47a-482e-9e03-648751d93185)
       const orderStateStr = tokens[7]; // Token 8 (es. PROCESSING)
       
       // VALIDAZIONE DEL DTO ed ESECUZIONE UPDATE
@@ -213,7 +213,7 @@ SellOrderEventListener, ShipmentEventListener, UpdateOrderStateUseCase {
         const orderIdDTO: OrderIdDTO = { id: orderId };
         const orderIdDomain = await this.dataMapper.orderIdToDomain(orderIdDTO);
         
-        await this.ordersService.updateOrderState(orderIdDomain, OrderState.CANCELED);
+        await this.ordersService.cancelOrder(orderIdDomain);
           
       } catch (error) {
           console.error('Errore nella cancellazione dell\'ordine:', error);
@@ -233,7 +233,7 @@ SellOrderEventListener, ShipmentEventListener, UpdateOrderStateUseCase {
           const orderIdDTO: OrderIdDTO = { id: orderId };
           const orderIdDomain = await this.dataMapper.orderIdToDomain(orderIdDTO);
           
-          await this.ordersService.updateOrderState(orderIdDomain, OrderState.COMPLETED);
+          await this.ordersService.completeOrder(orderIdDomain);
       } catch (error) {
           console.error('Errore nel completamento dell\'ordine:', error);
           throw error;
