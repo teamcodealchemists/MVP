@@ -6,20 +6,22 @@
     "test": "npm-run-all test:inventario test:ordini",
     "test:inventario": "cd warehouse/inventory && npm test",
     "test:ordini": "cd warehouse/orders && npm test",
-
     "test:cov": "npm-run-all test:cov:inventario test:cov:ordini",
     "test:cov:inventario": "cd warehouse/inventory && npm run test:cov",
     "test:cov:ordini": "cd warehouse/orders && npm run test:cov",
-
     "test:debug": "npm-run-all test:debug:inventario test:debug:ordini",
     "test:debug:inventario": "cd warehouse/inventory && npm run test:debug",
     "test:debug:ordini": "cd warehouse/orders && npm run test:debug || exit 0",
-
     "test:e2e": "npm-run-all test:e2e:inventario test:e2e:ordini",
     "test:e2e:inventario": "cd warehouse/inventory && npm run  test:e2e",
     "test:e2e:ordini": "cd warehouse/orders && npm run  test:e2e || exit 0"
   },
   "devDependencies": {
     "npm-run-all": "^4.1.5"
+  },
+  "dependencies": {
+    "@nestjs/microservices": "^11.1.6",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.2"
   }
 }
