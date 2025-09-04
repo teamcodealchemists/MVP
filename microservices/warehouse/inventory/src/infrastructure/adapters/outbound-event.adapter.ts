@@ -42,21 +42,21 @@ export class OutboundEventAdapter
     this.nc.publish('warehouse.critical.aboveMax', this.sc.encode(JSON.stringify(product)));
   }
 
-  stockAdded(product: Product, warehouseId: string): void {
+  stockAdded(product: Product, warehouseId: number): void {
     this.nc.publish(
       'warehouse.stock.added',
       this.sc.encode(JSON.stringify({ product, warehouseId })),
     );
   }
 
-  stockRemoved(productId: string, warehouseId: string): void {
+  stockRemoved(productId: string, warehouseId: number): void {
     this.nc.publish(
       'warehouse.stock.removed',
       this.sc.encode(JSON.stringify({ productId, warehouseId })),
     );
   }
 
-  stockUpdated(product: Product, warehouseId: string): void {
+  stockUpdated(product: Product, warehouseId: number): void {
     this.nc.publish(
       'warehouse.stock.updated',
       this.sc.encode(JSON.stringify({ product, warehouseId })),

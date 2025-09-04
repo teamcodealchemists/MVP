@@ -15,7 +15,7 @@ export class InventoryService {
     private readonly inventoryRepository: InventoryRepository,
     private readonly natsAdapter: OutboundEventAdapter,
   ) {
-    this.warehouseId = new WarehouseId(`${process.env.WAREHOUSE_ID}`);
+    this.warehouseId = new WarehouseId(Number(`${process.env.WAREHOUSE_ID}`));
   }
 
   async addProduct(newProduct: Product): Promise<void> {
@@ -47,7 +47,7 @@ export class InventoryService {
     return await this.inventoryRepository.getAllProducts();
   }
 
-  async getWarehouseId(): Promise<string> {
+  async getWarehouseId(): Promise<number> {
     return this.warehouseId.getId();
   }
 

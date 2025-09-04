@@ -1,13 +1,27 @@
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { connect, NatsConnection, StringCodec, Subscription } from 'nats';
+import { Injectable } from '@nestjs/common';
 import { ProductAddQuantityUseCase } from 'src/domain/use-cases/product-add-quantity.usecase';
 import { OrderRequestUseCase } from 'src/domain/use-cases/order-request.usecase';
 import { productQuantityDto } from 'src/interfaces/dto/productQuantity.dto';
 import { productQuantityArrayDto } from 'src/interfaces/dto/productQuantityArray.dto';
+import { InventoryService } from 'src/application/inventory.service';
 
 @Injectable()
-export class InboundEventListener implements OnModuleInit, OnModuleDestroy {
-  private nc: NatsConnection;
+export class InboundEventListener implements OrderRequestUseCase, ProductAddQuantityUseCase{
+  constructor(private readonly service : InventoryService ) {}
+  orderRequest(dto: productQuantityArrayDto): boolean {
+    console.log('Ricevuta richiesta ordine:', dto);
+    const result = await this.service.processOrder(dto);
+    return Promise.resolve(result); 
+  }
+
+  addQuantity(dto: productQuantityDto): void {
+    console.log('Aggiunta quantità prodotto:', dto);
+    this.service.addProductQuantity(dto);
+    return Promise.resolve();
+  }
+}
+
+  /*private nc: NatsConnection;
   private sc = StringCodec();
   private subAddQuantity: Subscription;
   private subOrderRequest: Subscription;
@@ -47,5 +61,4 @@ export class InboundEventListener implements OnModuleInit, OnModuleDestroy {
     await this.subAddQuantity?.unsubscribe();
     await this.subOrderRequest?.unsubscribe();
     await this.nc.drain();
-  }
-}
+  }*/
