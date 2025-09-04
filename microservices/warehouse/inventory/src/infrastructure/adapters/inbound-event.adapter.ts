@@ -44,14 +44,19 @@ EditStockUseCase {
   }
 
   async orderRequest(dto: ProductQuantityArrayDto): Promise<boolean> {
-    const products = DataMapper.toDomainProductQuantityArray(dto);
-    await this.service.checkProductAvailability(products);
+    const { orderId, productQuantities } = DataMapper.toDomainProductQuantityArray(dto);
+    await this.service.checkProductAvailability(orderId, productQuantities);
     return true;
   }
 
   async addQuantity(dto: ProductQuantityDto): Promise<void> {
-    const product = DataMapper.toDTOProductQuantity(dto.productId, dto.quantity);
+    const product = DataMapper.toDomainProductQuantity(dto);
     await this.service.addProductQuantity(product);
+  }
+
+  async shipOrderRequest(dto : ProductQuantityArrayDto) : Promise<void>{
+    const { orderId, productQuantities } = DataMapper.toDomainProductQuantityArray(dto);
+    await this.service.shipOrder(orderId, productQuantities);
   }
   
 

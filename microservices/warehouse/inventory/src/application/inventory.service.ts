@@ -6,6 +6,7 @@ import { ProductId } from 'src/domain/productId.entity';
 import { InventoryRepository } from 'src/domain/inventory.repository';
 import {ProductQuantity} from 'src/domain/productQuantity.entity';
 import { OutboundEventAdapter } from 'src/infrastructure/adapters/outbound-event.adapter';
+import { OrderId } from 'src/domain/orderId.entity';
 
 const logger = new Logger('InventoryService');
 
@@ -69,13 +70,13 @@ export class InventoryService {
     );
   }
 
-  async checkProductAvailability(productQuantities: ProductQuantity[]): Promise<boolean> {
+  async checkProductAvailability(orderId : OrderId, productQuantities: ProductQuantity[]): Promise<boolean> {
     for (const pq of productQuantities) {
       const product = await this.inventoryRepository.getById(pq.getId());
       if (!product) return false;
       if (product.getQuantity() < pq.getQuantity()) return false;
     }
-    return true;
+    return ;
   }
 
   async addProductQuantity(productQuantity: ProductQuantity): Promise<void> {
@@ -86,6 +87,11 @@ export class InventoryService {
     }
     product.setQuantity(product.getQuantity() + productQuantity.getQuantity());
     await this.inventoryRepository.updateProduct(product);
+    return Promise.resolve();
+  }
+
+  async shipOrder(order : OrderId, productQ :  ProductQuantity[]): Promise<void>{
+
     return Promise.resolve();
   }
 }

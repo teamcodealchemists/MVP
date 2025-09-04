@@ -13,6 +13,7 @@ import { BelowMinThresDto } from '../../interfaces/dto/belowMinThres.dto';
 import { AboveMaxThresDto } from '../../interfaces/dto/aboveMaxThres.dto';
 import { ProductQuantityDto } from '../../interfaces/dto/productQuantity.dto';
 import { ProductQuantityArrayDto } from 'src/interfaces/dto/productQuantityArray.dto';
+import { OrderId } from 'src/domain/orderId.entity';
 
 export const DataMapper = {
   toDomainProductId(productIdDTO: ProductIdDto): ProductId {
@@ -36,12 +37,22 @@ export const DataMapper = {
     return new Inventory(products);
   },
 
-  toDomainProductQuantityArray(productQuantityArrayDto: ProductQuantityArrayDto): ProductQuantity[] {
-    return productQuantityArrayDto.productQuantityArray.map(pq => new ProductQuantity(
+ toDomainProductQuantityArray(productQuantityArrayDto: ProductQuantityArrayDto): { 
+  orderId: OrderId; 
+  productQuantities: ProductQuantity[] 
+  } {
+  const productQuantities = productQuantityArrayDto.productQuantityArray.map(pq =>
+    new ProductQuantity(
       new ProductId(pq.productId.id),
       pq.quantity
-    ));
+    )
+  )
+  return {
+      orderId: new OrderId(productQuantityArrayDto.id.id),
+      productQuantities,
+    };
   },
+
 
   toDTOProductId(productId: ProductId): ProductIdDto {
     return {
