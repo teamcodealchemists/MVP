@@ -1,4 +1,3 @@
-import { Injectable } from '@nestjs/common';
 import { ProductAddQuantityUseCase } from 'src/domain/use-cases/product-add-quantity.usecase';
 import { OrderRequestUseCase } from 'src/domain/use-cases/order-request.usecase';
 import { ProductQuantityDto } from 'src/interfaces/dto/productQuantity.dto';
@@ -7,20 +6,12 @@ import { InventoryService } from 'src/application/inventory.service';
 import { DataMapper } from '../mappers/dataMapper';
 import { ProductId } from 'src/domain/productId.entity';
 import { Product } from 'src/domain/product.entity';
+import { Injectable } from '@nestjs/common';
 
 @Injectable()
-export class InboundEventListener implements
-OrderRequestUseCase,
-ProductAddQuantityUseCase {
+export class InboundEventListener {
   constructor(private readonly service : InventoryService ) {}
 
-  async orderRequest(productQuantityArrayDto: ProductQuantityArrayDto): Promise<boolean> {
-    return await this.service.checkProductAvailability(DataMapper.toDomainProductQuantityArray(productQuantityArrayDto));
-  }
-
-  async addQuantity(productQuantityDto: ProductQuantityDto): Promise<void> {
-    
-  }
 
 }
 
