@@ -9,6 +9,7 @@ import { Product } from 'src/domain/product.entity';
 import { Inventory } from 'src/domain/inventory.entity';
 import { Payload } from '@nestjs/microservices';
 import { OutboundEventAdapter } from 'src/infrastructure/adapters/outbound-event.adapter';
+import { WarehouseId } from 'src/domain/warehouseId.entity';
 
 
 @Controller()
@@ -27,7 +28,8 @@ export class CommandHandler {
       unitPrice: productObj.unitPrice,
       quantity: productObj.quantity,
       minThres: productObj.minThres,
-      maxThres: productObj.maxThres
+      maxThres: productObj.maxThres,
+      warehouseId : productObj.warehouseId
     };
 
     const product = DataMapper.toDomainProduct(productDTO);
