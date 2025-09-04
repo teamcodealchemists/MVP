@@ -76,7 +76,8 @@ export class InventoryService {
       if (!product) return false;
       if (product.getQuantity() < pq.getQuantity()) return false;
     }
-    return ;
+    
+    return true;
   }
 
   async addProductQuantity(productQuantity: ProductQuantity): Promise<void> {

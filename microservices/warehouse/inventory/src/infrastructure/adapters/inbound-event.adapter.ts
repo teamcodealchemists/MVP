@@ -34,8 +34,9 @@ EditStockUseCase {
   }
 
   // ottenere singolo prodotto
-  async handleGetProduct(productId: ProductId): Promise<Product | null> {
-    return await this.service.getProduct(productId);
+  async handleGetProduct(productId: ProductIdDto): Promise<Product | null> {
+    const id = DataMapper.toDomainProductId(productId);
+    return await this.service.getProduct(id);
   }
 
   // ottenere inventario completo
