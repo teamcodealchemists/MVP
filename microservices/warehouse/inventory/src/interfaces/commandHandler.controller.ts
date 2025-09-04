@@ -23,6 +23,7 @@ export class CommandHandler {
       name: productObj.name,
       unitPrice: productObj.unitPrice,
       quantity: productObj.quantity,
+      quantityReserved: productObj.reservedQuantities,
       minThres: productObj.minThres,
       maxThres: productObj.maxThres,
       warehouseId : productObj.warehouseId
@@ -73,6 +74,7 @@ export class CommandHandler {
       name: productObj.name,
       unitPrice: productObj.unitPrice,
       quantity: productObj.quantity,
+      quantityReserved: productObj.reservedQuantities,
       minThres: productObj.minThres,
       maxThres: productObj.maxThres,
       warehouseId : productObj.warehouseId
@@ -105,9 +107,7 @@ export class CommandHandler {
     const productIdDTO: ProductIdDto = {
       id: productIdObj.id,
     };
-
-    const productId = DataMapper.toDomainProductId(productIdDTO);
-    return Promise.resolve(await this.inboundEventListener.handleGetProduct(productId));
+    return Promise.resolve(await this.inboundEventListener.handleGetProduct(productIdDTO));
   }
 
 

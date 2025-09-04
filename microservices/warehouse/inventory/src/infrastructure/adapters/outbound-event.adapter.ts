@@ -50,12 +50,7 @@ export class OutboundEventAdapter
     return Promise.resolve();
   }
 
-  async insufficientProductAvailability(): Promise<void> {
-       //conversione domain -- dto
-    return Promise.resolve();
-  }
-
-  async sufficientProductAvailability(): Promise<void> {
+  async sufficientProductAvailability(order : OrderId): Promise<void> {
      //conversione domain -- dto
     return Promise.resolve();
   }

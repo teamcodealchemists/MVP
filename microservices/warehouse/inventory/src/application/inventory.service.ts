@@ -73,10 +73,12 @@ export class InventoryService {
   async checkProductAvailability(orderId : OrderId, productQuantities: ProductQuantity[]): Promise<boolean> {
     for (const pq of productQuantities) {
       const product = await this.inventoryRepository.getById(pq.getId());
-      if (!product) return false;
-      if (product.getQuantity() < pq.getQuantity()) return false;
+      if (!product || product.getQuantity() < pq.getQuantity()){
+        this.natsAdapter.reservedQuantities(orderId, productQuantities);
+        return false;
+      }
     }
-    
+    this.natsAdapter.sufficientProductAvailability(orderId);
     return true;
   }
 
@@ -92,7 +94,7 @@ export class InventoryService {
   }
 
   async shipOrder(order : OrderId, productQ :  ProductQuantity[]): Promise<void>{
-
+    //continuazione per domani
     return Promise.resolve();
   }
 }
