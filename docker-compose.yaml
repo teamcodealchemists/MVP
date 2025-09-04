@@ -57,6 +57,21 @@ services:
       - mongodb
       - resgate
 
+  state-aggregate:
+    build:
+      context: ./microservices/centralized/state-aggregate
+      dockerfile: Dockerfile
+    environment:
+      - MONGO_DB=mongodb://mongo:27017/state-aggregate
+    volumes:
+      - ./microservices/centralized/state-aggregate/src:/usr/src/app/src
+    networks:
+      - shared-warehouses
+    depends_on:
+      - nats
+      - mongodb
+      - resgate
+
 #==========================================================================#
 #                         Infrastructure Microservices                     #
 #==========================================================================#

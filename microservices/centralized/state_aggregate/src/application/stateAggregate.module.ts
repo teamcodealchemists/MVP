@@ -3,6 +3,7 @@ import { StateAggregateController } from '../interfaces/stateAggregate.controlle
 import { StateAggregateService } from './stateAggregate.service';
 import { NatsModule } from 'src/interfaces/nats/nats.module';
 import { MongooseModule } from '@nestjs/mongoose';
+import { CloudStateRepositoryMongo } from 'src/infrastructure/adapters/mongodb/cloudState.repository.impl';
 
 @Module({
   imports: [
@@ -10,6 +11,11 @@ import { MongooseModule } from '@nestjs/mongoose';
     NatsModule
   ],
   controllers: [StateAggregateController],
-  providers: [StateAggregateService],
+  providers: [
+    StateAggregateService,
+    { provide: 'CLOUDSTATEREPOSITORY', 
+      useClass: CloudStateRepositoryMongo
+    }
+  ],
 })
 export class StateAggregateModule {}
