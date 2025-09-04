@@ -1,11 +1,11 @@
 import { IsNumber, Min, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
-import { productIdDto } from './productId.dto';
+import { ProductIdDto } from './productId.dto';
 
-export class productQuantityDto {
+export class ProductQuantityDto {
   @ValidateNested()
-  @Type(() => productIdDto)
-  productId: productIdDto;
+  @Type(() => ProductIdDto)
+  productId: ProductIdDto;
 
   @IsNumber()
   @Min(0)

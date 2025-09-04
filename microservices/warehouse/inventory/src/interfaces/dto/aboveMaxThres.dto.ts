@@ -1,8 +1,10 @@
-import { IsUUID, IsNumber, Min } from 'class-validator';
+import { IsNumber, Min } from 'class-validator';
+import { ProductIdDto } from './productId.dto';
+import { Type } from 'class-transformer';
 
-export class aboveMaxThresDto {
-  @IsUUID()
-  id: string;
+export class AboveMaxThresDto {
+  @Type(() => ProductIdDto)
+  id: ProductIdDto;
 
   @IsNumber()
   @Min(0)
