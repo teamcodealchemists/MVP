@@ -1,8 +1,8 @@
 import { Controller, Logger } from '@nestjs/common';
 import { MessagePattern } from '@nestjs/microservices';
 import { InventoryService } from 'src/application/inventory.service';
-import { productDto } from './dto/product.dto';
-import { productIdDto } from './dto/productId.dto';
+import { ProductDto } from './dto/product.dto';
+import { ProductIdDto } from './dto/productId.dto';
 import { DataMapper } from '../infrastructure/mappers/dataMapper';
 import { plainToInstance } from 'class-transformer';
 import { Product } from 'src/domain/product.entity';
@@ -23,7 +23,7 @@ export class CommandHandler {
 
     const productObj = JSON.parse(data);
 
-    const productDTO: productDto = {
+    const productDTO: ProductDto = {
       id: productObj.id,
       name: productObj.name,
       unitPrice: productObj.unitPrice,
@@ -51,7 +51,7 @@ export class CommandHandler {
 
 
     const productObj = JSON.parse(data);
-    const productIdDTO: productIdDto = {
+    const productIdDTO: ProductIdDto = {
       id: productObj.id
     };
 
@@ -77,7 +77,7 @@ export class CommandHandler {
     const productObj = JSON.parse(data);
 
 
-    const productDTO: productDto = {
+    const productDTO: ProductDto = {
       id: productObj.id,
       name: productObj.name,
       unitPrice: productObj.unitPrice,
@@ -113,7 +113,7 @@ export class CommandHandler {
       return null;
     }
 
-    const productIdDTO: productIdDto = {
+    const productIdDTO: ProductIdDto = {
       id: productIdObj.id,
     };
 

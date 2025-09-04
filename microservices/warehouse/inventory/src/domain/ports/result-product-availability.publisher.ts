@@ -1,4 +1,4 @@
 export interface ResultProductAvailabilityPublisher {
-  insufficientProductAvailability(): void;
-  sufficientProductAvailability(): void;
+  insufficientProductAvailability(): Promise<void>;
+  sufficientProductAvailability(): Promise<void>;
 }

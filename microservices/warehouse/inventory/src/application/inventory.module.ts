@@ -11,7 +11,6 @@ import { OrderRequestUseCase } from 'src/domain/use-cases/order-request.usecase'
 
 @Module({
   imports: [
-    
     MongooseModule.forRoot(process.env.MONGO_URI || 'mongodb://localhost:27017/inventorydb'), 
     InventoryRepositoryModule,
   ],

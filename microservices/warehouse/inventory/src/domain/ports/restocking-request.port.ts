@@ -1,3 +1,3 @@
 export interface RestockingRequestPort {
-  requestRestock(productId: string, number: number): void;
+  requestRestock(productId: string, number: number): Promise<void>;
 }
