@@ -1,10 +1,10 @@
 import { ValidateNested, IsArray } from 'class-validator';
 import { Type } from 'class-transformer';
-import { productDto } from './product.dto';
+import { ProductDto } from './product.dto';
 
-export class inventoryDto {
+export class InventoryDto {
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => productDto)
-  productList: productDto[];
+  @Type(() => ProductDto)
+  productList: ProductDto[];
 }
