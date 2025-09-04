@@ -5,6 +5,7 @@ import { CloudDataMapper } from '../infrastructure/mappers/cloud.data.mapper';
 import { CloudOrdersRepositoryModule } from 'src/infrastructure/adapters/mongodb/cloud.orders.repository.module';
 import { NatsModule } from '../interfaces/nats/nats.module';
 import { CloudOrdersController } from 'src/interfaces/cloudOrders.controller';
+import { CloudInboundPortsAdapter } from 'src/infrastructure/adapters/cloudInboundPorts.adapter';
 import { CloudOutboundEventAdapter } from 'src/infrastructure/adapters/cloudOutboundEvent.adapter';
 
 @Module({
@@ -13,7 +14,7 @@ import { CloudOutboundEventAdapter } from 'src/infrastructure/adapters/cloudOutb
     NatsModule, 
     CloudOrdersRepositoryModule],
   controllers: [CloudOrdersController],
-  providers: [CloudOrdersService, CloudDataMapper, CloudOutboundEventAdapter],
+  providers: [CloudInboundPortsAdapter, CloudOrdersService, CloudDataMapper, CloudOutboundEventAdapter],
 })
 export class CloudOrdersModule {}
     

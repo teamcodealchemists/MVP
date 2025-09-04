@@ -31,41 +31,6 @@ describe("InternalOrderDTO Validation", () => {
   expect(errors.length).toBe(0);
   });
 
-/*     it("should fail if orderId has wrong format", async () => {
-    const dtoPlain = {
-      orderId: { id: "NOT_VALID_FORMAT" }, //  Formato non valido (manca UUID)
-      items: [{ item: { itemId: { id: 1}, quantity: 5 }, quantityReserved: 5, unitPrice: 29.99 }],
-      orderState: { orderState: "PENDING" },
-      creationDate: new Date(),
-      warehouseDeparture: 1,
-      warehouseDestination: 2
-    };
-
-    const dto = plainToInstance(InternalOrderDTO, dtoPlain);
-    const errors = await validate(dto);
-    
-    console.log('Errors for wrong orderId format:', errors.map(e => ({
-      property: e.property,
-      constraints: e.constraints,
-      value: e.value
-    })));
-
-    expect(errors.length).toBeGreaterThan(0);
-    
-    // Cerca errori su orderId o nei suoi children
-    const hasOrderIdError = errors.some(error => 
-      error.property === 'orderId' ||
-      (error.children && error.children.some(child => 
-        child.property === 'orderId' || 
-        (child.children && child.children.some(grandChild => 
-          grandChild.property === 'id' // Cerca errori sulla proprietà 'id' di OrderIdDTO
-        ))
-      ))
-    );
-    
-    expect(hasOrderIdError).toBe(true);
-  }); */
-
   it("should fail if orderId doesn't start with I or S", async () => {
     const dtoPlain = {
       orderId: { id: "X-1234-1234-1234-123456789012" }, // Inizia con X invece di I/S
@@ -89,22 +54,7 @@ describe("InternalOrderDTO Validation", () => {
     expect(errors.length).toBeGreaterThan(0);
   });
 
-/*   it("should accept valid Internal OrderId format", async () => {
-    const dtoPlain = {
-      orderId: { id: "Ia2b2e2f2-471e-4b9c-879d-261e006eb804" }, // Formato valido
-      items: [{ item: { itemId: { id: 1}, quantity: 5 }, quantityReserved: 5, unitPrice: 29.99 }],
-      orderState: { orderState: "PENDING" },
-      creationDate: new Date(),
-      warehouseDeparture: 1,
-      warehouseDestination: 2
-    };
 
-    const dto = plainToInstance(InternalOrderDTO, dtoPlain);
-    const errors = await validate(dto);
-    
-    expect(errors.length).toBe(0);
-  });
- */
   it("should fail if orderState is not a valid OrderState", async () => {
     const dtoPlain = {
       orderId: { id: "I7f4837d0-246a-4c75-8589-dfe5f7f4c52a" },
@@ -124,23 +74,6 @@ describe("InternalOrderDTO Validation", () => {
 
     const dto = plainToInstance(InternalOrderDTO, dtoPlain);
     const errors = await validate(dto);
-    
-    // DEBUG DETTAGLIATO
-    console.log('=== ORDER STATE VALIDATION DEBUG ===');
-    console.log('DTO:', dto);
-    console.log('Errors:', errors);
-    errors.forEach(error => {
-      console.log(`Property: ${error.property}`);
-      console.log(`Constraints: ${JSON.stringify(error.constraints)}`);
-      console.log(`Value: ${JSON.stringify(error.value)}`);
-      if (error.children) {
-        error.children.forEach(child => {
-          console.log(`  Child: ${child.property}`);
-          console.log(`  Constraints: ${JSON.stringify(child.constraints)}`);
-          console.log(`  Value: ${JSON.stringify(child.value)}`);
-        });
-      }
-    });
 
     expect(errors.length).toBeGreaterThan(0);
     

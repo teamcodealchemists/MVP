@@ -5,6 +5,7 @@ import { DataMapper } from '../infrastructure/mappers/data.mapper';
 import { OrdersRepositoryModule } from 'src/infrastructure/adapters/mongodb/orders.repository.module';
 import { NatsModule } from '../interfaces/nats/nats.module';
 import { OrdersController } from 'src/interfaces/orders.controller';
+import { InboundPortsAdapter } from 'src/infrastructure/adapters/inboundPorts.adapter';
 import { OutboundEventAdapter } from 'src/infrastructure/adapters/outboundEvent.adapter';
 
 @Module({
@@ -13,7 +14,7 @@ import { OutboundEventAdapter } from 'src/infrastructure/adapters/outboundEvent.
     NatsModule, 
     OrdersRepositoryModule],
   controllers: [OrdersController],
-  providers: [OrdersService, DataMapper, OutboundEventAdapter],
+  providers: [InboundPortsAdapter, OrdersService, DataMapper, OutboundEventAdapter],
 })
 export class OrdersModule {}
     

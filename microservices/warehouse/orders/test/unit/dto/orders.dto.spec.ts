@@ -44,7 +44,7 @@ describe('OrdersDTO Validation', () => {
       ],
     };
 
-    // Debug: validiamo ogni parte separatamente
+    // Debug: valido ogni parte separatamente
     console.log('=== VALIDATING SELL ORDER ===');
     const sellOrder = plainToInstance(SellOrderDTO, dtoPlain.sellOrders[0]);
     const sellErrors = await validate(sellOrder);
@@ -58,36 +58,6 @@ describe('OrdersDTO Validation', () => {
     console.log('=== VALIDATING ORDERS DTO ===');
     const dto = plainToInstance(OrdersDTO, dtoPlain);
     const errors = await validate(dto);
-    
-    // Debug dettagliato degli errori di OrdersDTO
-    if (errors.length > 0) {
-      console.log('OrdersDTO validation errors:');
-      errors.forEach((error, index) => {
-        console.log(`\nError ${index + 1}:`);
-        console.log('Property:', error.property);
-        console.log('Constraints:', error.constraints);
-        console.log('Value type:', typeof error.value);
-        
-        if (error.children && error.children.length > 0) {
-          console.log('Children:');
-          error.children.forEach((child, childIndex) => {
-            console.log(`  Child ${childIndex + 1}:`);
-            console.log('    Property:', child.property);
-            console.log('    Constraints:', child.constraints);
-            console.log('    Value:', child.value);
-            
-            if (child.children && child.children.length > 0) {
-              console.log('    Nested children:');
-              child.children.forEach((nested, nestedIndex) => {
-                console.log(`      Nested ${nestedIndex + 1}:`);
-                console.log('        Property:', nested.property);
-                console.log('        Constraints:', nested.constraints);
-              });
-            }
-          });
-        }
-      });
-    }
 
     expect(errors.length).toBe(0);
   });
