@@ -3,5 +3,6 @@ import { productQuantityArrayDto } from 'src/interfaces/dto/productQuantityArray
 import { InventoryService } from '../../application/inventory.service';
 
 export interface OrderRequestUseCase {
-  orderRequest(dto: productQuantityArrayDto): boolean;
+  orderRequest(dto: productQuantityArrayDto): Promise<boolean>;
+  shipOrderRequest(dto : productQuantityArrayDto) : Promise<void>;
 }

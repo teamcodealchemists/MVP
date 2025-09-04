@@ -8,18 +8,23 @@ import { InventoryService } from 'src/application/inventory.service';
 @Injectable()
 export class InboundEventListener implements OrderRequestUseCase, ProductAddQuantityUseCase{
   constructor(private readonly service : InventoryService ) {}
-  orderRequest(dto: productQuantityArrayDto): boolean {
+  async orderRequest(dto: productQuantityArrayDto): Promise<boolean> {
     console.log('Ricevuta richiesta ordine:', dto);
     const result = await this.service.processOrder(dto);
     return Promise.resolve(result); 
   }
 
-  addQuantity(dto: ProductQuantityDto): void {
+  async addQuantity(dto: ProductQuantityDto): Promise<void> {
     console.log('Aggiunta quantità prodotto:', dto);
     this.service.addProductQuantity(dto);
     return Promise.resolve();
   }
-}
+
+  async shipOrderRequest(dto : productQuantityArrayDto) : Promise<void>{
+
+    return Promise.resolve();
+  }
+} 
 
   /*private nc: NatsConnection;
   private sc = StringCodec();
