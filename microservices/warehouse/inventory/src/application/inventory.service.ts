@@ -23,18 +23,18 @@ export class InventoryService {
   async addProduct(newProduct: Product): Promise<void> {
     await this.inventoryRepository.addProduct(newProduct);
      console.log('Publishing stockAdded event', newProduct);
-    this.natsAdapter.stockAdded(newProduct, this.warehouseId.getId());
+    this.natsAdapter.stockAdded(newProduct, this.warehouseId);
      console.log('pUBBLICATO stockAdded event');
   }
 
   async removeProduct(id: ProductId): Promise<boolean> {
     return await this.inventoryRepository.removeById(id);
-    this.natsAdapter.stockRemoved(id.getId(), this.warehouseId.getId());
+    this.natsAdapter.stockRemoved(id, this.warehouseId);
   }
 
   async editProduct(editedProduct: Product): Promise<void> {
     await this.inventoryRepository.updateProduct(editedProduct);
-    this.natsAdapter.stockUpdated(editedProduct, this.warehouseId.getId());
+    this.natsAdapter.stockUpdated(editedProduct, this.warehouseId);
     return Promise.resolve();
   }
 

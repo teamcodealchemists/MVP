@@ -7,11 +7,41 @@ import { DataMapper } from '../mappers/dataMapper';
 import { ProductId } from 'src/domain/productId.entity';
 import { Product } from 'src/domain/product.entity';
 import { Injectable } from '@nestjs/common';
+import { Inventory } from 'src/domain/inventory.entity';
+import { ProductIdDto } from 'src/interfaces/dto/productId.dto';
+import { ProductDto } from 'src/interfaces/dto/product.dto';
 
 @Injectable()
 export class InboundEventListener {
   constructor(private readonly service : InventoryService ) {}
+   async newStock(dto: ProductDto): Promise<void> {
+    const product = DataMapper.toDomainProduct(dto);
+    await this.service.addProduct(product);
+  }
 
+  // rimozione stock
+  async removeStock(dto: ProductIdDto): Promise<void> {
+    const productId = new ProductId(dto.id);
+    await this.service.removeProduct(productId);
+  }
+
+  // modifica stock
+  async editStock(dto: ProductDto): Promise<void> {
+    const product = DataMapper.toDomainProduct(dto);
+    await this.service.editProduct(product);
+  }
+
+  // ottenere singolo prodotto
+  async handleGetProduct(productId: ProductId): Promise<Product | null> {
+    return await this.service.getProduct(productId);
+  }
+
+  // ottenere inventario completo
+  async getInventory(): Promise<Inventory> {
+    return Promise.resolve(await this.service.getInventory());
+  }
+
+  
 
 }
 
