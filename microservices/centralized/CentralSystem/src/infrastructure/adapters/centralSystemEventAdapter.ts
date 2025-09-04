@@ -21,6 +21,8 @@ import { inventoryDto } from "src/interfaces/http/dto/inventory.dto";
 import { OrdersDTO } from "src/interfaces/http/dto/orders.dto";
 import { WarehouseStateDTO } from "src/interfaces/http/dto/warehouseState.dto";
 import { InternalOrderDTO } from "src/interfaces/http/dto/internalOrder.dto";
+import { OrderId } from "src/domain/orderId.entity";
+import { ProductId } from "src/domain/productId.entity";
 
 @Injectable()
 export class OutboundPortsAdapter implements 
@@ -71,13 +73,13 @@ NotificationPublisher
         return Promise.resolve(warehouseStatesDTO);
     }
 
-    async sendOrder(message : string): Promise<void> {
-        await this.centralSystemHandler.handleRequestOrdResult(message);
+    async sendOrder(message : string, orderId : OrderId, warehouseId : WarehouseId): Promise<void> {
+        await this.centralSystemHandler.handleRequestOrdResult(message, orderId, warehouseId);
         return Promise.resolve();
     }
 
-    async sendInventory(message : string): Promise<void> {
-        await this.centralSystemHandler.handleRequestInvResult(message);
+    async sendInventory(message : string, productId : ProductId, warehouseId : WarehouseId): Promise<void> {
+        await this.centralSystemHandler.handleRequestInvResult(message, productId , warehouseId);
         return Promise.resolve();
     }
 

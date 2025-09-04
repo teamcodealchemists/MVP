@@ -6,6 +6,9 @@ import { WarehouseState } from "../../src/domain/warehouseState.entity";
 import { firstValueFrom } from "rxjs";
 import { InternalOrderDTO } from "./http/dto/internalOrder.dto";
 import { warehouseIdDto } from "./http/dto/warehouseId.dto";
+import { OrderId } from "src/domain/orderId.entity";
+import { WarehouseId } from "src/domain/warehouseId.entity";
+import { ProductId } from "src/domain/productId.entity";
 @Injectable()
 export class centralSystemHandler implements OnModuleInit {
   constructor(
@@ -30,7 +33,7 @@ export class centralSystemHandler implements OnModuleInit {
   async handleOrder(order: InternalOrderDTO): Promise<void> {
     console.log("handler : Magazzino mandato! \n"+ order);
     try {
-      this.natsClient.emit("order.internal.create", order);
+      this.natsClient.emit("call.warehouse."+order.warehouseDeparture+".order.internal.new", order);
     } catch (error) {
       console.error("Error creating internal order:", error);
       throw error;
@@ -45,7 +48,7 @@ export class centralSystemHandler implements OnModuleInit {
 
   async handleCloudOrdersRequest(): Promise<Orders> {
     return Promise.resolve(await firstValueFrom(
-        this.natsClient.send("cloud.orders.request", {})
+        this.natsClient.send("get.aggregate.orders", {})
     ));
   }
 
@@ -55,7 +58,7 @@ export class centralSystemHandler implements OnModuleInit {
     ));
   }
 
-   async handleRequestInvResult(message: string): Promise<void> {
+   async handleRequestInvResult(message : string, productId : ProductId, warehouseId : WarehouseId): Promise<void> {
     /*
     console.log("----------------------------------------------------------------------------------------------");
     console.log("|Handler announcement|");
@@ -65,14 +68,14 @@ export class centralSystemHandler implements OnModuleInit {
     this.natsClient.emit("send.InvRequestResult", { message });
     return Promise.resolve();
   }
-    async handleRequestOrdResult(message: string): Promise<void> {
+    async handleRequestOrdResult(message : string, orderId : OrderId, warehouseId : WarehouseId): Promise<void> {
     /*
     console.log("----------------------------------------------------------------------------------------------");
     console.log("|Handler announcement|");
     console.log(message);
     console.log("----------------------------------------------------------------------------------------------");
     */
-    this.natsClient.emit("send.OrdRequestResult", { message });
+    this.natsClient.emit("call.warehouse."+warehouseId+".order."+orderId+".cancel", { message });
     return Promise.resolve();
   }
 }

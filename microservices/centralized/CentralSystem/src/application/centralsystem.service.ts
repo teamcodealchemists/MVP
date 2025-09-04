@@ -176,7 +176,7 @@ export class CentralSystemService {
         //console.log("Magazzino : "+whId+"\nresidualQty >= product.getMinThres()\n availableQty : " + availableQty + "\n pendingQtyInternal : "+ pendingQtyInternal + "\n pendingQtySell : "+ pendingQtySell + "\n residualQty : "+ residualQty);
       }
     }
-    this.outboundPortsAdapter.sendInventory("MIN - Non disponibile");
+    this.outboundPortsAdapter.sendInventory("MIN - Non disponibile", new ProductId(product.getId()), new WarehouseId(product.getIdWarehouse()));
     return Promise.resolve()
   }
 
@@ -303,7 +303,7 @@ async CheckInsufficientQuantity(
 
   if (productsToAllocate.length > 0) {
     console.log("Alcuni prodotti non hanno quantità sufficiente nei magazzini:", productsToAllocate.map((p) => p.getItemId()));
-    this.outboundPortsAdapter.sendOrder("CANCELORDER");
+    this.outboundPortsAdapter.sendOrder("CANCELORDER", new OrderId(orderQuantity.getId()), warehouseId);
     return Promise.resolve();
   }else{
     //this.logger.log(`Received orderQuantity: ${JSON.stringify(internalOrdersToCreate)}`);
@@ -407,7 +407,7 @@ async CheckInsufficientQuantity(
         return;
       }//else console.log("!residualQty <= productInInv.getMaxThres()");
     }
-    this.outboundPortsAdapter.sendInventory("MAX - Non disponibile");
+    this.outboundPortsAdapter.sendInventory("MAX - Non disponibile", new ProductId(product.getId()), new WarehouseId(product.getIdWarehouse()));
     return Promise.resolve()
   }
   

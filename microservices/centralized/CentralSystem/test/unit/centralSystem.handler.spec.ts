@@ -52,7 +52,7 @@ describe('centralSystemHandler', () => {
     orState.orderState = OrderState.PENDING;
     const order: InternalOrderDTO = {orderId: orId, items: [],orderState: orState, creationDate: new Date(),warehouseDeparture: 1,warehouseDestination: 2};
     await handler.handleOrder(order);
-    expect(natsClient.emit).toHaveBeenCalledWith('order.internal.create', order);
+    expect(natsClient.emit).toHaveBeenCalledWith('call.warehouse.'+order.warehouseDeparture+'.order.internal.new', order);
   });
 
   it('should send cloud inventory request and return Inventory', async () => {
@@ -67,7 +67,7 @@ describe('centralSystemHandler', () => {
     const mockOrders = new Orders([], []);
     (natsClient.send as jest.Mock).mockReturnValue(of(mockOrders));
     const result = await handler.handleCloudOrdersRequest();
-    expect(natsClient.send).toHaveBeenCalledWith('cloud.orders.request', {});
+    expect(natsClient.send).toHaveBeenCalledWith('get.aggregate.orders', {});
     expect(result).toBe(mockOrders);
   });
 
