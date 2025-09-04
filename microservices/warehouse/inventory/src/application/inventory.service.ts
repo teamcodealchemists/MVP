@@ -1,11 +1,13 @@
 import { Inventory } from 'src/domain/inventory.entity';
-import { Injectable, Inject, NotFoundException } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException, Logger } from '@nestjs/common';
 import { WarehouseId } from '../domain/warehouseId.entity';
 import { Product } from 'src/domain/product.entity';
 import { ProductId } from 'src/domain/productId.entity';
 import { InventoryRepository } from 'src/domain/inventory.repository';
 import {ProductQuantity} from 'src/domain/productQuantity.entity';
 import { OutboundEventAdapter } from 'src/infrastructure/adapters/outbound-event.adapter';
+
+const logger = new Logger('InventoryService');
 
 @Injectable()
 export class InventoryService {
@@ -33,6 +35,7 @@ export class InventoryService {
   async editProduct(editedProduct: Product): Promise<void> {
     await this.inventoryRepository.updateProduct(editedProduct);
     this.natsAdapter.stockUpdated(editedProduct, this.warehouseId.getId());
+    return Promise.resolve();
   }
 
   async getProduct(id: ProductId): Promise<Product> {
@@ -71,5 +74,16 @@ export class InventoryService {
       if (product.getQuantity() < pq.getQuantity()) return false;
     }
     return true;
+  }
+
+  async addProductQuantity(productQuantity: ProductQuantity): Promise<void> {
+    const product = await this.inventoryRepository.getById(productQuantity.getId());
+    if (!product) {
+      logger.warn(`Product with id ${productQuantity.getId().getId()} not found`);
+      throw new NotFoundException(`Product with id ${productQuantity.getId().getId()} not found`);
+    }
+    product.setQuantity(product.getQuantity() + productQuantity.getQuantity());
+    await this.inventoryRepository.updateProduct(product);
+    return Promise.resolve();
   }
 }

@@ -1,15 +1,18 @@
 // DataMapper.ts
-import { ProductDto } from '../../interfaces/dto/product.dto';
-import { ProductIdDto } from '../../interfaces/dto/productId.dto';
-import { InventoryDto } from '../../interfaces/dto/inventory.dto';
 import { Product } from '../../domain/product.entity';
 import { ProductId } from '../../domain/productId.entity';
 import { Inventory } from '../../domain/inventory.entity';
 import { WarehouseId } from '../../domain/warehouseId.entity';
+import { ProductQuantity } from 'src/domain/productQuantity.entity';
+
+import { ProductDto } from '../../interfaces/dto/product.dto';
+import { ProductIdDto } from '../../interfaces/dto/productId.dto';
+import { InventoryDto } from '../../interfaces/dto/inventory.dto';
 import { WarehouseIdDto } from '../../interfaces/dto/warehouseId.dto';
 import { BelowMinThresDto } from '../../interfaces/dto/belowMinThres.dto';
 import { AboveMaxThresDto } from '../../interfaces/dto/aboveMaxThres.dto';
 import { ProductQuantityDto } from '../../interfaces/dto/productQuantity.dto';
+import { ProductQuantityArrayDto } from 'src/interfaces/dto/productQuantityArray.dto';
 
 export const DataMapper = {
   toDomainProductId(productIdDTO: ProductIdDto): ProductId {
@@ -32,6 +35,14 @@ export const DataMapper = {
     const products = inventoryDTO.productList.map(DataMapper.toDomainProduct);
     return new Inventory(products);
   },
+
+  toDomainProductQuantityArray(productQuantityArrayDto: ProductQuantityArrayDto): ProductQuantity[] {
+    return productQuantityArrayDto.productQuantityArray.map(pq => new ProductQuantity(
+      new ProductId(pq.productId.id),
+      pq.quantity
+    ));
+  },
+
   toDtoProduct(product: Product): ProductDto {
     return {
       id: { id: product.getId().getId() },

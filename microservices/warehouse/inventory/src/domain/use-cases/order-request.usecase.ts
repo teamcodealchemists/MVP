@@ -1,7 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { productQuantityArrayDto } from 'src/interfaces/dto/productQuantityArray.dto';
-import { InventoryService } from '../../application/inventory.service';
+import { ProductQuantityArrayDto } from 'src/interfaces/dto/productQuantityArray.dto';
 
 export interface OrderRequestUseCase {
-  orderRequest(dto: productQuantityArrayDto): boolean;
+  orderRequest(productQuantityArrayDto: ProductQuantityArrayDto): Promise<boolean>;
 }

@@ -2,27 +2,30 @@ import { Injectable } from '@nestjs/common';
 import { ProductAddQuantityUseCase } from 'src/domain/use-cases/product-add-quantity.usecase';
 import { OrderRequestUseCase } from 'src/domain/use-cases/order-request.usecase';
 import { ProductQuantityDto } from 'src/interfaces/dto/productQuantity.dto';
-import { productQuantityArrayDto } from 'src/interfaces/dto/productQuantityArray.dto';
+import { ProductQuantityArrayDto } from 'src/interfaces/dto/productQuantityArray.dto';
 import { InventoryService } from 'src/application/inventory.service';
+import { DataMapper } from '../mappers/dataMapper';
+import { ProductId } from 'src/domain/productId.entity';
+import { Product } from 'src/domain/product.entity';
 
 @Injectable()
-export class InboundEventListener implements OrderRequestUseCase, ProductAddQuantityUseCase{
+export class InboundEventListener implements
+OrderRequestUseCase,
+ProductAddQuantityUseCase {
   constructor(private readonly service : InventoryService ) {}
-  orderRequest(dto: productQuantityArrayDto): boolean {
-    console.log('Ricevuta richiesta ordine:', dto);
-    const result = await this.service.processOrder(dto);
-    return Promise.resolve(result); 
+
+  async orderRequest(productQuantityArrayDto: ProductQuantityArrayDto): Promise<boolean> {
+    return await this.service.checkProductAvailability(DataMapper.toDomainProductQuantityArray(productQuantityArrayDto));
   }
 
-  addQuantity(dto: ProductQuantityDto): void {
-    console.log('Aggiunta quantità prodotto:', dto);
-    this.service.addProductQuantity(dto);
-    return Promise.resolve();
+  async addQuantity(productQuantityDto: ProductQuantityDto): Promise<void> {
+    
   }
+
 }
 
   /*private nc: NatsConnection;
-  private sc = StringCodec();
+  private sc = StringCodec(); 
   private subAddQuantity: Subscription;
   private subOrderRequest: Subscription;
 
