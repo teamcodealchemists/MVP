@@ -6,16 +6,20 @@ services:
       - "27017:27017"
     volumes:
       - mongo-data:/data/db
+    networks:
+      - shared-warehouses
 
   nats:
-    image: nats:latest
-    container_name: nats
-    ports:
-      - "4222:4222"   # porta client
-      - "6222:6222"   # cluster
-      - "8222:8222"   # monitoring
-    command: >
-      -js
+     container_name: nats
+     image: nats:latest
+     ports:
+       - "4222:4222"
+     command:
+       - "--jetstream"
+       - "--debug"
+       - "--trace"
+     networks:
+       - shared-warehouses 
 
   resgate:
     image: resgateio/resgate
@@ -24,32 +28,33 @@ services:
       - "8080:8080"
     command: >
       -n nats://nats:4222
+    networks:
+       - shared-warehouses
 
   mvp-inventory:
     build:
       context: ./microservices/warehouse/inventory
       dockerfile: Dockerfile
-    container_name: mvp-inventory-1
-    ports:
-      - "3001:3000"   
+    container_name: mvp-inventory-1   
     environment:
       - MONGO_URI=mongodb://mongo:27017/inventory
+      - WAREHOUSE_ID=1
       - NATS_URL=nats://nats:4222
     volumes:
-      - ./microservices/warehouse/inventory:/usr/src/app
-      - /usr/src/app/node_modules
+      - ./microservices/warehouse/inventory:/app
+      - /app/node_modules
     command: npm run start:dev
     depends_on:
       - mongo
       - nats
+    networks:
+      - shared-warehouses
 
   mvp-inventory-aggregated:
     build:
       context: ./microservices/warehouse/inventory-aggregated
       dockerfile: Dockerfile
     container_name: mvp-inventory-aggregated-1
-    ports:
-      - "3002:3000"
     environment:
       - MONGO_URI=mongodb://mongo:27017/inventory-aggregated
       - NATS_URL=nats://nats:4222
@@ -60,6 +65,12 @@ services:
     depends_on:
       - mongo
       - nats
+    networks:
+      - shared-warehouses
 
 volumes:
   mongo-data:
+
+networks:
+  shared-warehouses:
+    driver: bridge

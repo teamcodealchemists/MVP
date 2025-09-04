@@ -8,13 +8,13 @@ import { CloudDataMapper } from '../infrastructure/mappers/cloud-data.mapper';
 
 @Module({
   imports: [
-    MongooseModule.forRoot(process.env.MONGO_URI || 'mongodb://localhost:27017/inventory'),
+    MongooseModule.forRoot(process.env.MONGO_URI!),
     MongooseModule.forFeature([{ name: SyncProduct.name, schema: SyncProductSchema }]),
   ],
   providers: [
     InventoryAggregatedService,
     CloudDataMapper,
-    {
+    { 
       provide: 'INVENTORYREPOSITORY',
       useClass: InventoryAggregatedRepositoryImpl,
     },

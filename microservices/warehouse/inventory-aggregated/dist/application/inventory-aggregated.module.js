@@ -20,7 +20,7 @@ exports.InventoryAggregatedModule = InventoryAggregatedModule;
 exports.InventoryAggregatedModule = InventoryAggregatedModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            mongoose_1.MongooseModule.forRoot(process.env.MONGO_URI || 'mongodb://localhost:27017/inventory'),
+            mongoose_1.MongooseModule.forRoot(process.env.MONGO_URI),
             mongoose_1.MongooseModule.forFeature([{ name: syncProduct_schema_1.SyncProduct.name, schema: syncProduct_schema_2.SyncProductSchema }]),
         ],
         providers: [
