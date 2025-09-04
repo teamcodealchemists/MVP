@@ -7,6 +7,7 @@ import { Product } from 'src/domain/product.entity';
 import { ProductId } from 'src/domain/productId.entity';
 import { ProductDocument } from './schemas/product.schema';
 import { ProductQuantity } from 'src/domain/productQuantity.entity';
+import { WarehouseId } from 'src/domain/warehouseId.entity';
 
 
 @Injectable()
@@ -41,6 +42,7 @@ export class InventoryRepositoryMongo implements InventoryRepository {
         name: product.getName(),
         unitPrice: product.getUnitPrice(),
         quantity: product.getQuantity(),
+        quantityReserved: product.getQuantityReserved(),
         minThres: product.getMinThres(),
         maxThres: product.getMaxThres(),
       },
@@ -56,8 +58,9 @@ export class InventoryRepositoryMongo implements InventoryRepository {
       productDoc.name,
       productDoc.unitPrice,
       productDoc.quantity,
+      productDoc.quantityReserved,
       productDoc.minThres,
-      productDoc.maxThres,
+      productDoc.maxThres
     );
   }
 
@@ -70,6 +73,7 @@ export class InventoryRepositoryMongo implements InventoryRepository {
           doc.name,
           doc.unitPrice,
           doc.quantity,
+          doc.quantityReserved,
           doc.minThres,
           doc.maxThres,
         ),
