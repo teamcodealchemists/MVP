@@ -1,4 +1,4 @@
-import { Controller } from '@nestjs/common';
+import { Controller, Logger } from '@nestjs/common';
 import { MessagePattern } from '@nestjs/microservices';
 import { InventoryService } from 'src/application/inventory.service';
 import { productDto } from './dto/product.dto';
@@ -10,11 +10,12 @@ import { Inventory } from 'src/domain/inventory.entity';
 import { Payload } from '@nestjs/microservices';
 import { OutboundEventAdapter } from 'src/infrastructure/adapters/outbound-event.adapter';
 import { WarehouseId } from 'src/domain/warehouseId.entity';
+import { InboundEventListener } from 'src/infrastructure/adapters/inbound-event.listener';
 
-
+const logger = new Logger('commandHandler');
 @Controller()
 export class CommandHandler {
-  constructor(private readonly inventoryService: InventoryService) { }
+  constructor(private readonly inboundEventListener : InboundEventListener) { }
 
   @MessagePattern(`api.warehouse.1.newStock`)
   async handleNewStock(payload: any): Promise<void> {
@@ -33,7 +34,7 @@ export class CommandHandler {
     };
 
     const product = DataMapper.toDomainProduct(productDTO);
-    return this.inventoryService.addProduct(product);
+    return //this.inventoryService.addProduct(product);
 
   }
 
@@ -56,7 +57,7 @@ export class CommandHandler {
 
 
     const productId = DataMapper.toDomainProductId(productIdDTO);
-    return this.inventoryService.removeProduct(productId);
+    return //this.inventoryService.removeProduct(productId);
 
   }
 
@@ -82,12 +83,13 @@ export class CommandHandler {
       unitPrice: productObj.unitPrice,
       quantity: productObj.quantity,
       minThres: productObj.minThres,
-      maxThres: productObj.maxThres
+      maxThres: productObj.maxThres,
+      warehouseId : productObj.warehouseId
     };
 
     const product = DataMapper.toDomainProduct(productDTO);
     console.log(product);
-    return this.inventoryService.editProduct(product)
+    return //this.inventoryService.editProduct(product)
   }
 
 
@@ -116,13 +118,13 @@ export class CommandHandler {
     };
 
     const productId = DataMapper.toDomainProductId(productIdDTO);
-    return this.inventoryService.getProduct(productId);
+    return //this.inventoryService.getProduct(productId);
   }
 
 
   @MessagePattern(`api.warehouse.${process.env.WAREHOUSE_ID}.getInventory`)
   async handleGetInventory(): Promise<Inventory> {
-    return this.inventoryService.getInventory();
+    return //this.inventoryService.getInventory();
   }
 
 }
