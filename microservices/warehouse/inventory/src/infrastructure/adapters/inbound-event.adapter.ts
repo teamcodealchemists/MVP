@@ -7,11 +7,17 @@ import { DataMapper } from '../mappers/dataMapper';
 import { ProductId } from 'src/domain/productId.entity';
 import { Product } from 'src/domain/product.entity';
 import { Injectable } from '@nestjs/common';
+import { EditStockUseCase } from 'src/domain/use-cases/editStock.usecase';
+import { ProductDto } from 'src/interfaces/dto/product.dto';
 
 @Injectable()
-export class InboundEventListener {
+export class InboundEventListener implements 
+EditStockUseCase {
   constructor(private readonly service : InventoryService ) {}
 
+  async editStock(dto: ProductDto): Promise<string> {
+    return await this.service.editProduct(DataMapper.toDomainProduct(dto));
+  }
 
 }
 

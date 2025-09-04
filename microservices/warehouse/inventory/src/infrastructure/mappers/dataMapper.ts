@@ -25,9 +25,9 @@ export const DataMapper = {
       productDTO.name,
       productDTO.unitPrice,
       productDTO.quantity,
+      productDTO.quantityReserved,
       productDTO.minThres,
-      productDTO.maxThres,
-      new WarehouseId(productDTO.warehouseId.warehouseId)
+      productDTO.maxThres
     );
   },
 
@@ -43,25 +43,24 @@ export const DataMapper = {
     ));
   },
 
-  toDtoProduct(product: Product): ProductDto {
-    return {
-      id: { id: product.getId().getId() },
-      name: product.getName(),
-      unitPrice: product.getUnitPrice(),
-      quantity: product.getQuantity(),
-      minThres: product.getMinThres(),
-      maxThres: product.getMaxThres(),
-      warehouseId: { warehouseId: product.getIdWarehouse() },
-    };
-  },
   toDTOProductId(productId: ProductId): ProductIdDto {
     return {
       id: productId.getId(),
     };
   },
+  
   toDtoInventory(inventory: Inventory): InventoryDto {
     return {
-      productList: inventory.getInventory().map(DataMapper.toDtoProduct),
+      productList: inventory.getInventory().map(product => ({
+        id: { id: product.getId().getId() },
+        name: product.getName(),
+        unitPrice: product.getUnitPrice(),
+        quantity: product.getQuantity(),
+        quantityReserved: product.getQuantityReserved(),
+        minThres: product.getMinThres(),
+        maxThres: product.getMaxThres(),
+        warehouseId: { warehouseId: Number(process.env.WAREHOUSE_ID) },
+      })),
     };
   },
   toDTO(warehouseId: WarehouseId): WarehouseIdDto {

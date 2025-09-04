@@ -23,19 +23,20 @@ export class InventoryService {
   async addProduct(newProduct: Product): Promise<void> {
     await this.inventoryRepository.addProduct(newProduct);
      console.log('Publishing stockAdded event', newProduct);
-    this.natsAdapter.stockAdded(newProduct, this.warehouseId.getId());
+    //this.natsAdapter.stockAdded(newProduct, this.warehouseId.getId());
      console.log('pUBBLICATO stockAdded event');
   }
 
   async removeProduct(id: ProductId): Promise<boolean> {
     return await this.inventoryRepository.removeById(id);
-    this.natsAdapter.stockRemoved(id.getId(), this.warehouseId.getId());
+    //this.natsAdapter.stockRemoved(id.getId(), this.warehouseId.getId());
   }
 
-  async editProduct(editedProduct: Product): Promise<void> {
+  async editProduct(editedProduct: Product): Promise<string> {
     await this.inventoryRepository.updateProduct(editedProduct);
-    this.natsAdapter.stockUpdated(editedProduct, this.warehouseId.getId());
-    return Promise.resolve();
+    //this.natsAdapter.stockUpdated(editedProduct, this.warehouseId.getId());
+    //Implementare l'outbound adapter per l'edit
+    return Promise.resolve('Product updated successfully');
   }
 
   async getProduct(id: ProductId): Promise<Product> {
