@@ -1,9 +1,9 @@
 export class WarehouseId {
     constructor(
-        private id: string,
+        private id: number,
     ) { }
 
-    getId(): string {
+    getId(): number {
         return this.id;
     }
 }

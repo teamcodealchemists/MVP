@@ -1,4 +1,5 @@
 import { ProductId } from './productId.entity';
+import { WarehouseId } from './warehouseId.entity';
 
 export class Product {
     constructor(
@@ -7,7 +8,8 @@ export class Product {
         private unitPrice: number,
         private quantity: number,
         private minThres: number,
-        private maxThres: number
+        private maxThres: number,
+        private warehouseId : WarehouseId
     ) { }
 
     getId(): ProductId {
@@ -43,5 +45,8 @@ export class Product {
     }
     setMaxThres(newMaxThres): void {
         this.maxThres = newMaxThres;
+    }
+    getIdWarehouse(): number {
+        return this.warehouseId.getId();
     }
 }
