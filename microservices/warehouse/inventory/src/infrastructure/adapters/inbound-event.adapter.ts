@@ -41,6 +41,16 @@ export class InboundEventListener {
     return Promise.resolve(await this.service.getInventory());
   }
 
+  async orderRequest(dto: ProductQuantityArrayDto): Promise<boolean> {
+    const products = DataMapper.toDomainProductQuantityArray(dto);
+    await this.service.checkProductAvailability(products);
+    return true;
+  }
+
+  async addQuantity(dto: ProductQuantityDto): Promise<void> {
+    const product = DataMapper.toDTOProductQuantity(dto);
+    await this.service.addProductQuantity(product);
+  }
   
 
 }

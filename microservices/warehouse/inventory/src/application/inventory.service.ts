@@ -28,8 +28,9 @@ export class InventoryService {
   }
 
   async removeProduct(id: ProductId): Promise<boolean> {
-    return await this.inventoryRepository.removeById(id);
-    this.natsAdapter.stockRemoved(id, this.warehouseId);
+    await this.inventoryRepository.removeById(id);
+    Promise.resolve(await this.natsAdapter.stockRemoved(id, this.warehouseId));
+    return true;
   }
 
   async editProduct(editedProduct: Product): Promise<void> {

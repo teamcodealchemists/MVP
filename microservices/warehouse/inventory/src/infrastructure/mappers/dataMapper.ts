@@ -25,9 +25,9 @@ export const DataMapper = {
       productDTO.name,
       productDTO.unitPrice,
       productDTO.quantity,
+      productDTO.
       productDTO.minThres,
       productDTO.maxThres,
-      new WarehouseId(productDTO.warehouseId.warehouseId)
     );
   },
 
@@ -89,4 +89,10 @@ export const DataMapper = {
       quantity: quantity,
     };
   },
+  toDomainProductQuantity(dto: ProductQuantityDto): ProductQuantity {
+  return new ProductQuantity(
+    new ProductId(dto.productId.id),
+    dto.quantity
+  );
+}
 };
