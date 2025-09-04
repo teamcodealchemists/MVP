@@ -34,13 +34,13 @@ export class CommandHandler {
     };
 
     const product = DataMapper.toDomainProduct(productDTO);
-    return //this.inventoryService.addProduct(product);
-
+    this.inboundEventListener.newStock()
+    return Promise.resolve();
   }
 
 
   @MessagePattern(`api.warehouse.1.removeStock`)
-  async handleRemoveStock(payload: any): Promise<boolean> {
+  async handleRemoveStock(payload: any): Promise<void> {
 
     const data =
       typeof payload === 'string'
@@ -57,8 +57,8 @@ export class CommandHandler {
 
 
     const productId = DataMapper.toDomainProductId(productIdDTO);
-    return //this.inventoryService.removeProduct(productId);
-
+     //this.inventoryService.removeProduct(productId);
+    return Promise.resolve();
   }
 
 
@@ -89,7 +89,8 @@ export class CommandHandler {
 
     const product = DataMapper.toDomainProduct(productDTO);
     console.log(product);
-    return //this.inventoryService.editProduct(product)
+   //this.inventoryService.editProduct(product)
+    return Promise.resolve();
   }
 
 

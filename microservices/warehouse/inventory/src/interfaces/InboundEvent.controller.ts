@@ -3,7 +3,7 @@ import { MessagePattern } from '@nestjs/microservices';
 import { plainToInstance } from 'class-transformer';
 import { InboundEventListener } from 'src/infrastructure/adapters/inbound-event.adapter';
 import { ProductQuantityDto } from './dto/productQuantity.dto';
-import { productQuantityArrayDto } from './dto/productQuantityArray.dto';
+import { ProductQuantityArrayDto } from './dto/productQuantityArray.dto';
 import { validateOrReject } from 'class-validator';
 
 const logger = new Logger('InboundEventController');
@@ -43,7 +43,7 @@ export class InboundEventController {
             : payload;
         try {
             const parsed = JSON.parse(data);
-            const dto = plainToInstance(productQuantityArrayDto, {
+            const dto = plainToInstance(ProductQuantityArrayDto, {
                 productQuantityArray: parsed,
             });
             const errors = await validateOrReject(dto);
