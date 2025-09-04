@@ -1,74 +1,78 @@
 // DataMapper.ts
-import { productDto } from '../../interfaces/dto/product.dto';
-import { productIdDto } from '../../interfaces/dto/productId.dto';
-import { inventoryDto } from '../../interfaces/dto/inventory.dto';
+import { ProductDto } from '../../interfaces/dto/product.dto';
+import { ProductIdDto } from '../../interfaces/dto/productId.dto';
+import { InventoryDto } from '../../interfaces/dto/inventory.dto';
 import { Product } from '../../domain/product.entity';
 import { ProductId } from '../../domain/productId.entity';
 import { Inventory } from '../../domain/inventory.entity';
 import { WarehouseId } from '../../domain/warehouseId.entity';
-import { warehouseIdDto } from '../../interfaces/dto/warehouseId.dto';
-import { belowMinThresDto } from '../../interfaces/dto/belowMinThres.dto';
-import { aboveMaxThresDto } from '../../interfaces/dto/aboveMaxThres.dto';
-import { productQuantityDto } from '../../interfaces/dto/productQuantity.dto';
+import { WarehouseIdDto } from '../../interfaces/dto/warehouseId.dto';
+import { BelowMinThresDto } from '../../interfaces/dto/belowMinThres.dto';
+import { AboveMaxThresDto } from '../../interfaces/dto/aboveMaxThres.dto';
+import { ProductQuantityDto } from '../../interfaces/dto/productQuantity.dto';
 
 export const DataMapper = {
-  toDomainProductId(productIdDTO: productIdDto): ProductId {
+  toDomainProductId(productIdDTO: ProductIdDto): ProductId {
     return new ProductId(productIdDTO.id);
   },
-  toDomainProduct(productDTO: productDto): Product {
+  
+  toDomainProduct(productDTO: ProductDto): Product {
     return new Product(
-      new ProductId(productDTO.id),
+      new ProductId(productDTO.id.id),
       productDTO.name,
       productDTO.unitPrice,
       productDTO.quantity,
       productDTO.minThres,
-      productDTO.maxThres
+      productDTO.maxThres,
+      new WarehouseId(productDTO.warehouseId.warehouseId)
     );
   },
-  toDomainInventory(inventoryDTO: inventoryDto): Inventory {
+
+  toDomainInventory(inventoryDTO: InventoryDto): Inventory {
     const products = inventoryDTO.productList.map(DataMapper.toDomainProduct);
     return new Inventory(products);
   },
-  toDtoProduct(product: Product): productDto {
+  toDtoProduct(product: Product): ProductDto {
     return {
-      id: product.getId().getId(),
+      id: { id: product.getId().getId() },
       name: product.getName(),
       unitPrice: product.getUnitPrice(),
       quantity: product.getQuantity(),
       minThres: product.getMinThres(),
       maxThres: product.getMaxThres(),
+      warehouseId: { warehouseId: product.getIdWarehouse() },
     };
   },
-  toDTOProductId(productId: ProductId): productIdDto {
+  toDTOProductId(productId: ProductId): ProductIdDto {
     return {
       id: productId.getId(),
     };
   },
-  toDtoInventory(inventory: Inventory): inventoryDto {
+  toDtoInventory(inventory: Inventory): InventoryDto {
     return {
       productList: inventory.getInventory().map(DataMapper.toDtoProduct),
     };
   },
-  toDTO(warehouseId: WarehouseId): warehouseIdDto {
+  toDTO(warehouseId: WarehouseId): WarehouseIdDto {
     return {
-      warehouseId: parseInt(warehouseId.getId(), 10),
+      warehouseId: warehouseId.getId(),
     };
   },
-  toBelowMinDTO(product: Product): belowMinThresDto {
+  toBelowMinDTO(product: Product): BelowMinThresDto {
     return {
-      id: product.getId().getId(),
+      id: { id: product.getId().getId() },
       quantity: product.getQuantity(),
       minThres: product.getMinThres(),
     };
   },
-  toAboveMaxDTO(product: Product): aboveMaxThresDto {
+  toAboveMaxDTO(product: Product): AboveMaxThresDto {
     return {
-      id: product.getId().getId(),
+      id: { id: product.getId().getId() },
       quantity: product.getQuantity(),
       maxThres: product.getMaxThres(),
     };
   },
-  toDTOProductQuantity(productId: ProductId, quantity: number): productQuantityDto {
+  toDTOProductQuantity(productId: ProductId, quantity: number): ProductQuantityDto {
     return {
       productId: { id: productId.getId() },
       quantity: quantity,
