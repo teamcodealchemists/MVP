@@ -18,9 +18,7 @@ import { OrderRequestUseCase } from 'src/domain/use-cases/order-request.usecase'
   controllers: [CommandHandler],
   providers: [ 
     InventoryService,
-    OutboundEventAdapter,
-    InboundEventListener,
-     ProductAddQuantityUseCase,  
+    ProductAddQuantityUseCase,  
     OrderRequestUseCase,
     {
       provide: 'INVENTORYREPOSITORY',

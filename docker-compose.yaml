@@ -43,14 +43,14 @@ services:
       - WAREHOUSE_ID=1
       - NATS_URL=nats://nats:4222
     volumes:
-      - ./microservices/warehouse/inventory:/app
-      - /app/node_modules
-    command: npm run start:dev
+      - ./microservices/warehouse/inventory/src:/usr/src/app/src
+    networks:
+      - shared-warehouses
     depends_on:
       - mongo
       - nats
-    networks:
-      - shared-warehouses
+      - resgate
+    
 
   mvp-inventory-aggregated:
     build:
@@ -61,17 +61,13 @@ services:
       - MONGO_URI=mongodb://mongo:27017/inventory-aggregated
       - NATS_URL=nats://nats:4222
     volumes:
-      - ./microservices/warehouse/inventory-aggregated:/app
-      - /app/node_modules
-    command: npm run start:dev
+      - ./microservices/warehouse/inventory-aggregated/src:/usr/src/app/src
+    networks:
+      - shared-warehouses
     depends_on:
       - mongo
       - nats
-    networks:
-      - shared-warehouses
-
-volumes:
-  mongo-data:
+      - resgate
 
 networks:
   shared-warehouses:

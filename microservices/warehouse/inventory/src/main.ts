@@ -1,6 +1,9 @@
 import { NestFactory } from '@nestjs/core';
 import { InventoryModule } from './application/inventory.module';
-import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+import { MicroserviceOptions, RpcException, Transport } from '@nestjs/microservices';
+import { ValidationPipe, Logger } from '@nestjs/common';
+
+const logger = new Logger('InventoryMicroservice');
 
 async function bootstrap() {
   // Creiamo il microservizio Nest con NATS
@@ -8,13 +11,15 @@ async function bootstrap() {
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(
     InventoryModule,
     {
+      logger,
       transport: Transport.NATS,
       options: {
-        servers: ['nats://nats:4222'],
+        servers: [process.env.NATS_URL || 'nats://nats:4222'],
       },
     },
   );
   console.log(process.env.NATS_URL);
+  app.useGlobalPipes(new ValidationPipe({ exceptionFactory: (errors) => new RpcException(errors) }));
   await app.listen();
   console.log('Inventory NATS microservice running on nats://nats:4222');
 }
