@@ -10,7 +10,7 @@ import { Inventory } from 'src/domain/inventory.entity';
 import { Payload } from '@nestjs/microservices';
 import { OutboundEventAdapter } from 'src/infrastructure/adapters/outbound-event.adapter';
 import { WarehouseId } from 'src/domain/warehouseId.entity';
-import { InboundEventListener } from 'src/infrastructure/adapters/inbound-event.listener';
+import { InboundEventListener } from 'src/infrastructure/adapters/inbound-event.adapter';
 
 const logger = new Logger('commandHandler');
 @Controller()

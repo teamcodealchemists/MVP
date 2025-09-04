@@ -5,7 +5,7 @@ import { InventoryRepositoryModule } from 'src/infrastructure/adapters/mongodb/i
 import { CommandHandler } from 'src/interfaces/commandHandler.controller';
 import { InventoryRepositoryMongo } from 'src/infrastructure/adapters/mongodb/inventory.repository.impl';
 import { OutboundEventAdapter } from 'src/infrastructure/adapters/outbound-event.adapter';
-import { InboundEventListener } from 'src/infrastructure/adapters/inbound-event.listener';
+import { InboundEventListener } from 'src/infrastructure/adapters/inbound-event.adapter';
 import { ProductAddQuantityUseCase } from 'src/domain/use-cases/product-add-quantity.usecase';
 import { OrderRequestUseCase } from 'src/domain/use-cases/order-request.usecase';
 
