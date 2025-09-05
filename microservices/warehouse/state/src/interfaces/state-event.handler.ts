@@ -1,4 +1,3 @@
-// src/interfaces/event/state-event.handler.ts
 import { Inject, Injectable, OnModuleInit } from "@nestjs/common";
 import { ClientProxy } from '@nestjs/microservices';
 import { WarehouseState } from "../domain/warehouse-state.entity";
@@ -13,9 +12,9 @@ export class StateEventHandler implements OnModuleInit {
     await this.natsClient.connect(); 
   }
 
-async publishHeartbeat(heartbeat: Heartbeat, warehouseId: number): Promise<void> {
-    await this.natsClient.emit(`state.heartbeat.${warehouseId}`, {
-        warehouseId: warehouseId,
+async publishHeartbeat(heartbeat: Heartbeat): Promise<void> {
+    await this.natsClient.emit(`state.heartbeat.${heartbeat.getId()}`, {
+        warehouseId: heartbeat.getId(),
         heartbeatMsg: heartbeat.getHeartbeatMsg(),
         timestamp: heartbeat.getTimestamp()
     });
