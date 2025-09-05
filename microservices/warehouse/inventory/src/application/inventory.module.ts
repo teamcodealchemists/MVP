@@ -7,8 +7,8 @@ import { InventoryRepositoryMongo } from 'src/infrastructure/adapters/mongodb/in
 import { OutboundEventAdapter } from 'src/infrastructure/adapters/outbound-event.adapter';
 import { InboundEventListener } from 'src/infrastructure/adapters/inbound-event.adapter';
 import { AccessController } from 'src/interfaces/access.controller';
-import { InboundEventController } from 'src/interfaces/InboundEvent.controller';
-import { OutboundEventHandler } from 'src/interfaces/OutboundEventHandler';
+import { InboundEventController } from 'src/interfaces/inboundEvent.controller';
+import { OutboundEventHandler } from 'src/interfaces/outboundEventHandler';
 import { NatsClientModule } from 'src/interfaces/nats/natsClientModule/natsClient.module';
 
 

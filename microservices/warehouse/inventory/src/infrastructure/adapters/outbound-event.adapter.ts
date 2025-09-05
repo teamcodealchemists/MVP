@@ -5,7 +5,7 @@ import { StockRemovedPort } from 'src/domain/ports/stock-removed.port';
 import { StockUpdatedPort } from 'src/domain/ports/stock-updated.port';
 import { ResultProductAvailabilityPublisher } from 'src/domain/ports/result-product-availability.publisher';
 import { ReservetionPort } from 'src/domain/ports/reservetion.port';
-import { OutboundEventHandler } from 'src/interfaces/OutboundEventHandler';
+import { OutboundEventHandler } from 'src/interfaces/outboundEventHandler';
 import { ProductDto } from 'src/interfaces/dto/product.dto';
 import { OrderId } from 'src/domain/orderId.entity';
 import { ProductQuantity } from 'src/domain/productQuantity.entity';

@@ -36,7 +36,7 @@ export class InventoryService {
       console.log('PUBBLICATO stockAdded event');
       return Promise.resolve();
     } else {
-      throw new Error(`Product with id ${newProduct.getId().getId()} already exists`);
+      throw new Error(`Product with id ${newProduct.getId()} already exists`);
     }
   }
 

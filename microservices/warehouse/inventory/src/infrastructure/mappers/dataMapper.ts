@@ -21,8 +21,9 @@ export const DataMapper = {
   },
   
   toDomainProduct(productDTO: ProductDto): Product {
+    const pId = new ProductId(productDTO.id.id);
     return new Product(
-      new ProductId(productDTO.id.id),
+      pId,
       productDTO.name,
       productDTO.unitPrice,
       productDTO.quantity,
@@ -104,5 +105,7 @@ export const DataMapper = {
     new ProductId(dto.productId.id),
     dto.quantity
   );
-}
+  },
+  
+  
 };

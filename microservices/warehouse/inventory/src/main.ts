@@ -7,7 +7,7 @@ import { OutboundResponseSerializer } from './interfaces/nats/natsMessagesFormat
 
 const logger = new Logger('InventoryMicroservice');
 
-async function bootstrap() {
+export async function bootstrap() {
   // Creiamo il microservizio Nest con NATS
   console.log(process.env.NATS_URL);
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(
