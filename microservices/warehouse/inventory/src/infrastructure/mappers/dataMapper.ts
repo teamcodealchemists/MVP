@@ -93,10 +93,10 @@ export const DataMapper = {
       maxThres: product.getMaxThres(),
     };
   },
-  toDTOProductQuantity(productId: ProductIdDto, quantity: number): ProductQuantityDto {
+  toDTOProductQuantity(product : ProductQuantity): ProductQuantityDto {
     return {
-      productId: { id: productId.id },
-      quantity: quantity,
+      productId: { id: product.getId().getId() },
+      quantity: product.getQuantity(),
     };
   },
   toDomainProductQuantity(dto: ProductQuantityDto): ProductQuantity {

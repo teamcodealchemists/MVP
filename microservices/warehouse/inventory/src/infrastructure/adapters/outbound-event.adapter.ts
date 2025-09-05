@@ -14,6 +14,8 @@ import { ProductId } from 'src/domain/productId.entity';
 import { ProductIdDto } from 'src/interfaces/dto/productId.dto';
 import { WarehouseIdDto } from 'src/interfaces/dto/warehouseId.dto';
 import { OrderIdDTO } from 'src/interfaces/dto/orderId.dto';
+import { DataMapper } from '../mappers/dataMapper';
+import { ProductQuantityArrayDto } from 'src/interfaces/dto/productQuantityArray.dto';
 
 export class OutboundEventAdapter
   implements
@@ -119,8 +121,15 @@ export class OutboundEventAdapter
   }
 
   async reservedQuantities(orderId: OrderId, product : ProductQuantity[]): Promise<void> {
+    const prodDtos = product.map(pq =>
+      DataMapper.toDTOProductQuantity(pq),
+    );
     const oIdDto = new OrderIdDTO();
     oIdDto.id = orderId.getId();
+    const prodQDtos = new ProductQuantityArrayDto();
+    prodQDtos.id = oIdDto;
+    prodQDtos.productQuantityArray = prodDtos;
+    this.outboundEventHandler.handlerReservetionQuantities(prodQDtos);
     return Promise.resolve();
   }
 }
