@@ -1,6 +1,6 @@
 import { Product } from "../product.entity";
 
 export interface CriticalThresEventPort {
-  belowMinThres(product: Product): Promise<void>;
-  aboveMaxThres(product: Product): Promise<void>;
+  belowMinThres(product: Product, warehouseId: string): Promise<void>;
+  aboveMaxThres(product: Product, warehouseId: string): Promise<void>;
 }
