@@ -58,4 +58,16 @@ export class OutboundEventHandler implements OnModuleInit {
     this.natsClient.emit("inventory.reservetionQuantities", { productJson : JSON.stringify(product, null, 2) });
     return Promise.resolve();
   }
+  
+  async handlerStockShipped(orderId : OrderIdDTO): Promise<void> {
+
+    this.natsClient.emit("", { orderIdJson : JSON.stringify(orderId, null, 2) });
+    return Promise.resolve();
+  }
+
+  async handlerStockReceived(orderId : OrderIdDTO): Promise<void> {
+   
+    this.natsClient.emit("", { productJson : JSON.stringify(orderId, null, 2) });
+    return Promise.resolve();
+  }
 }
