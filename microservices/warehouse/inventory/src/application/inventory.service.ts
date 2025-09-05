@@ -4,7 +4,7 @@ import { WarehouseId } from '../domain/warehouseId.entity';
 import { Product } from 'src/domain/product.entity';
 import { ProductId } from 'src/domain/productId.entity';
 import { InventoryRepository } from 'src/domain/inventory.repository';
-import {ProductQuantity} from 'src/domain/productQuantity.entity';
+import { ProductQuantity } from 'src/domain/productQuantity.entity';
 import { OutboundEventAdapter } from 'src/infrastructure/adapters/outbound-event.adapter';
 import { OrderId } from 'src/domain/orderId.entity';
 
@@ -26,13 +26,14 @@ export class InventoryService {
   // ---------------------------------------
 
   async addProduct(newProduct: Product): Promise<void> {
-    if (await this.inventoryRepository.getById(newProduct.getId())==null){ {
-      await this.inventoryRepository.addProduct(newProduct);
-      console.log('Publishing stockAdded event', newProduct);
-      //this.natsAdapter.stockAdded(newProduct, this.warehouseId);
-      console.log('PUBBLICATO stockAdded event');
-      return Promise.resolve();
-    }
+    if (await this.inventoryRepository.getById(newProduct.getId()) == null) {
+      {
+        await this.inventoryRepository.addProduct(newProduct);
+        console.log('Publishing stockAdded event', newProduct);
+        //this.natsAdapter.stockAdded(newProduct, this.warehouseId);
+        console.log('PUBBLICATO stockAdded event');
+        return Promise.resolve();
+      }
     } else {
       throw new Error(`Product with id ${newProduct.getId().getId()} already exists`);
     }
@@ -48,6 +49,10 @@ export class InventoryService {
   }
 
   async editProduct(editedProduct: Product): Promise<void> {
+    const existingProduct = await this.inventoryRepository.getById(editedProduct.getId());
+    if (!existingProduct) {
+      throw new NotFoundException(`Product with id ${editedProduct.getId().getId()} not found`);
+    }
     await this.inventoryRepository.updateProduct(editedProduct);
     //this.natsAdapter.stockUpdated(editedProduct, this.warehouseId);
     //Implementare l'outbound adapter per l'edit
@@ -62,19 +67,20 @@ export class InventoryService {
     return product;
   }
 
+  async getInventory(): Promise<Inventory> {
+    return await this.inventoryRepository.getAllProducts();
+  }
+
   // ---------------------------------------
   //        Listener Event Methods
   // ---------------------------------------
 
-  async getInventory(): Promise<Inventory> {
-    return await this.inventoryRepository.getAllProducts();
-  }
 
   async getWarehouseId(): Promise<number> {
     return this.warehouseId.getId();
   }
 
- 
+
   async checkProductExistence(id: ProductId): Promise<boolean> {
     const product = await this.inventoryRepository.getById(id);
     return !!product;
@@ -87,10 +93,10 @@ export class InventoryService {
     );
   }
 
-  async checkProductAvailability(orderId : OrderId, productQuantities: ProductQuantity[]): Promise<boolean> {
+  async checkProductAvailability(orderId: OrderId, productQuantities: ProductQuantity[]): Promise<boolean> {
     for (const pq of productQuantities) {
       const product = await this.inventoryRepository.getById(pq.getId());
-      if (!product || product.getQuantity() < pq.getQuantity()){
+      if (!product || product.getQuantity() < pq.getQuantity()) {
         this.natsAdapter.reservedQuantities(orderId, productQuantities);
         return false;
       }
@@ -110,12 +116,12 @@ export class InventoryService {
     return Promise.resolve();
   }
 
-  async shipOrder(order : OrderId, productQ :  ProductQuantity[]): Promise<void>{
-    
+  async shipOrder(order: OrderId, productQ: ProductQuantity[]): Promise<void> {
+
     return Promise.resolve();
   }
-  async reserveStock(order : OrderId, productQ :  ProductQuantity[]): Promise<void>{
-    
+  async reserveStock(order: OrderId, productQ: ProductQuantity[]): Promise<void> {
+
     /*this.inventoryRepository.updateProduct();
     this.natsAdapter.reservedQuantities();
 

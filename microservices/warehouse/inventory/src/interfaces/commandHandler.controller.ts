@@ -81,7 +81,9 @@ export class CommandHandler {
     logger.log('Received edit stock payload:', productObj);
 
     const productDTO: ProductDto = new ProductDto();
-    productDTO.id = itemIdStr;
+    const productIdDto = new ProductIdDto();
+    productIdDto.id = itemIdStr as string;
+    productDTO.id = productIdDto;
     productDTO.name = productObj.name;
     productDTO.unitPrice = productObj.unitPrice;
     productDTO.quantity = productObj.quantity;
@@ -100,8 +102,6 @@ export class CommandHandler {
     }
   }
 
-
-
   @MessagePattern(`get.warehouse.${process.env.WAREHOUSE_ID}.stock.*`)
   async handleGetProduct(@Ctx() context: any): Promise<string> {
 
@@ -113,8 +113,8 @@ export class CommandHandler {
 
     try {
       await validateOrReject(productIdDTO);
-      //return Promise.resolve(await this.inboundEventListener.handleGetProduct(productIdDTO));
-      return Promise.resolve(JSON.stringify({ result: { model: productIdDTO } }));
+      const result = await this.inboundEventListener.handleGetProduct(productIdDTO);
+      return Promise.resolve(JSON.stringify({ result: { model: result } }));
     } catch (error) {
       logger.error('Error in handleGetProduct:', error);
       return await this.errorHandler(error);
@@ -122,8 +122,16 @@ export class CommandHandler {
   }
 
   @MessagePattern(`get.warehouse.${process.env.WAREHOUSE_ID}.inventory`)
-  async handleGetInventory(): Promise<string> {
-    return Promise.resolve(JSON.stringify({ result: await this.inboundEventListener.getInventory() }));
+  async handleGetInventoryCollection(): Promise<string> {
+    // Ottieni tutti i prodotti dall'inventario
+    const products = (await this.inboundEventListener.getInventory()).getInventory();
+
+    // Mappa ogni prodotto in un riferimento rid
+    const collection = products.map(product => ({
+      rid: `warehouse.${process.env.WAREHOUSE_ID}.stock.${product.getId()}`
+    }));
+
+    return Promise.resolve(JSON.stringify({ result: { collection } }));
   }
 
 
@@ -138,7 +146,7 @@ export class CommandHandler {
 
         return Promise.resolve(JSON.stringify({ error: { code: 'system.invalidParams', message } }));
       } else {
-        return Promise.resolve(JSON.stringify({ error: { code: 'system.internalError', message: error?.message || 'Unknown error' } }));
+        return Promise.resolve(JSON.stringify({ error: { code: 'system.internalError', message: error?.message || 'Unknown error' }, meta: {status: 404} }));
       }
   }
 }
