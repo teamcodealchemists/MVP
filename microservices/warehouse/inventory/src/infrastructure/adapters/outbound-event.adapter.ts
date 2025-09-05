@@ -134,13 +134,17 @@ export class OutboundEventAdapter
     return Promise.resolve();
   }
 
-  async stockShipped(OrderId): Promise<void>{
-    
+  async stockShipped(orderId : OrderId): Promise<void>{
+    const oIdDto = new OrderIdDTO();
+    oIdDto.id = orderId.getId();
+    this.outboundEventHandler.handlerStockShipped(oIdDto);
     return Promise.resolve();
   }
 
-  async stockReceived(OrderId): Promise<void>{
-
+  async stockReceived(orderId : OrderId): Promise<void>{
+    const oIdDto = new OrderIdDTO();
+    oIdDto.id = orderId.getId();
+    this.outboundEventHandler.handlerStockReceived(oIdDto);
     return Promise.resolve();
   }
 }
