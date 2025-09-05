@@ -7,6 +7,7 @@ import { SyncProduct } from './schemas/syncProduct.schema';
 import { CloudDataMapper } from '../../mappers/cloud-data.mapper';
 import { ProductId } from '../../../domain/productId.entity';
 import { WarehouseId } from '../../../domain/warehouseId.entity';
+import { InventoryAggregated } from 'src/domain/inventory-aggregated.entity';
 
 @Injectable()
 export class InventoryAggregatedRepositoryImpl implements InventoryAggregatedRepository {
@@ -17,7 +18,7 @@ export class InventoryAggregatedRepositoryImpl implements InventoryAggregatedRep
   async addProduct(product: Product): Promise<void> {
     const doc = new this.productModel({
       warehouseId: product.getWarehouseId(),
-      id: product.getId(),
+      productId: product.getId(),
       name: product.getName(),
       unitPrice: product.getUnitPrice(),
       quantity: product.getQuantity(),
@@ -27,15 +28,12 @@ export class InventoryAggregatedRepositoryImpl implements InventoryAggregatedRep
     await doc.save();
   }
 
-   async removeById(id: string): Promise<boolean> {
-    const result = await this.productModel.deleteOne({ id }).exec();
-    return result.deletedCount > 0;
+   async removeById(id: ProductId): Promise<void> {
+    await this.productModel.deleteOne({ id: id.getId() }).exec();
   }
 
-
-
-async updateProduct(id: string, product: Product): Promise<void> {
-  await this.productModel.updateOne({ id }, {
+async updateProduct(product: Product): Promise<void> {
+  await this.productModel.updateOne({ productId: product.getId() }, {
     name: product.getName(),
     unitPrice: product.getUnitPrice(),
     quantity: product.getQuantity(),
@@ -45,32 +43,62 @@ async updateProduct(id: string, product: Product): Promise<void> {
   }).exec();
 }
 
-async getById(id: string): Promise<Product | null> {
-  const productDoc = await this.productModel.findOne({ id }).exec();
+async getById(id: ProductId): Promise<Product | null> {
+  const productDoc = await this.productModel.findOne({ productId: id.getId() }).exec();
   if (!productDoc) return null;
 
-  return new Product(
+  return Promise.resolve(new Product(
     new ProductId(productDoc.id),
     productDoc.name,
     productDoc.unitPrice,
     productDoc.quantity,
     productDoc.minThres,
     productDoc.maxThres,
-    new WarehouseId(productDoc.warehouseId),
-  );
+    new WarehouseId(Number(productDoc.warehouseId)),
+  ));
 }
 
+  async getAllProducts(): Promise<InventoryAggregated> {
+    const docs = await this.productModel.aggregate([
+      {
+        $group: {
+          _id: "$name",
+          productIds: { $addToSet: "$productId" },
+          unitPrice: { $sum: "$unitPrice" },
+          quantity: { $sum: "$quantity" },
+          minThres: { $first: "$minThres" },
+          maxThres: { $first: "$maxThres" }
+        }
+      }
+    ]).exec();
 
-  async getAllProducts(): Promise<Product[]> {
-    const docs = await this.productModel.find().exec();
-    return docs.map(doc => new Product(
-      new ProductId(doc.id),
-      doc.name,
-      doc.unitPrice,
-      doc.quantity,
-      doc.minThres,
-      doc.maxThres,
-      new WarehouseId(doc.warehouseId)
+    return Promise.resolve(new InventoryAggregated(
+      docs.map(doc => new Product(
+        // Use the first productId for the aggregated product
+        new ProductId(doc.productIds[0]),
+        doc._id, // name
+        doc.unitPrice,
+        doc.quantity,
+        doc.minThres,
+        doc.maxThres,
+        new WarehouseId(0), // Aggregated, no specific warehouse
+      ))
     ));
+  }
+
+  async getAll(): Promise<InventoryAggregated> {
+    const docs = await this.productModel.find().exec();
+
+    const products = docs.map(productDoc => new Product(
+      new ProductId(productDoc.productId),
+      productDoc.name,
+      productDoc.unitPrice,
+      productDoc.quantity,
+      productDoc.minThres,
+      productDoc.maxThres,
+      new WarehouseId(Number(productDoc.warehouseId)),
+    ));
+
+    return Promise.resolve(new InventoryAggregated(products));
   }
 }

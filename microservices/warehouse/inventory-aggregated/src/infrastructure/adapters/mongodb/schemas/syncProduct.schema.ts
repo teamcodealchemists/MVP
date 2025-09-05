@@ -7,7 +7,7 @@ export class SyncProduct extends Document {
   warehouseId!: string;
 
   @Prop({ required: true })
-  id!: string;
+  productId!: string;
 
   @Prop({ required: true })
   name!: string;
