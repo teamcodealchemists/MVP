@@ -16,7 +16,9 @@ import { WarehouseIdDto } from 'src/interfaces/dto/warehouseId.dto';
 import { OrderIdDTO } from 'src/interfaces/dto/orderId.dto';
 import { DataMapper } from '../mappers/dataMapper';
 import { ProductQuantityArrayDto } from 'src/interfaces/dto/productQuantityArray.dto';
+import { Inject, Injectable } from '@nestjs/common';
 
+@Injectable()
 export class OutboundEventAdapter
   implements
     CriticalThresEventPort,
@@ -26,7 +28,7 @@ export class OutboundEventAdapter
     ResultProductAvailabilityPublisher,
     ReservetionPort
 {
-  constructor(private readonly outboundEventHandler : OutboundEventHandler) {}
+  constructor(@Inject() private readonly outboundEventHandler : OutboundEventHandler) {}
 
   async belowMinThres(product: Product , warehouseId : WarehouseId): Promise<void> {
     const idDto = new ProductIdDto();
@@ -81,9 +83,8 @@ export class OutboundEventAdapter
     maxThres: product.getMaxThres(),
     warehouseId: whIdDto,
     };
-    this.outboundEventHandler.handlerStockAdded(p);
-    return Promise.resolve();
-  } 
+    return await this.outboundEventHandler.handlerStockAdded(p);
+  }
 
   async stockRemoved(productId: ProductId, warehouseId: WarehouseId): Promise<void> {
     const whIdDto = new WarehouseIdDto();
