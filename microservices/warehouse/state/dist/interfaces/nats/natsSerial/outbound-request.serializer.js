@@ -11,9 +11,9 @@ class OutboundResponseSerializer {
         var _a;
         this.logger.verbose(`-->> Serializing outbound response: ${JSON.stringify(value)}`);
         return {
-            id: (0, uuid_1.v4)(),
-            response: (_a = value.response) !== null && _a !== void 0 ? _a : value,
-            isDisposed: true,
+            id: (0, uuid_1.v4)(), // obbligatorio
+            response: (_a = value.response) !== null && _a !== void 0 ? _a : value, // il payload che vuoi inviare
+            isDisposed: true, // opzionale ma consigliato
         };
     }
 }
