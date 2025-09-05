@@ -1,10 +1,11 @@
-import { IsNotEmpty, IsString, IsNumber, Min, ValidateNested } from 'class-validator';
+import { IsNotEmpty, IsString, IsNumber, Min, ValidateNested, IsPositive } from 'class-validator';
 import { ProductIdDto } from './productId.dto';
 import { Type } from 'class-transformer';
 import { WarehouseIdDto } from './warehouseId.dto';
 
 export class ProductDto {
   @IsString()
+  @Type(() => ProductIdDto)
   id: ProductIdDto;
 
   @IsNotEmpty()
@@ -16,6 +17,7 @@ export class ProductDto {
   unitPrice: number;
 
   @IsNotEmpty()
+  @Min(0)
   @IsNumber()
   quantity: number;
 
