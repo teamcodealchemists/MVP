@@ -53,5 +53,44 @@ export class InboundEventController {
             logger.error('Errore parsing orderRequest payload', err);
         }
   }
-
+  @MessagePattern(``)
+  async handleShipOrderRequest(payload: any): Promise<void> {
+    const data =
+        typeof payload === 'string'
+            ? payload
+            : payload?.data
+            ? payload.data.toString()
+            : payload;
+        try {
+            const parsed = JSON.parse(data);
+            const dto = plainToInstance(ProductQuantityArrayDto, {
+                productQuantityArray: parsed,
+            });
+            const errors = await validateOrReject(dto);
+            logger.error('Validation failed for orderRequest:', errors);
+            this.inboundEventListener.shipOrderRequest(dto);
+        } catch (err) {
+            logger.error('Errore parsing orderRequest payload', err);
+        }
+  }
+  @MessagePattern(``)
+  async handleReceiveShipment(payload: any) : Promise<void>{
+    const data =
+        typeof payload === 'string'
+            ? payload
+            : payload?.data
+            ? payload.data.toString()
+            : payload;
+        try {
+            const parsed = JSON.parse(data);
+            const dto = plainToInstance(ProductQuantityArrayDto, {
+                productQuantityArray: parsed,
+            });
+            const errors = await validateOrReject(dto);
+            logger.error('Validation failed for orderRequest:', errors);
+            this.inboundEventListener.receiveShipment(dto);
+        } catch (err) {
+            logger.error('Errore parsing orderRequest payload', err);
+     }
+  }
 }

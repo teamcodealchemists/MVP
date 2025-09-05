@@ -132,4 +132,14 @@ export class OutboundEventAdapter
     this.outboundEventHandler.handlerReservetionQuantities(prodQDtos);
     return Promise.resolve();
   }
+
+  async stockShipped(OrderId): Promise<void>{
+    
+    return Promise.resolve();
+  }
+
+  async stockReceived(OrderId): Promise<void>{
+
+    return Promise.resolve();
+  }
 }
