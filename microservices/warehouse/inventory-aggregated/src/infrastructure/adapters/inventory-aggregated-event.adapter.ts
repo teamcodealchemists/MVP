@@ -1,44 +1,47 @@
+import { InventoryAggregatedService } from './../../application/inventory-aggregated.service';
 import { Injectable } from '@nestjs/common';
-import { ClientProxy, ClientProxyFactory, Transport } from '@nestjs/microservices';
+import { CloudDataMapper } from '../mappers/cloud-data.mapper';
 import { SyncProductDTO } from '../../interfaces/dto/syncProduct.dto';
 import { SyncProductIdDTO } from '../../interfaces/dto/syncProductId.dto';
 import { SyncWarehouseIdDTO } from '../../interfaces/dto/syncWarehouseId.dto';
 import { SyncInventoryDTO } from '../../interfaces/dto/syncInventory.dto';
+import { SyncAddedStockEvent } from 'src/domain/ports/inbound/syncAddedStockEvent.port';
+import { GetAllProductsUseCase } from 'src/domain/ports/inbound/getAllProductsUseCase.port';
+import { GetAllUseCase } from 'src/domain/ports/inbound/getAllUseCase.port';
+import { SyncEditedStockEvent } from 'src/domain/ports/inbound/syncEditedStockEvent.port';
+import { SyncRemovedStockEvent } from 'src/domain/ports/inbound/syncRemovedStockEvent.port';
+import { InventoryAggregated } from 'src/domain/inventory-aggregated.entity';
 
 @Injectable()
-export class CloudInventoryEventAdapter {
-  private client: ClientProxy;
+export class CloudInventoryEventAdapter implements 
+  SyncEditedStockEvent,
+  SyncRemovedStockEvent,
+  SyncAddedStockEvent,
+  GetAllUseCase,
+  GetAllProductsUseCase {
 
-  constructor() {
-    this.client = ClientProxyFactory.create({
-      transport: Transport.NATS,
-      options: {
-        url: 'nats://localhost:4222', 
-      },
-    });
+    constructor(
+        private readonly InventoryAggregatedService: InventoryAggregatedService,
+        private readonly CloudDataMapper: CloudDataMapper
+    ) {}
+
+  async syncAddedStock(dto: SyncProductDTO): Promise<void> {
+    return await this.InventoryAggregatedService.addProduct(this.CloudDataMapper.toDomainProduct(dto));
   }
 
-  // Stock Added Port
-  stockAdded(dto: SyncProductDTO) {
-    this.client.emit('stock.added', dto);
+  async syncEditedStock(dto: SyncProductDTO): Promise<void> {
+    return await this.InventoryAggregatedService.updateProduct(this.CloudDataMapper.toDomainProduct(dto));
   }
 
-  // Stock Removed Port
-  stockRemoved(productId: SyncProductIdDTO, warehouseId: SyncWarehouseIdDTO) {
-    this.client.emit('stock.removed', { productId, warehouseId });
+  async syncRemovedStock(dto: SyncProductIdDTO): Promise<void> {
+    return await this.InventoryAggregatedService.removeProduct(this.CloudDataMapper.toDomainProductId(dto));
   }
 
-  // Stock Updated Port
-  stockUpdated(dto: SyncProductDTO) {
-    this.client.emit('stock.updated', dto);
+  async getAll(): Promise<InventoryAggregated> {
+    return await this.InventoryAggregatedService.getAll();
   }
 
- 
-  publishAll(inventory: SyncInventoryDTO) {
-    this.client.emit('inventory.all', inventory);
-  }
-
-  publishAllProducts(inventory: SyncInventoryDTO) {
-    this.client.emit('inventory.allProducts', inventory);
+  async getAllProducts(): Promise<InventoryAggregated> {
+    return await this.InventoryAggregatedService.getAllProducts();
   }
 }

@@ -5,29 +5,24 @@ import { SyncProductDTO } from './dto/syncProduct.dto';
 import { SyncProductIdDTO } from './dto/syncProductId.dto';
 import { SyncInventoryDTO } from './dto/syncInventory.dto';
 import { CloudDataMapper } from '../infrastructure/mappers/cloud-data.mapper';
+import { CloudInventoryEventAdapter } from 'src/infrastructure/adapters/inventory-aggregated-event.adapter';
 @Controller()
 export class commandHandler {
-  constructor(
-    private readonly inventoryService: InventoryAggregatedService,
-    private readonly mapper: CloudDataMapper,
+  constructor(private readonly cloudInventoryEventAdapter : CloudInventoryEventAdapter
   ) {}
 
- //DA MODIFCARE I MESSAGE PATTERN
-  @MessagePattern(`prova`)
+  @MessagePattern('warehouse.stock.added')
   async syncAddedStock(payload: any): Promise<void> {
     console.log(payload);
-    console.log("ARRIVATOOO");
     const dto: SyncProductDTO = typeof payload === 'string' ? JSON.parse(payload) : payload;
-    await this.inventoryService.addProduct(dto);
-
+    await this.cloudInventoryEventAdapter.syncAddedStock(dto);
   }
 
-  
   @MessagePattern('warehouse.stock.removed')
   async syncRemovedStock(payload: any): Promise<void> {
     console.log(payload);
     const dto: SyncProductIdDTO = typeof payload === 'string' ? JSON.parse(payload) : payload;
-    await this.inventoryService.removeProduct(dto.id);
+    await this.cloudInventoryEventAdapter.syncRemovedStock(dto);
   }
 
 
@@ -35,19 +30,19 @@ export class commandHandler {
   async syncEditedStock(payload: any): Promise<void> {
     console.log(payload);
     const dto: SyncProductDTO = typeof payload === 'string' ? JSON.parse(payload) : payload;
-    await this.inventoryService.updateProduct(dto);
+    await this.cloudInventoryEventAdapter.syncEditedStock(dto);
   }
 
   @MessagePattern('getAllProducts')
-  async getAllProducts(): Promise<SyncInventoryDTO> {
-    const products = await this.inventoryService.getAllProducts();
+  async getAllProducts(): Promise<InventoryAggregated> {
+    const products = await this.cloudInventoryEventAdapter.getAllProducts();
     return { productList: products.map(p => this.mapper.toDTOProduct(p)) };
   }
 
   // UseCase: ottenere inventario completo (puoi adattarlo se differisce da getAllProducts)
   @MessagePattern('getAll')
-  async getAll(): Promise<SyncInventoryDTO> {
-    const products = await this.inventoryService.getAllProducts();
+  async getAll(): Promise<InventoryAggregated> {
+    const products = await this.cloudInventoryEventAdapter.getAllProducts();
     return { productList: products.map(p => this.mapper.toDTOProduct(p)) };
   }
 }

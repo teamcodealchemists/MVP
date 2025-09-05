@@ -24,7 +24,7 @@ export class CloudDataMapper {
 
   }
 
-  toDomainproductId(syncProductIdDTO: SyncProductIdDTO): ProductId {
+  toDomainProductId(syncProductIdDTO: SyncProductIdDTO): ProductId {
     return new ProductId(syncProductIdDTO.id);
   }
 

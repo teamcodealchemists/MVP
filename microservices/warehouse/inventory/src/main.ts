@@ -8,8 +8,6 @@ import { OutboundResponseSerializer } from './interfaces/nats/natsMessagesFormat
 const logger = new Logger('InventoryMicroservice');
 
 export async function bootstrap() {
-  // Creiamo il microservizio Nest con NATS
-  console.log(process.env.NATS_URL);
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(
     InventoryModule,
     {
@@ -22,7 +20,6 @@ export async function bootstrap() {
       },
     },
   );
-  console.log(process.env.NATS_URL);
   app.useGlobalPipes(new ValidationPipe({ exceptionFactory: (errors) => new RpcException(errors) }));
   await app.listen();
   console.log('Inventory NATS microservice running on nats://nats:4222');
@@ -30,6 +27,6 @@ export async function bootstrap() {
 
 // Avvio
 bootstrap().catch(err => {
-  console.error('Error starting Inventory microservice:', err);
+  logger.error('Error starting Inventory microservice:', err);
   process.exit(1);
 });
