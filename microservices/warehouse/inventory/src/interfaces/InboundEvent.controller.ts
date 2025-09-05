@@ -10,7 +10,7 @@ const logger = new Logger('InboundEventController');
 @Controller()
 export class InboundEventController {
   constructor(private readonly inboundEventListener : InboundEventListener) { }
-  @MessagePattern(``)
+  @MessagePattern(`event.warehouse.${process.env.WAREHOUSE_ID}.stock.addQuantity`)
   async handleAddQuantity(payload: any): Promise<void> {
     const data =
       typeof payload === 'string'
@@ -33,7 +33,7 @@ export class InboundEventController {
     }
 };
 
-  @MessagePattern(``)
+  @MessagePattern(`event.warehouse.${process.env.WAREHOUSE_ID}.order.request`)
   async handleOrderRequest(payload: any): Promise<void> {
     const data =
         typeof payload === 'string'

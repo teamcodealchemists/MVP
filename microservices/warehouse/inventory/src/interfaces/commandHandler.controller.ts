@@ -34,7 +34,7 @@ export class CommandHandler {
       warehouseId: productObj.warehouseId
     };
     try {
-      validateOrReject(productDTO);
+      await validateOrReject(productDTO);
       await this.inboundEventListener.newStock(productDTO);
       return Promise.resolve();
     } catch (error) {
@@ -58,7 +58,7 @@ export class CommandHandler {
     };
 
     try {
-      validateOrReject(productIdDTO);
+      await validateOrReject(productIdDTO);
       await this.inboundEventListener.removeStock(productIdDTO);
       return Promise.resolve();
     } catch (error) {
@@ -95,7 +95,7 @@ export class CommandHandler {
       warehouseId : productObj.warehouseId
     };
     try {
-      validateOrReject(productDTO);
+      await validateOrReject(productDTO);
       await this.inboundEventListener.editStock(productDTO);
       return Promise.resolve();
     } catch (error) {
@@ -108,22 +108,22 @@ export class CommandHandler {
 
 
   @MessagePattern(`get.warehouse.${process.env.WAREHOUSE_ID}.stock.*`)
-  async handleGetProduct(@Ctx() context:any): Promise<Product | null> {
+  async handleGetProduct(@Ctx() context:any): Promise<string> {
 
     // Estrae l'ID prodotto dalla subject del messaggio, dove l'asterisco (*) rappresenta l'ID
     const itemIdStr = context.getSubject().split('.').pop();
 
-    const productIdDTO: ProductIdDto = {
-      id: itemIdStr
-    };
+    const productIdDTO: ProductIdDto = new ProductIdDto();
+    productIdDTO.id = itemIdStr;
 
     try {
-      validateOrReject(productIdDTO);
-      return Promise.resolve(await this.inboundEventListener.handleGetProduct(productIdDTO));
+      await validateOrReject(productIdDTO);
+      //return Promise.resolve(await this.inboundEventListener.handleGetProduct(productIdDTO));
+      return Promise.resolve(JSON.stringify({ result: { model: productIdDTO}}));
     } catch (error) {
       logger.error('Error in handleGetProduct:', error);
-      return Promise.resolve(null);
-      //return Promise.resolve(JSON.stringify({ error: { code: 'system.internalError', message: error?.message || 'Unknown error' } }));
+      //return Promise.resolve(null);
+      return Promise.resolve(JSON.stringify({ error: { code: 'system.internalError', message: Array.isArray(error) ? error.map(e => e.toString()).join(', ') : error?.message || 'Unknown error' } }));
     }
   }
 
