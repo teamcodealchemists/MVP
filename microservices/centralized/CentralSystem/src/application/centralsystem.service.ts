@@ -399,7 +399,7 @@ async CheckInsufficientQuantity(
       if (residualQty <= productInInv.getMaxThres()) {
         //Chiamata per creare un ordine nuovo avendo già i dati del magazzino trovato
         //per ricordare
-        let oI = new OrderItem(new ItemId(Number(product.getId())),product.getMinThres()-product.getQuantity());
+        let oI = new OrderItem(new ItemId(Number(product.getId())), product.getQuantity() - product.getMaxThres());
         let oID = new OrderItemDetail(oI,0,product.getUnitPrice());
         let internalOrders = new InternalOrder(new OrderId(""),[oID],OrderState.PENDING, new Date(),warehouseId.getId(),whId);
         //console.log("service : Magazzino mandato! \n"+ JSON.stringify(internalOrders, null, 2));
