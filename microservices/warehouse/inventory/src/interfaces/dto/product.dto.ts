@@ -32,7 +32,6 @@ export class ProductDto {
   maxThres: number;
 
   @IsNotEmpty()
-  @ValidateNested()
   @Type(() => WarehouseIdDto)
   warehouseId : WarehouseIdDto;
 }

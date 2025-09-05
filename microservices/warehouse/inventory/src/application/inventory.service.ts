@@ -94,7 +94,21 @@ export class InventoryService {
   }
 
   async shipOrder(order : OrderId, productQ :  ProductQuantity[]): Promise<void>{
-    //continuazione per domani
+    
     return Promise.resolve();
+  }
+  async reserveStock(order : OrderId, productQ :  ProductQuantity[]): Promise<void>{
+    
+    /*this.inventoryRepository.updateProduct();
+    this.natsAdapter.reservedQuantities();
+
+
+    //Se basta i prodotti riservati 
+    //Manda questo
+    this.natsAdapter.sufficientProductAvailability();
+    //Se non basta i prodotti manda un ordine id e la quantità che è stata riservata
+    this.natsAdapter.reservedQuantities();
+    return Promise.resolve();
+    */
   }
 }
