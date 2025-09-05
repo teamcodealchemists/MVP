@@ -19,6 +19,7 @@ import { OrderId } from "src/domain/orderId.entity";
 import { DataMapper } from "src/infrastructure/mappers/dataMapper";
 import { SellOrder } from "src/domain/sellOrder.entity";
 import { ProductId } from "src/domain/productId.entity";
+import { Order } from "src/domain/order.entity";
 
 @Injectable()
 export class CentralSystemService {
@@ -171,7 +172,7 @@ export class CentralSystemService {
         let oID = new OrderItemDetail(oI,0,product.getUnitPrice());
         let internalOrders = new InternalOrder(new OrderId(""),[oID],OrderState.PENDING, new Date(), whId,warehouseId.getId());
         //console.log("service : Magazzino mandato! \n"+ JSON.stringify(internalOrders, null, 2));
-        this.outboundPortsAdapter.createInternalOrder(internalOrders);
+        this.outboundPortsAdapter.createInternalOrder(internalOrders, new OrderId(""));
       }else {
         //console.log("Magazzino : "+whId+"\nresidualQty >= product.getMinThres()\n availableQty : " + availableQty + "\n pendingQtyInternal : "+ pendingQtyInternal + "\n pendingQtySell : "+ pendingQtySell + "\n residualQty : "+ residualQty);
       }
@@ -309,7 +310,7 @@ async CheckInsufficientQuantity(
     //this.logger.log(`Received orderQuantity: ${JSON.stringify(internalOrdersToCreate)}`);
     for (const internalOrder of internalOrdersToCreate) {
       try {
-        await this.outboundPortsAdapter.createInternalOrder(internalOrder);
+        await this.outboundPortsAdapter.createInternalOrder(internalOrder, new OrderId(orderQuantity.getId()));
       } catch (err) {
         console.error("Errore invio InternalOrder:", err);
       }
@@ -402,7 +403,7 @@ async CheckInsufficientQuantity(
         let oID = new OrderItemDetail(oI,0,product.getUnitPrice());
         let internalOrders = new InternalOrder(new OrderId(""),[oID],OrderState.PENDING, new Date(),warehouseId.getId(),whId);
         //console.log("service : Magazzino mandato! \n"+ JSON.stringify(internalOrders, null, 2));
-        this.outboundPortsAdapter.createInternalOrder(internalOrders);
+        this.outboundPortsAdapter.createInternalOrder(internalOrders, new OrderId(""));
         
         return;
       }//else console.log("!residualQty <= productInInv.getMaxThres()");

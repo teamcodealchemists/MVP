@@ -2,6 +2,7 @@
 import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
 import 'reflect-metadata';
+import { OrderId } from "src/domain/orderId.entity";
 import { InternalOrderDTO } from "src/interfaces/http/dto/internalOrder.dto";
 import { OrderIdDTO } from "src/interfaces/http/dto/orderId.dto";
 import { OrderItemDTO } from "src/interfaces/http/dto/orderItem.dto";
@@ -9,6 +10,8 @@ import { OrderStateDTO } from "src/interfaces/http/dto/orderState.dto";
 
 describe("InternalOrderDTO Validation", () => {
   it("should validate a correct DTO", async () => {
+  const sellOrder = new OrderIdDTO();
+  sellOrder.id = "S123";
   const dtoPlain = {
     orderId: { id: "I123" },
     items: [
@@ -17,9 +20,9 @@ describe("InternalOrderDTO Validation", () => {
     orderState: "PENDING",
     creationDate: new Date(),
     warehouseDeparture: 1,
-    warehouseDestination: 2
+    warehouseDestination: 2,
+    sellOrderId : sellOrder
   };
-
   const dto = plainToInstance(InternalOrderDTO, dtoPlain);
   const errors = await validate(dto);
   console.log(errors);
@@ -33,7 +36,8 @@ describe("InternalOrderDTO Validation", () => {
     dto.creationDate = new Date();
     dto.warehouseDeparture = 1;
     dto.warehouseDestination = 2;
-
+    dto.sellOrderId = new OrderIdDTO();
+    
     const errors = await validate(dto);
     expect(errors.length).toBeGreaterThan(0);
     expect(errors[0].property).toBe("orderId");
@@ -47,7 +51,7 @@ describe("InternalOrderDTO Validation", () => {
     dto.creationDate = new Date();
     dto.warehouseDeparture = 1;
     dto.warehouseDestination = 2;
-
+    dto.sellOrderId = new OrderIdDTO();
     const errors = await validate(dto);
     expect(errors.some(e => e.property === "items")).toBe(true);
   });
@@ -60,6 +64,7 @@ describe("InternalOrderDTO Validation", () => {
     dto.creationDate = new Date();
     dto.warehouseDeparture = 1.5 as any; // not an int
     dto.warehouseDestination = 2;
+    dto.sellOrderId = new OrderIdDTO();
 
     const errors = await validate(dto);
     expect(errors.some(e => e.property === "warehouseDeparture")).toBe(true);

@@ -45,7 +45,7 @@ NotificationPublisher
         await this.centralSystemHandler.handleNotification(notification);
     }
 
-    async createInternalOrder(order: InternalOrder): Promise<void> {
+    async createInternalOrder(order: InternalOrder , sellOrderId : OrderId): Promise<void> {
         const dto: InternalOrderDTO = await DataMapper.internalOrderToDTO(order);
         console.log("adapter : Magazzino mandato! \n"+ dto);
         try{

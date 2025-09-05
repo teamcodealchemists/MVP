@@ -29,4 +29,9 @@ export class InternalOrderDTO {
         @IsNotEmpty()
         @IsInt()
         warehouseDestination: number;
+
+        @IsNotEmpty()
+        @ValidateNested()
+        @Type(() => OrderIdDTO)
+        sellOrderId: OrderIdDTO;
 }
