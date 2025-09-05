@@ -33,11 +33,11 @@ services:
     networks:
        - shared-warehouses
 
-  mvp-inventory:
+  inventory:
     build:
       context: ./microservices/warehouse/inventory
       dockerfile: Dockerfile
-    container_name: mvp-inventory-1   
+    container_name: inventory-1
     environment:
       - MONGO_URI=mongodb://mongo:27017/inventory
       - WAREHOUSE_ID=1
@@ -52,11 +52,11 @@ services:
       - resgate
     
 
-  mvp-inventory-aggregated:
+  inventory-aggregated:
     build:
       context: ./microservices/warehouse/inventory-aggregated
       dockerfile: Dockerfile
-    container_name: mvp-inventory-aggregated-1
+    container_name: inventory-aggregated-1
     environment:
       - MONGO_URI=mongodb://mongo:27017/inventory-aggregated
       - NATS_URL=nats://nats:4222
@@ -68,6 +68,7 @@ services:
       - mongo
       - nats
       - resgate
+      - inventory
 
 networks:
   shared-warehouses:

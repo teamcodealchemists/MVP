@@ -5,24 +5,19 @@ import { SyncProductDTO } from './dto/syncProduct.dto';
 import { SyncProductIdDTO } from './dto/syncProductId.dto';
 import { SyncInventoryDTO } from './dto/syncInventory.dto';
 import { CloudDataMapper } from '../infrastructure/mappers/cloud-data.mapper';
+import { CloudInventoryEventAdapter } from 'src/infrastructure/adapters/inventory-aggregated-event.adapter';
 @Controller()
 export class commandHandler {
-  constructor(
-    private readonly inventoryService: InventoryAggregatedService,
-    private readonly mapper: CloudDataMapper,
+  constructor(private readonly cloudInventoryEventAdapter : CloudInventoryEventAdapter
   ) {}
 
- //DA MODIFCARE I MESSAGE PATTERN
-  @MessagePattern(`prova`)
+  @MessagePattern('warehouse.stock.added')
   async syncAddedStock(payload: any): Promise<void> {
     console.log(payload);
-    console.log("ARRIVATOOO");
     const dto: SyncProductDTO = typeof payload === 'string' ? JSON.parse(payload) : payload;
     await this.inventoryService.addProduct(dto);
-
   }
 
-  
   @MessagePattern('warehouse.stock.removed')
   async syncRemovedStock(payload: any): Promise<void> {
     console.log(payload);

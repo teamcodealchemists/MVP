@@ -12,9 +12,13 @@ import { Inventory } from 'src/domain/inventory.entity';
 import { ProductIdDto } from 'src/interfaces/dto/productId.dto';
 import { ProductDto } from 'src/interfaces/dto/product.dto';
 
+
+//TODO: implementare tutte le porte
 @Injectable()
 export class InboundEventListener implements 
-EditStockUseCase {
+EditStockUseCase,
+ProductAddQuantityUseCase,
+OrderRequestUseCase {
   constructor(private readonly service : InventoryService ) {}
    async newStock(dto: ProductDto): Promise<void> {
     const product = DataMapper.toDomainProduct(dto);
