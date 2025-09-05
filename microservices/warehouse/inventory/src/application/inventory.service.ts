@@ -79,7 +79,6 @@ export class InventoryService {
     return this.warehouseId.getId();
   }
 
-
   async checkProductExistence(id: ProductId): Promise<boolean> {
     const product = await this.inventoryRepository.getById(id);
     return !!product;
