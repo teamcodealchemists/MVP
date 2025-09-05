@@ -26,6 +26,8 @@ export class InventoryRepositoryMongo implements InventoryRepository {
       maxThres: product.getMaxThres(),
     };
 
+    console.log('DEBUG addProduct productValues:', productValues); // <--- AGGIUNGI QUESTA RIGA
+
     const newProduct = new this.productModel(productValues);
     await newProduct.save();
   }
