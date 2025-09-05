@@ -11,6 +11,8 @@ import { OrderId } from 'src/domain/orderId.entity';
 import { ProductQuantity } from 'src/domain/productQuantity.entity';
 import { WarehouseId } from 'src/domain/warehouseId.entity';
 import { ProductId } from 'src/domain/productId.entity';
+import { ProductIdDto } from 'src/interfaces/dto/productId.dto';
+import { WarehouseIdDto } from 'src/interfaces/dto/warehouseId.dto';
 
 export class OutboundEventAdapter
   implements
@@ -23,15 +25,41 @@ export class OutboundEventAdapter
 {
   constructor(private readonly outboundEventHandler : OutboundEventHandler) {}
 
-  async belowMinThres(product: Product): Promise<void> {
+  async belowMinThres(product: Product , warehouseId : WarehouseId): Promise<void> {
     //conversione domain -- dto
-    const p = new ProductDto();
+    const idDto = new ProductIdDto();
+    idDto.id = product.getId().getId();
+    const whIdDto = new WarehouseIdDto();
+    whIdDto.warehouseId = warehouseId.getId();
+    const p: ProductDto = {
+    id: idDto,
+    name: product.getName(),
+    unitPrice: product.getUnitPrice(),
+    quantity: product.getQuantity(),
+    quantityReserved : product.getQuantityReserved(),
+    minThres: product.getMinThres(),
+    maxThres: product.getMaxThres(),
+    warehouseId: whIdDto,
+    };
     await this.outboundEventHandler.handlerBelowMinThres(p);
     return Promise.resolve();
   }
 
-  async aboveMaxThres(product: Product): Promise<void> {
-     //conversione domain -- dto
+  async aboveMaxThres(product: Product, warehouseId : WarehouseId): Promise<void> {
+    const idDto = new ProductIdDto();
+    idDto.id = product.getId().getId();
+    const whIdDto = new WarehouseIdDto();
+    whIdDto.warehouseId = warehouseId.getId();
+    const p: ProductDto = {
+    id: idDto,
+    name: product.getName(),
+    unitPrice: product.getUnitPrice(),
+    quantity: product.getQuantity(),
+    quantityReserved : product.getQuantityReserved(),
+    minThres: product.getMinThres(),
+    maxThres: product.getMaxThres(),
+    warehouseId: whIdDto,
+    };
     return Promise.resolve();
   }
 
