@@ -29,6 +29,7 @@ export const DataMapper = {
     return { state: entity.getState() };
   },
 
+
   toDTOHeartbeat(entity: Heartbeat): HeartbeatDTO {
     return {
       heartbeatMsg: entity.getHeartbeatMsg(),
