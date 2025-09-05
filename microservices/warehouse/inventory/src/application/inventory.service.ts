@@ -94,21 +94,87 @@ export class InventoryService {
   }
 
   async shipOrder(order : OrderId, productQ :  ProductQuantity[]): Promise<void>{
-    
+    for (const pq of productQ) {
+      const product = await this.inventoryRepository.getById(pq.getId());
+      if (!product) {
+        console.warn(`Prodotto con id ${pq.getId().getId()} non trovato per l'ordine ${order}`);
+        continue;
+      }
+      const newReserved = Math.max((product.getQuantityReserved() || 0) - pq.getQuantity(), 0);
+      const updatedProduct = new Product(
+        product.getId(),
+        product.getName(),
+        product.getUnitPrice(),
+        product.getQuantity(),
+        newReserved,
+        product.getMinThres(),
+        product.getMaxThres()
+      );
+      await this.inventoryRepository.updateProduct(updatedProduct);
+    }
+    await this.natsAdapter.stockShipped(order);
     return Promise.resolve();
   }
   async reserveStock(order : OrderId, productQ :  ProductQuantity[]): Promise<void>{
-    
-    /*this.inventoryRepository.updateProduct();
-    this.natsAdapter.reservedQuantities();
-
-
-    //Se basta i prodotti riservati 
-    //Manda questo
-    this.natsAdapter.sufficientProductAvailability();
-    //Se non basta i prodotti manda un ordine id e la quantità che è stata riservata
-    this.natsAdapter.reservedQuantities();
+      const reserved: ProductQuantity[] = [];
+      let allSufficient = true;
+      for (const pq of productQ) {
+        const product = await this.inventoryRepository.getById(pq.getId());
+        if (!product) {
+          allSufficient = false;
+          continue;
+        }
+        if (product.getQuantity() >= pq.getQuantity()) {
+          console.log("c'è abbastanza prodotto per questo go go");
+        } else {
+          allSufficient = false;
+          const newReserved = pq.getQuantity();
+          const p = new Product(new ProductId(pq.getId().getId()), product.getName(), product.getUnitPrice(), 0,
+                                newReserved, product.getMinThres(), product.getMaxThres());
+          const p1 = new ProductQuantity(new ProductId(product.getId().getId()), newReserved);
+          if(product.getMinThres() > 0) this.natsAdapter.belowMinThres(p,this.warehouseId);
+          reserved.push(p1);
+          await this.inventoryRepository.updateProduct(p);
+        }
+      }
+      if (allSufficient) {
+        const reserved: ProductQuantity[] = [];
+        for (const pq of productQ) {
+          const product = await this.inventoryRepository.getById(pq.getId());
+          if (!product) continue;
+          const newQuantity = product.getQuantity() - pq.getQuantity();
+          const newReserved = (product.getQuantityReserved() || 0) + pq.getQuantity();
+          const updatedProduct = new Product(
+            product.getId(),
+            product.getName(),
+            product.getUnitPrice(),
+            newQuantity,
+            newReserved,
+            product.getMinThres(),
+            product.getMaxThres()
+          );
+          if(product.getMinThres() > newQuantity) this.natsAdapter.belowMinThres(updatedProduct,this.warehouseId);
+          await this.inventoryRepository.updateProduct(updatedProduct);
+          reserved.push(new ProductQuantity(product.getId(), pq.getQuantity()));
+        }
+        await this.natsAdapter.sufficientProductAvailability(order);
+      } else {
+        await this.natsAdapter.reservedQuantities(order, reserved);
+      }
     return Promise.resolve();
-    */
+  }
+  async receiveStock(order : OrderId, productQ :  ProductQuantity[]): Promise<void>{
+    for (const pq of productQ) {
+      const product = await this.inventoryRepository.getById(pq.getId());
+      if (!product) {
+        continue;
+      }
+      const newQuantity = pq.getQuantity() + product.getQuantity();
+      const p = new Product(new ProductId(product.getId().getId()), product.getName(), product.getUnitPrice(), newQuantity,
+                            product.getQuantityReserved(), product.getMinThres(), product.getMaxThres());
+      await this.inventoryRepository.updateProduct(p);
+    }
+    this.natsAdapter.stockReceived(order);
+    return Promise.resolve();
   }
 }
