@@ -21,22 +21,35 @@ export class InventoryService {
     this.warehouseId = new WarehouseId(Number(`${process.env.WAREHOUSE_ID}`));
   }
 
+  // ---------------------------------------
+  //        Command Handler Methods
+  // ---------------------------------------
+
   async addProduct(newProduct: Product): Promise<void> {
-    await this.inventoryRepository.addProduct(newProduct);
-     console.log('Publishing stockAdded event', newProduct);
-    this.natsAdapter.stockAdded(newProduct, this.warehouseId);
-     console.log('PUBBLICATO stockAdded event');
+    if (await this.inventoryRepository.getById(newProduct.getId())==null){ {
+      await this.inventoryRepository.addProduct(newProduct);
+      console.log('Publishing stockAdded event', newProduct);
+      //this.natsAdapter.stockAdded(newProduct, this.warehouseId);
+      console.log('PUBBLICATO stockAdded event');
+      return Promise.resolve();
+    }
+    } else {
+      throw new Error(`Product with id ${newProduct.getId().getId()} already exists`);
+    }
   }
 
   async removeProduct(id: ProductId): Promise<boolean> {
+    if (await this.inventoryRepository.getById(id) == null) {
+      throw new NotFoundException(`Product with id ${id.getId()} not found`);
+    }
     await this.inventoryRepository.removeById(id);
-    Promise.resolve(await this.natsAdapter.stockRemoved(id, this.warehouseId));
+    //await this.natsAdapter.stockRemoved(id, this.warehouseId);
     return true;
   }
 
   async editProduct(editedProduct: Product): Promise<void> {
     await this.inventoryRepository.updateProduct(editedProduct);
-    this.natsAdapter.stockUpdated(editedProduct, this.warehouseId);
+    //this.natsAdapter.stockUpdated(editedProduct, this.warehouseId);
     //Implementare l'outbound adapter per l'edit
     return Promise.resolve();
   }
@@ -48,6 +61,10 @@ export class InventoryService {
     }
     return product;
   }
+
+  // ---------------------------------------
+  //        Listener Event Methods
+  // ---------------------------------------
 
   async getInventory(): Promise<Inventory> {
     return await this.inventoryRepository.getAllProducts();

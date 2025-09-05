@@ -26,7 +26,9 @@ export class CommandHandler {
     logger.log('Received new stock payload:', productObj);
 
     const productDTO: ProductDto = new ProductDto();
-    productDTO.id = productObj.id;
+    const productIdDto = new ProductIdDto();
+    productIdDto.id = productObj.id as string;
+    productDTO.id = productIdDto;
     productDTO.name = productObj.name;
     productDTO.unitPrice = productObj.unitPrice;
     productDTO.quantity = productObj.quantity;
@@ -37,8 +39,8 @@ export class CommandHandler {
 
     try {
       await validateOrReject(productDTO);
-      //await this.inboundEventListener.newStock(productDTO);
-      let RID = `warehouse.${process.env.WAREHOUSE_ID}.stock.${productDTO.id}`;
+      await this.inboundEventListener.newStock(productDTO);
+      let RID = `warehouse.${process.env.WAREHOUSE_ID}.stock.${productDTO.id.id}`;
       return Promise.resolve(JSON.stringify({ resource: { rid: RID } }));
     } catch (error) {
       logger.error('Error in handleNewStock:', error);
@@ -60,8 +62,8 @@ export class CommandHandler {
 
     try {
       await validateOrReject(productIdDTO);
-      //await this.inboundEventListener.removeStock(productIdDTO);
-      return Promise.resolve(JSON.stringify({ result: `Prodotto con ID ${itemIdStr} rimosso` }));
+      await this.inboundEventListener.removeStock(productIdDTO);
+      return Promise.resolve(JSON.stringify({ result: `Product with ID ${itemIdStr} removed` }));
     } catch (error) {
       logger.error('Error in handleRemoveStock:', error);
       return await this.errorHandler(error);
@@ -90,8 +92,8 @@ export class CommandHandler {
 
     try {
       await validateOrReject(productDTO);
-      //await this.inboundEventListener.editStock(productDTO);
-      return Promise.resolve(JSON.stringify({ result: `Prodotto con ID ${itemIdStr} aggiornato` }));
+      await this.inboundEventListener.editStock(productDTO);
+      return Promise.resolve(JSON.stringify({ result: `Product with ID ${itemIdStr} updated` }));
     } catch (error) {
       logger.error('Error in handleEditStock:', error);
       return await this.errorHandler(error);

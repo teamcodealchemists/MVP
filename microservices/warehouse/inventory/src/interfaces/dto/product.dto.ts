@@ -4,7 +4,8 @@ import { Type } from 'class-transformer';
 import { WarehouseIdDto } from './warehouseId.dto';
 
 export class ProductDto {
-  @IsString()
+
+  @IsNotEmpty()
   @Type(() => ProductIdDto)
   id: ProductIdDto;
 
