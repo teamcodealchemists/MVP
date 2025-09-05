@@ -70,11 +70,6 @@ export class InventoryService {
     return await this.inventoryRepository.getAllProducts();
   }
 
-  // ---------------------------------------
-  //        Listener Event Methods
-  // ---------------------------------------
-
-
   async getWarehouseId(): Promise<number> {
     return this.warehouseId.getId();
   }
