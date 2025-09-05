@@ -21,18 +21,18 @@ async publishHeartbeat(heartbeat: Heartbeat, warehouseId: number): Promise<void>
     });
 }
  
-
+// serve??
   async publishState(state: WarehouseState, warehouseId: number): Promise<void> {
     await this.natsClient.emit(`state.get.${warehouseId}`, {
         warehouseId: warehouseId,
         state: state.getState()
     });
-}
+} 
 
 async stateUpdated(state: WarehouseState, warehouseId: number): Promise<void> {
     await this.natsClient.emit(`state.updated.${warehouseId}`, {
         warehouseId: warehouseId,
-        state: state.getState()
+        state: state.getState() 
     });
 }
   

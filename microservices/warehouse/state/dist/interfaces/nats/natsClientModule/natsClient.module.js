@@ -1,3 +1,4 @@
+"use strict";
 /*import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 
@@ -19,4 +20,4 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
     ]
 
 })
-export class NatsClientModule {}*/
+export class NatsClientModule {}*/ 
