@@ -53,7 +53,7 @@ export class InboundEventController {
             logger.error('Errore parsing orderRequest payload', err);
         }
   }
-  @MessagePattern(``)
+  @MessagePattern(`event.warehouse.${process.env.WAREHOUSE_ID}.order.ship`)
   async handleShipOrderRequest(payload: any): Promise<void> {
     const data =
         typeof payload === 'string'
@@ -73,7 +73,7 @@ export class InboundEventController {
             logger.error('Errore parsing orderRequest payload', err);
         }
   }
-  @MessagePattern(``)
+  @MessagePattern(`event.warehouse.${process.env.WAREHOUSE_ID}.order.receiveShipment`)
   async handleReceiveShipment(payload: any) : Promise<void>{
     const data =
         typeof payload === 'string'
