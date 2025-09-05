@@ -2,16 +2,8 @@ import { Controller, Logger } from '@nestjs/common';
 import { Ctx, MessagePattern, Payload } from '@nestjs/microservices';
 import { ProductDto } from './dto/product.dto';
 import { ProductIdDto } from './dto/productId.dto';
-import { DataMapper } from '../infrastructure/mappers/dataMapper';
-import { Product } from 'src/domain/product.entity';
-import { Inventory } from 'src/domain/inventory.entity';
 import { InboundEventListener } from 'src/infrastructure/adapters/inbound-event.adapter';
 import { validateOrReject } from 'class-validator';
-import { log } from 'console';
-
-
-//TODO: Risistemare per RESGATE
-// I payload sono assolutamente errati
 
 const logger = new Logger('commandHandler');
 @Controller()
