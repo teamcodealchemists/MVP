@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, Logger } from '@nestjs/common';
 import { CloudOrdersService } from 'src/application/cloud.orders.service';
 import { CloudDataMapper } from 'src/infrastructure/mappers/cloud.data.mapper';
-import { CloudOrdersRepository } from 'src/domain/cloud.orders.repository';
+import { CloudOrdersRepositoryMongo } from 'src/infrastructure/adapters/mongodb/cloud.orders.repository.impl';
 
 // Use Cases
 import { SyncGetAllOrdersUseCase } from '../../interfaces/inbound-ports/syncGetAllOrders.useCase';
@@ -35,12 +35,15 @@ export class CloudInboundPortsAdapter implements SyncGetAllOrdersUseCase,
   SyncGetOrderUseCase, SyncGetOrderStateUseCase, SyncInternalOrderEventListener, 
   SyncOrderStatusEventListener, SyncReservationEventListener, 
   SyncSellOrderEventListener, SyncUpdateOrderStateUseCase {
+    
+    private readonly logger = new Logger(CloudInboundPortsAdapter.name);
 
   constructor(
     private readonly ordersService: CloudOrdersService,
     private readonly dataMapper: CloudDataMapper,
-    private readonly cloudOrdersRepository: CloudOrdersRepository
-  ) {}
+    @Inject('CLOUDORDERSREPOSITORY')
+    private readonly cloudOrdersRepositoryMongo: CloudOrdersRepositoryMongo  ) 
+    {}
 
   async stockReserved(orderQuantityDTO: SyncOrderQuantityDTO): Promise<void> {
     const orderId = await this.dataMapper.syncOrderIdToDomain(orderQuantityDTO.id);
@@ -89,14 +92,14 @@ export class CloudInboundPortsAdapter implements SyncGetAllOrdersUseCase,
   async getOrderState(orderId: string): Promise<SyncOrderStateDTO> {
     const orderIdDTO: SyncOrderIdDTO = { id: orderId };
     const orderIdDomain = await this.dataMapper.syncOrderIdToDomain(orderIdDTO);
-    const receivedState = await this.cloudOrdersRepository.getState(orderIdDomain);
+    const receivedState = await this.cloudOrdersRepositoryMongo.getState(orderIdDomain);
     return await this.dataMapper.syncOrderStateToDTO(receivedState);
   }
 
   async getOrder(orderId: string): Promise<SyncInternalOrderDTO | SyncSellOrderDTO> {
     const orderIdDTO: SyncOrderIdDTO = { id: orderId };
     const orderIdDomain = await this.dataMapper.syncOrderIdToDomain(orderIdDTO);
-    const receivedOrder = await this.cloudOrdersRepository.getById(orderIdDomain);
+    const receivedOrder = await this.cloudOrdersRepositoryMongo.getById(orderIdDomain);
     
     if (receivedOrder instanceof SyncInternalOrder) {
       return await this.dataMapper.syncInternalOrderToDTO(receivedOrder);
@@ -108,9 +111,22 @@ export class CloudInboundPortsAdapter implements SyncGetAllOrdersUseCase,
   }
 
   async getAllOrders(): Promise<SyncOrdersDTO> {
-    const ordersDomain = await this.cloudOrdersRepository.getAllOrders();
-    const ordersDTO = await this.dataMapper.syncOrdersToDTO(ordersDomain);
-    console.log('[AggregateO] SyncOrders convertiti a DTO correttamente', ordersDTO);
-    return ordersDTO;
+     
+      try {
+          const ordersDomain = await this.cloudOrdersRepositoryMongo.getAllOrders();
+          this.logger.log('[Adapter] Ordini recuperati dal repository');
+          
+          const ordersDTO = await this.dataMapper.syncOrdersToDTO(ordersDomain);
+          this.logger.log('[Adapter] Conversione a DTO completata');
+          
+          return ordersDTO;
+      } catch (error) {
+          this.logger.log('[Adapter] Errore in getAllOrders:', error);
+          // Restituisci un DTO vuoto invece di propagare l'errore
+          return {
+              sellOrders: [],
+              internalOrders: []
+          };
+      }
   }
 }

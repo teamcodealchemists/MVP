@@ -14,7 +14,10 @@ import { CloudOutboundEventAdapter } from 'src/infrastructure/adapters/cloudOutb
     NatsModule, 
     CloudOrdersRepositoryModule],
   controllers: [CloudOrdersController],
-  providers: [CloudInboundPortsAdapter, CloudOrdersService, CloudDataMapper, CloudOutboundEventAdapter],
+  providers: [CloudInboundPortsAdapter, 
+              CloudOrdersService, 
+              CloudDataMapper, 
+              CloudOutboundEventAdapter]
 })
 export class CloudOrdersModule {}
     

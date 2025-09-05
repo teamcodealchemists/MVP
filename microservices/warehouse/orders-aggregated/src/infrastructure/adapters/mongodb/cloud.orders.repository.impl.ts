@@ -40,7 +40,7 @@ export class CloudOrdersRepositoryMongo implements CloudOrdersRepository {
                         internalDoc.items.map(item => 
                             new SyncOrderItemDetail(
                                     new SyncOrderItem(
-                                        new SyncItemId(item.item.itemId),
+                                        new SyncItemId(item.item.id),
                                         item.item.quantity), 
                                 item.quantityReserved,
                                 item.unitPrice
@@ -64,7 +64,7 @@ export class CloudOrdersRepositoryMongo implements CloudOrdersRepository {
                     sellDoc.items.map(item => 
                         new SyncOrderItemDetail(
                                 new SyncOrderItem(
-                                    new SyncItemId(item.item.itemId),
+                                    new SyncItemId(item.item.id),
                                     item.item.quantity), 
                             item.quantityReserved,
                             item.unitPrice
@@ -103,67 +103,95 @@ export class CloudOrdersRepositoryMongo implements CloudOrdersRepository {
         }
     }
 
+    // NB: A differenza dell'omonima funzione in Orders locale, qui prende solo gli ordini PENDING o PROCESSING (per il s.c.)
     async getAllOrders(): Promise<SyncOrders> {
         try {
+            console.log('[Repository] Recupero internalDocs...');
             const internalDocs = await this.syncInternalOrderModel.find().lean().exec() as any[];
+            console.log('[Repository] InternalDocs trovati:', internalDocs.length);
+            
+            console.log('[Repository] Recupero sellDocs...');
             const sellDocs = await this.syncSellOrderModel.find().lean().exec() as any[];
+            console.log('[Repository] SellDocs trovati:', sellDocs.length);
 
-        // Conversione da documento a dominio
-            const internalOrders = internalDocs.map(doc => {
-                try {
-                    return new SyncInternalOrder(
-                        new SyncOrderId(doc.orderId.id),
-                        (doc.items || []).map(item => 
-                            new SyncOrderItemDetail(
-                                new SyncOrderItem(
-                                    new SyncItemId(item.item.itemId),
-                                    item.item.quantity
-                                ), 
-                                item.quantityReserved,
-                                item.unitPrice
-                            )
-                        ),
-                        doc.orderState as SyncOrderState,
-                        new Date(doc.creationDate),
-                        doc.warehouseDeparture,
-                        doc.warehouseDestination
-                    );
-                } catch (error) {
-                    throw new Error('Errore conversione internalDoc:', error);
-                }
-            });
+            // Conversione da documento a dominio con filtro
+            const internalOrders = internalDocs
+                .filter(doc => {
+                    const isValid = doc.orderState === SyncOrderState.PENDING || doc.orderState === SyncOrderState.PROCESSING;
+                    console.log(`[Repository] InternalOrder ${doc.orderId?.id} - Stato: ${doc.orderState}, Valido: ${isValid}`);
+                    return isValid;
+                })
+                .map(doc => {
+                    try {
+                        console.log(`[Repository] Conversione InternalOrder: ${doc.orderId?.id}`);
+                        return new SyncInternalOrder(
+                            new SyncOrderId(doc.orderId.id),
+                            (doc.items || []).map(item => 
+                                new SyncOrderItemDetail(
+                                    new SyncOrderItem(
+                                        new SyncItemId(item.item.itemId),
+                                        item.item.quantity
+                                    ), 
+                                    item.quantityReserved,
+                                    item.unitPrice
+                                )
+                            ),
+                            doc.orderState as SyncOrderState,
+                            new Date(doc.creationDate),
+                            doc.warehouseDeparture,
+                            doc.warehouseDestination
+                        );
+                    } catch (error) {
+                        console.error('[Repository] Errore conversione internalDoc:', error);
+                        console.error('[Repository] Doc che causa errore:', JSON.stringify(doc, null, 2));
+                        throw new Error(`Errore conversione internalDoc: ${error.message}`);
+                    }
+                });
 
-        // Conversione da documento a dominio
-            const sellOrders = sellDocs.map(doc => {
-                try {
-                    return new SyncSellOrder(
-                        new SyncOrderId(doc.orderId.id),
-                        (doc.items || []).map(item => 
-                            new SyncOrderItemDetail(
-                                new SyncOrderItem(
-                                    new SyncItemId(item.item.itemId),
-                                    item.item.quantity
-                                ), 
-                                item.quantityReserved,
-                                item.unitPrice
-                            )
-                        ),
-                        doc.orderState as SyncOrderState,
-                        new Date(doc.creationDate),
-                        doc.warehouseDeparture,
-                        doc.destinationAddress
-                    );
-                } catch (error) {
-                    throw new Error('Errore conversione sellDoc:', error);
-                }
-            });
+            // Conversione da documento a dominio con filtro
+            const sellOrders = sellDocs
+                .filter(doc => {
+                    const isValid = doc.orderState === SyncOrderState.PENDING || doc.orderState === SyncOrderState.PROCESSING;
+                    console.log(`[Repository] SellOrder ${doc.orderId?.id} - Stato: ${doc.orderState}, Valido: ${isValid}`);
+                    return isValid;
+                })
+                .map(doc => {
+                    try {
+                        console.log(`[Repository] Conversione SellOrder: ${doc.orderId?.id}`);
+                        return new SyncSellOrder(
+                            new SyncOrderId(doc.orderId.id),
+                            (doc.items || []).map(item => 
+                                new SyncOrderItemDetail(
+                                    new SyncOrderItem(
+                                        new SyncItemId(item.item.itemId),
+                                        item.item.quantity
+                                    ), 
+                                    item.quantityReserved,
+                                    item.unitPrice
+                                )
+                            ),
+                            doc.orderState as SyncOrderState,
+                            new Date(doc.creationDate),
+                            doc.warehouseDeparture,
+                            doc.destinationAddress
+                        );
+                    } catch (error) {
+                        console.error('[Repository] Errore conversione sellDoc:', error);
+                        console.error('[Repository] Doc che causa errore:', JSON.stringify(doc, null, 2));
+                        throw new Error(`Errore conversione sellDoc: ${error.message}`);
+                    }
+                });
 
+            console.log(`[Repository] Conversione completata: ${internalOrders.length} internal, ${sellOrders.length} sell`);
             return new SyncOrders(sellOrders, internalOrders);
             
         } catch (error) {
-            throw new Error ("Errore durante il recupero di tutti gli ordini:", error);
+            console.error('[Repository] Errore durante il recupero di tutti gli ordini:', error);
+            console.error('[Repository] Stack trace:', error.stack);
+            throw new Error(`Errore durante il recupero di tutti gli ordini: ${error.message}`);
         }
     }
+
 
     async syncAddSellOrder(order: SyncSellOrder): Promise<void> {
         try {           
