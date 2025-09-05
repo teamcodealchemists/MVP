@@ -27,13 +27,14 @@ export class InventoryService {
 
   async addProduct(newProduct: Product): Promise<void> {
     if (await this.inventoryRepository.getById(newProduct.getId()) == null) {
-      {
-        await this.inventoryRepository.addProduct(newProduct);
-        console.log('Publishing stockAdded event', newProduct);
-        this.natsAdapter.stockAdded(newProduct, this.warehouseId);
-        console.log('PUBBLICATO stockAdded event');
-        return Promise.resolve();
+      if(newProduct.getQuantity() > newProduct.getMaxThres()){
+        this.natsAdapter.aboveMaxThres(newProduct, this.warehouseId);
       }
+      await this.inventoryRepository.addProduct(newProduct);
+      console.log('Publishing stockAdded event', newProduct);
+      this.natsAdapter.stockAdded(newProduct, this.warehouseId);
+      console.log('PUBBLICATO stockAdded event');
+      return Promise.resolve();
     } else {
       throw new Error(`Product with id ${newProduct.getId().getId()} already exists`);
     }
@@ -52,6 +53,12 @@ export class InventoryService {
     const existingProduct = await this.inventoryRepository.getById(editedProduct.getId());
     if (!existingProduct) {
       throw new NotFoundException(`Product with id ${editedProduct.getId().getId()} not found`);
+    }
+    if(editedProduct.getQuantity() < editedProduct.getMinThres()){
+      this.natsAdapter.belowMinThres(editedProduct, this.warehouseId);
+    }
+    if(editedProduct.getQuantity() > editedProduct.getMaxThres()){
+      this.natsAdapter.aboveMaxThres(editedProduct, this.warehouseId);
     }
     await this.inventoryRepository.updateProduct(editedProduct);
     this.natsAdapter.stockUpdated(editedProduct, this.warehouseId);
