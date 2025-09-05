@@ -8,16 +8,20 @@ import { OutboundEventAdapter } from 'src/infrastructure/adapters/outbound-event
 import { InboundEventListener } from 'src/infrastructure/adapters/inbound-event.adapter';
 import { AccessController } from 'src/interfaces/access.controller';
 import { InboundEventController } from 'src/interfaces/InboundEvent.controller';
+import { OutboundEventHandler } from 'src/interfaces/OutboundEventHandler';
+import { NatsClientModule } from 'src/interfaces/nats/natsClientModule/natsClient.module';
 
 
 @Module({
   imports: [
     MongooseModule.forRoot(process.env.MONGO_URI || 'mongodb://localhost:27017/inventorydb'), 
     InventoryRepositoryModule,
+    NatsClientModule
   ],
   controllers: [CommandHandler, AccessController, InboundEventController],
   providers: [
     OutboundEventAdapter,
+    OutboundEventHandler,
     InboundEventListener,
     InventoryService,
     {

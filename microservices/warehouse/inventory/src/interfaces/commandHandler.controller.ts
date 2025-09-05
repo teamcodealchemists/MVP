@@ -48,7 +48,6 @@ export class CommandHandler {
     }
   }
 
-
   @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.stock.*.delete`)
   async handleRemoveStock(@Ctx() context: any): Promise<string> {
 
@@ -133,7 +132,6 @@ export class CommandHandler {
 
     return Promise.resolve(JSON.stringify({ result: { collection } }));
   }
-
 
   private async errorHandler(error: any): Promise<string> {
     let message: string;

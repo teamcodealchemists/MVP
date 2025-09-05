@@ -30,7 +30,7 @@ export class InventoryService {
       {
         await this.inventoryRepository.addProduct(newProduct);
         console.log('Publishing stockAdded event', newProduct);
-        //this.natsAdapter.stockAdded(newProduct, this.warehouseId);
+        this.natsAdapter.stockAdded(newProduct, this.warehouseId);
         console.log('PUBBLICATO stockAdded event');
         return Promise.resolve();
       }
@@ -44,7 +44,7 @@ export class InventoryService {
       throw new NotFoundException(`Product with id ${id.getId()} not found`);
     }
     await this.inventoryRepository.removeById(id);
-    //await this.natsAdapter.stockRemoved(id, this.warehouseId);
+    await this.natsAdapter.stockRemoved(id, this.warehouseId);
     return true;
   }
 
@@ -54,8 +54,7 @@ export class InventoryService {
       throw new NotFoundException(`Product with id ${editedProduct.getId().getId()} not found`);
     }
     await this.inventoryRepository.updateProduct(editedProduct);
-    //this.natsAdapter.stockUpdated(editedProduct, this.warehouseId);
-    //Implementare l'outbound adapter per l'edit
+    this.natsAdapter.stockUpdated(editedProduct, this.warehouseId);
     return Promise.resolve();
   }
 
