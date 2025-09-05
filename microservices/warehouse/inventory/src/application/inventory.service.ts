@@ -193,9 +193,15 @@ export class InventoryService {
         continue;
       }
       const newQuantity = pq.getQuantity() + product.getQuantity();
-      const p = new Product(new ProductId(product.getId().getId()), product.getName(), product.getUnitPrice(), newQuantity,
-                            product.getQuantityReserved(), product.getMinThres(), product.getMaxThres());
-      await this.inventoryRepository.updateProduct(p);
+      if(product.getMaxThres() > newQuantity){
+        const p = new Product(new ProductId(product.getId().getId()), product.getName(), product.getUnitPrice(), newQuantity,
+        product.getQuantityReserved(), product.getMinThres(), product.getMaxThres());
+        await this.inventoryRepository.updateProduct(p);
+      }else{
+        const p = new Product(new ProductId(product.getId().getId()), product.getName(), product.getUnitPrice(), newQuantity,
+        product.getQuantityReserved(), product.getMinThres(), product.getMaxThres());
+        this.natsAdapter.aboveMaxThres(p,this.warehouseId);
+      }
     }
     this.natsAdapter.stockReceived(order);
     return Promise.resolve();
