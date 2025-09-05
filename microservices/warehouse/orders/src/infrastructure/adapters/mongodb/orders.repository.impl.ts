@@ -54,11 +54,11 @@ export class OrdersRepositoryMongo implements OrdersRepository {
                 );
             }
 
-            // Cerca un SellOrder con quell'id
+            // Se non trovato, cerca un SellOrder con quell'id
             const sellDoc = await this.sellOrderModel.findOne(
                 { "orderId.id": id.getId() }).lean().exec() as any;
-            console.log("sellDoc generato", sellDoc);
-            if (sellDoc) {
+
+                if (sellDoc) {
                 // Ritorna l'oggetto ordine convertito da Document a Domain
                 return new SellOrder(
                     new OrderId(sellDoc.orderId.id),
@@ -317,6 +317,8 @@ export class OrdersRepositoryMongo implements OrdersRepository {
                     sellDoc.destinationAddress
                 );
             }
+            console.log("Aggiornato lo stato dell'ordine ", id.getId(), " a ", state );
+
             // Fallback
             throw new Error(`Impossibile aggiornare lo stato: ordine con ID ${id.getId()} non trovato`);
         } catch (error) {
@@ -352,7 +354,7 @@ export class OrdersRepositoryMongo implements OrdersRepository {
     }
  
 
-    async updateReservedStock(id: OrderId, items: OrderItem[]): Promise<InternalOrder | SellOrder> {
+    async updateReservedStock(id: OrderId, items: OrderItemDetail[]): Promise<InternalOrder | SellOrder> {
         try {
             // Trova tipo di ordine e documento
             const internalDoc = await this.internalOrderModel.findOne({ 
@@ -395,11 +397,11 @@ export class OrdersRepositoryMongo implements OrdersRepository {
                 updateOne: {
                     filter: { 
                         "orderId.id": id.getId(),
-                        "items.item.itemId.id": item.getItemId()
+                        "items.item.itemId.id": item.getItem().getItemId()
                     },
                     update: {
                         $set: { 
-                            "items.$.quantityReserved": item.getQuantity()
+                            "items.$.quantityReserved": item.getQuantityReserved()
                         }
                     }
                 }
@@ -462,12 +464,23 @@ export class OrdersRepositoryMongo implements OrdersRepository {
             );
 
             const items = foundOrder.getItemsDetail();
+            let allFullyReserved = true;
+            
             items.forEach((itemDetail: OrderItemDetail) => {
                 const itemId = itemDetail.getItem().getItemId();
                 const reservedQty = itemDetail.getQuantityReserved();
-                console.log(`SellOrder - Item: ${itemId}, Reserved: ${reservedQty}`);
-                // Eventuale logica di validazione specifica per SellOrder
+                const orderedQty = itemDetail.getItem().getQuantity();
+                
+                console.log(`SellOrder - Item: ${itemId}, Ordered: ${orderedQty}, Reserved: ${reservedQty}`);
+                
+                if (reservedQty !== orderedQty) {
+                    allFullyReserved = false;
+                }
             });
+            
+            if (!allFullyReserved) {
+                throw new Error('Quantità riservata insufficiente per alcuni items');
+            }
             
         } catch (error) {
             console.error(`Errore in checkReservedQuantityForSellOrder: ${error.message}`);
@@ -475,7 +488,7 @@ export class OrdersRepositoryMongo implements OrdersRepository {
         }
     }
 
-    
+        
     async checkReservedQuantityForInternalOrder(internalOrder: InternalOrder): Promise<void> {
         try {
             const stringId = internalOrder.getOrderId();
@@ -510,11 +523,23 @@ export class OrdersRepositoryMongo implements OrdersRepository {
             );
 
             const items = foundOrder.getItemsDetail();
+            let allFullyReserved = true;
+            
             items.forEach((itemDetail: OrderItemDetail) => {
                 const itemId = itemDetail.getItem().getItemId();
                 const reservedQty = itemDetail.getQuantityReserved();
-                console.log(`InternalOrder - Item: ${itemId}, Reserved: ${reservedQty}`);
+                const orderedQty = itemDetail.getItem().getQuantity();
+                
+                console.log(`InternalOrder - Item: ${itemId}, Ordered: ${orderedQty}, Reserved: ${reservedQty}`);
+                
+                if (reservedQty !== orderedQty) {
+                    allFullyReserved = false;
+                }
             });
+            
+            if (!allFullyReserved) {
+                throw new Error('Quantità riservata insufficiente per alcuni items');
+            }
             
         } catch (error) {
             console.error(`Errore in checkReservedQuantityForInternalOrder: ${error.message}`);

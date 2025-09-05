@@ -26,23 +26,35 @@ SellOrderEventPublisher, ShipStockCommandPublisher {
       private readonly dataMapper: DataMapper) {}
 
       
-  // (Deduco) Corrisponde in PUB a replenishmentReceived()
+  // (Deduco) Corrisponde in PUB a STOCKRESERVED
   async publishReserveStock(orderId: OrderId, items: OrderItem[]) {
+    // Invia alla porta handleOrderRequest in Inventory del magazzino stesso
       await this.natsService.publish(
-          `call.warehouse.${process.env.WAREHOUSE_ID}.order.replenishment.received`, 
+          `event.warehouse.${process.env.WAREHOUSE_ID}.order.request`, { orderId, items });
+  }
+
+
+  // Corrisponde in SUB a stockShipped()
+/*   async publishShipment(orderId: OrderId, items: OrderItem[]) {
+      await this.natsService.publish(
+          `call.warehouse.${process.env.WAREHOUSE_ID}.order.stock.shipped`, 
           { 
               id: orderId.getId()  // ID string
           }
       );
   }
+ */
 
-
-  // Corrisponde in SUB a stockShipped()
-  async publishShipment(orderId: OrderId, items: OrderItem[]) {
+  async publishShipment(orderId: OrderId, items: OrderItem[]): Promise<void> {
+      // Comunica a Inventario di spedire la merce
       await this.natsService.publish(
-          `call.warehouse.${process.env.WAREHOUSE_ID}.order.stock.shipped`, 
-          { 
-              id: orderId.getId()  // ID string
+          `call.warehouse.${process.env.WAREHOUSE_ID}.inventory.ship.items`, 
+          {
+              orderId: orderId.getId(),
+              items: items.map(item => ({
+                  itemId: item.getItemId(),
+                  quantity: item.getQuantity()
+              }))
           }
       );
   }
@@ -130,11 +142,11 @@ SellOrderEventPublisher, ShipStockCommandPublisher {
     if (context.destination === 'aggregate') {
       subject = `call.aggregate.order.internal.new`;
       await this.natsService.publish( subject, internalOrderDTO );
-    } 
+    } /* 
       else if (context.destination === 'warehouse' && context.warehouseId) {
         subject = `call.warehouse.${context.warehouseId}.order.internal.new`;
         await this.natsService.publish( subject,  internalOrderDTO );
-      }
+      } */
   }
 
 
@@ -146,11 +158,11 @@ SellOrderEventPublisher, ShipStockCommandPublisher {
     if (context.destination === 'aggregate') {
       subject = `call.aggregate.order.sell.new`;
       await this.natsService.publish( subject, sellOrderDTO );
-    } 
+    } /* 
       else if (context.destination === 'warehouse' && context.warehouseId) {
         subject = `call.warehouse.${context.warehouseId}.order.sell.new`;
         await this.natsService.publish( subject, sellOrderDTO );
-      }
+      } */
     
   }
 

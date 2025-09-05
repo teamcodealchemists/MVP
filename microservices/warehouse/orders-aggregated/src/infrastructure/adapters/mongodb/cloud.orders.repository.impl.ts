@@ -56,8 +56,8 @@ export class CloudOrdersRepositoryMongo implements CloudOrdersRepository {
             // Cerca un SellOrder con quell'id
             const sellDoc = await this.syncSellOrderModel.findOne(
                 { "orderId.id": id.getId() }).lean().exec() as any;
-            console.log("sellDoc generato", sellDoc);
-            if (sellDoc) {
+
+                if (sellDoc) {
                 // Ritorna l'oggetto ordine convertito da Document a Domain
                 return new SyncSellOrder(
                     new SyncOrderId(sellDoc.orderId.id),

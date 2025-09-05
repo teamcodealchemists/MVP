@@ -19,7 +19,7 @@ export class CloudOrdersService {
     ) {}
 
     async syncUpdateOrderState(id: SyncOrderId, state: SyncOrderState): Promise<void> {
-        console.log("[AggregateO] Ricevuto segnale di updateState per l'ordine ", id.getId());
+        console.log("[AggregateO] Ricevuto segnale di updateState per l'ordine", id.getId(), "a", state);
         // Aggiorna lo stato nella repository
         await this.cloudOrdersRepositoryMongo.syncUpdateOrderState(id, state);
 

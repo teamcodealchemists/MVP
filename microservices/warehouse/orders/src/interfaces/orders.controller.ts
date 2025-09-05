@@ -1,5 +1,6 @@
-import { Controller, Inject } from '@nestjs/common';
+import { Controller, Logger  } from '@nestjs/common';
 import { MessagePattern, Payload, Ctx } from '@nestjs/microservices';
+import { RpcException } from '@nestjs/microservices';
 
 import { OrderQuantityDTO } from "src/interfaces/dto/orderQuantity.dto";
 import { OrderIdDTO } from "src/interfaces/dto/orderId.dto";
@@ -14,10 +15,14 @@ import { InboundPortsAdapter } from '../infrastructure/adapters/inboundPorts.ada
 
 @Controller()
 export class OrdersController {
+  private readonly logger = new Logger(OrdersController.name);
+
   constructor(
-    private readonly inboundPortsAdapter: InboundPortsAdapter
+    private readonly inboundPortsAdapter: InboundPortsAdapter,
   ) {}
 
+  // Riceve la chiamata da magazzino di partenza di updatare la quantityReserved 
+  // RICEVE DAL PUB DI PUBLISHRESERVESTOCK()
   @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.stock.reserved`)
   async stockReserved(@Payload() orderQuantityDTO: OrderQuantityDTO): Promise<void> {
     await this.inboundPortsAdapter.stockReserved(orderQuantityDTO);
@@ -25,15 +30,26 @@ export class OrdersController {
 
   @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.sell.new`)
   async addSellOrder(@Payload() payload: any): Promise<void> {
-    const sellOrderDTO: SellOrderDTO = {
-      orderId: payload.orderId,
-      items: payload.items,
-      orderState: payload.orderState,
-      creationDate: payload.creationDate,
-      warehouseDeparture: payload.warehouseDeparture,
-      destinationAddress: payload.destinationAddress
-    };
-    await this.inboundPortsAdapter.addSellOrder(sellOrderDTO);
+    try {
+      const sellOrderDTO: SellOrderDTO = {
+        orderId: payload.orderId,
+        items: payload.items,
+        orderState: payload.orderState,
+        creationDate: payload.creationDate,
+        warehouseDeparture: payload.warehouseDeparture,
+        destinationAddress: payload.destinationAddress
+      };
+      await this.inboundPortsAdapter.addSellOrder(sellOrderDTO);
+    } catch (error) {
+    throw new RpcException({
+      message: error.message,
+      code: 'ORDER_CREATION_FAILED',
+      details: {
+        receivedState: payload.orderState,
+        expectedState: 'PENDING'
+      }
+    });
+  }
   }
 
   @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.internal.new`)
@@ -47,6 +63,13 @@ export class OrdersController {
       warehouseDestination: payload.warehouseDestination
     };
     await this.inboundPortsAdapter.addInternalOrder(internalOrderDTO);
+  }
+
+  // NUOVA PORTA (Stefano)
+  // Riceve il messaggio dall'Inventario del magazzino di partenza dove dice che ha tutta la merce
+  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.sufficient.availability`)
+  async sufficientProductAvailability(@Payload() orderIdDTO: OrderIdDTO): Promise<void> {
+      await this.inboundPortsAdapter.sufficientProductAvailability(orderIdDTO);
   }
 
   @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.*.waiting.stock`)
@@ -63,14 +86,19 @@ export class OrdersController {
     await this.inboundPortsAdapter.stockShipped(orderId);
   }
 
-  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.stock.received`)
-  async stockReceived(@Payload() orderIdDTO: OrderIdDTO): Promise<void> {
-    await this.inboundPortsAdapter.stockReceived(orderIdDTO);
+  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.*.stock.received`)
+  async stockReceived(@Ctx() context: any): Promise<void> {
+    const tokens = context.getSubject().split('.');
+    const orderId = tokens[tokens.length - 3];
+    await this.inboundPortsAdapter.stockReceived(orderId);
   }
 
-  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.replenishment.received`)
-  async replenishmentReceived(@Payload() orderIdDTO: OrderIdDTO): Promise<void> {
-    await this.inboundPortsAdapter.replenishmentReceived(orderIdDTO);
+  // Messaggio ricevuto dal servizio di riassortimento
+  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.*.replenishment.received`)
+  async replenishmentReceived(@Ctx() context: any): Promise<void> {
+    const tokens = context.getSubject().split('.');
+    const orderId = tokens[tokens.length - 3];
+    await this.inboundPortsAdapter.replenishmentReceived(orderId);
   }
 
   @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.*.state.update.*`)
