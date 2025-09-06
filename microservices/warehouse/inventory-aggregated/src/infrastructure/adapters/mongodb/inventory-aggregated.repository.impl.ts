@@ -38,6 +38,7 @@ async updateProduct(product: Product): Promise<void> {
     name: product.getName(),
     unitPrice: product.getUnitPrice(),
     quantity: product.getQuantity(),
+    quantityReserved: product.getQuantityReserved(),
     minThres: product.getMinThres(),
     maxThres: product.getMaxThres(),
     warehouseId: product.getWarehouseId(),
