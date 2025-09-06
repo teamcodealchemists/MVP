@@ -127,9 +127,10 @@ export class InventoryAggregatedRepositoryImpl implements InventoryAggregatedRep
       }
       }
     ]).exec();
+    if (!docs[0]) return null;
     const productDoc = docs[0];
     return Promise.resolve(new Product(
-      new ProductId(productDoc._id),
+      new ProductId(productDoc.productId), // <-- qui productId, non _id
       productDoc.name,
       productDoc.unitPrice,
       productDoc.quantity,

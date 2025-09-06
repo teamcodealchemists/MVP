@@ -74,7 +74,7 @@ describe('InventoryAggregatedRepositoryImpl', () => {
     mockProductModel.deleteOne = jest.fn(() => ({ exec: execMock }));
 
     await repository.removeProduct(id, warehouseId);
-    expect(mockProductModel.deleteOne).toHaveBeenCalledWith({ id: '1', warehouseId: 1 });
+    expect(mockProductModel.deleteOne).toHaveBeenCalledWith({ productId: '1', warehouseId: 1 });
     expect(execMock).toHaveBeenCalled();
   });
 
@@ -95,7 +95,7 @@ describe('InventoryAggregatedRepositoryImpl', () => {
 
     await repository.updateProduct(product);
     expect(mockProductModel.updateOne).toHaveBeenCalledWith(
-      { productId: product.getId() },
+      { productId: product.getId().getId() },
       {
         name: product.getName(),
         unitPrice: product.getUnitPrice(),
@@ -103,7 +103,7 @@ describe('InventoryAggregatedRepositoryImpl', () => {
         quantityReserved: product.getQuantityReserved(),
         minThres: product.getMinThres(),
         maxThres: product.getMaxThres(),
-        warehouseId: product.getWarehouseId(),
+        warehouseId: product.getWarehouseId().getId(),
       },
     );
     expect(execMock).toHaveBeenCalled();
@@ -119,7 +119,7 @@ describe('InventoryAggregatedRepositoryImpl', () => {
         quantityReserved: 0,
         minThres: 5,
         maxThres: 100,
-        warehouseId: 1,
+        warehouseId: 0,
       },
     ];
 
@@ -131,14 +131,14 @@ describe('InventoryAggregatedRepositoryImpl', () => {
     expect(mockProductModel.aggregate).toHaveBeenCalled();
     expect(result).toBeInstanceOf(InventoryAggregated);
     expect(result.getInventory()[0].getId().getId()).toBe('1');
-    expect(result.getInventory()[0].getWarehouseId().getId()).toBe(1);
+    expect(result.getInventory()[0].getWarehouseId().getId()).toBe(0);
   });
 
   it('should get all inventory', async () => {
     const mockDocs = [
       {
+        _id: 'asd',
         productId: '1',
-        name: 'asd',
         unitPrice: 123,
         quantity: 10,
         quantityReserved: 0,
@@ -189,24 +189,25 @@ describe('InventoryAggregatedRepositoryImpl', () => {
   it('should get aggregated product', async () => {
     const mockDocs = [
       {
-        productId: '1',
+        productId: '1',  
         name: 'asd',
         unitPrice: 123,
         quantity: 10,
         quantityReserved: 0,
         minThres: 5,
         maxThres: 100,
-        warehouseId: 1,
+        warehouseId: 0,
       },
     ];
 
-    const execMock = jest.fn().mockResolvedValue(mockDocs);
-    mockProductModel.aggregate = jest.fn(() => ({ exec: execMock }));
+    mockProductModel.aggregate = jest.fn(() => ({
+      exec: jest.fn().mockResolvedValue(mockDocs),
+    }));
 
     const result = await repository.getProductAggregated(new ProductId('1'));
 
     expect(mockProductModel.aggregate).toHaveBeenCalled();
-    expect(result?.getId().getId()).toBe('1');
+    expect(result?.getId().getId()).toBe('1');  
     expect(result?.getName()).toBe('asd');
   });
 
