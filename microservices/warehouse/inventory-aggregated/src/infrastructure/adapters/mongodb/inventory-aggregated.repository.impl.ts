@@ -88,7 +88,7 @@ export class InventoryAggregatedRepositoryImpl implements InventoryAggregatedRep
       productDoc.quantityReserved,
       productDoc.minThres,
       productDoc.maxThres,
-      new WarehouseId(Number(productDoc.warehouseId)),
+      new WarehouseId(productDoc.warehouseId),
     ));
 
     return Promise.resolve(new InventoryAggregated(products));
