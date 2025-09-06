@@ -4,6 +4,7 @@ import { Product } from '../domain/product.entity';
 import { CloudDataMapper } from '../infrastructure/mappers/cloud-data.mapper';
 import { InventoryAggregated } from 'src/domain/inventory-aggregated.entity';
 import { ProductId } from 'src/domain/productId.entity';
+import { WarehouseId } from 'src/domain/warehouseId.entity';
 
 
 @Injectable()
@@ -25,10 +26,6 @@ export class InventoryAggregatedService {
     return await this.repository.removeById(id);
   }
 
-  async getProductById(id: ProductId): Promise<Product | null> {
-    return await this.repository.getById(id);
-  }
-
   async getAllProducts(): Promise<InventoryAggregated> {
     return await this.repository.getAllProducts();
   }
@@ -36,4 +33,21 @@ export class InventoryAggregatedService {
   async getAll(): Promise<InventoryAggregated> {
     return await this.repository.getAll();
   }
+
+  async getProduct(id: ProductId, warehouseId: WarehouseId): Promise<Product | null> {
+    const product = await this.repository.getProduct(id, warehouseId);
+    if (!product) {
+      throw new Error('Product not found in the specified warehouse');
+    }
+    return product;
+  }
+
+  async getProductAggregated(id: ProductId): Promise<Product | null> {
+    const product = await this.repository.getProductAggregated(id);
+    if (!product) {
+      throw new Error('Product not found in the specified warehouse');
+    }
+    return product;
+  }
+
 }

@@ -4,7 +4,7 @@ import { Document } from 'mongoose';
 @Schema()
 export class SyncProduct extends Document {
   @Prop({ required: true })
-  warehouseId!: string;
+  warehouseId!: number;
 
   @Prop({ required: true })
   productId!: string;

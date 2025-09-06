@@ -13,7 +13,7 @@ import { InventoryAggregated } from 'src/domain/inventory-aggregated.entity';
 export class InventoryAggregatedRepositoryImpl implements InventoryAggregatedRepository {
   constructor(
     @InjectModel(SyncProduct.name) private readonly productModel: Model<SyncProduct>,
-  ) {}
+  ) { }
 
   async addProduct(product: Product): Promise<void> {
     const doc = new this.productModel({
@@ -29,37 +29,21 @@ export class InventoryAggregatedRepositoryImpl implements InventoryAggregatedRep
     await doc.save();
   }
 
-   async removeById(id: ProductId): Promise<void> {
+  async removeById(id: ProductId): Promise<void> {
     await this.productModel.deleteOne({ id: id.getId() }).exec();
   }
 
-async updateProduct(product: Product): Promise<void> {
-  await this.productModel.updateOne({ productId: product.getId() }, {
-    name: product.getName(),
-    unitPrice: product.getUnitPrice(),
-    quantity: product.getQuantity(),
-    quantityReserved: product.getQuantityReserved(),
-    minThres: product.getMinThres(),
-    maxThres: product.getMaxThres(),
-    warehouseId: product.getWarehouseId(),
-  }).exec();
-}
-
-async getById(id: ProductId): Promise<Product | null> {
-  const productDoc = await this.productModel.findOne({ productId: id.getId() }).exec();
-  if (!productDoc) return null;
-
-  return Promise.resolve(new Product(
-    new ProductId(productDoc.id),
-    productDoc.name,
-    productDoc.unitPrice,
-    productDoc.quantity,
-    productDoc.quantityReserved,
-    productDoc.minThres,
-    productDoc.maxThres,
-    new WarehouseId(Number(productDoc.warehouseId)),
-  ));
-}
+  async updateProduct(product: Product): Promise<void> {
+    await this.productModel.updateOne({ productId: product.getId() }, {
+      name: product.getName(),
+      unitPrice: product.getUnitPrice(),
+      quantity: product.getQuantity(),
+      quantityReserved: product.getQuantityReserved(),
+      minThres: product.getMinThres(),
+      maxThres: product.getMaxThres(),
+      warehouseId: product.getWarehouseId(),
+    }).exec();
+  }
 
   async getAllProducts(): Promise<InventoryAggregated> {
     const docs = await this.productModel.aggregate([
@@ -107,4 +91,51 @@ async getById(id: ProductId): Promise<Product | null> {
 
     return Promise.resolve(new InventoryAggregated(products));
   }
+
+  async getProduct(id: ProductId, warehouseId: WarehouseId): Promise<Product | null> {
+    const productDoc = await this.productModel.findOne({ productId: id.getId(), warehouseId: warehouseId.getId() }).exec();
+    if (!productDoc) return null;
+
+    return Promise.resolve(new Product(
+      new ProductId(productDoc.productId),
+      productDoc.name,
+      productDoc.unitPrice,
+      productDoc.quantity,
+      productDoc.quantityReserved,
+      productDoc.minThres,
+      productDoc.maxThres,
+      new WarehouseId(productDoc.warehouseId),
+    ));
+  }
+
+  async getProductAggregated(id: ProductId): Promise<Product | null> {
+    const docs = await this.productModel.aggregate([
+      { $match: { productId: id.getId() } },
+      {
+      $group: {
+        _id: "$productId",
+        name: { $first: "$name" },
+        unitPrice: { $sum: "$unitPrice" },
+        quantity: { $sum: "$quantity" },
+        quantityReserved: { $sum: "$quantityReserved" },
+        minThres: { $first: "$minThres" },
+        maxThres: { $first: "$maxThres" },
+        warehouseId: { $first: "$warehouseId" }
+      }
+      }
+    ]).exec();
+    const productDoc = docs[0];
+    if (!productDoc) return null;
+    return Promise.resolve(new Product(
+      new ProductId(productDoc.productId),
+      productDoc.name,
+      productDoc.unitPrice,
+      productDoc.quantity,
+      productDoc.quantityReserved,
+      productDoc.minThres,
+      productDoc.maxThres,
+      new WarehouseId(0),
+    ));
+  }
+
 }
