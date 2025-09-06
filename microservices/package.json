@@ -3,12 +3,6 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "test": "npm-run-all test:inventario test:ordini",
-    "test:inventario": "cd warehouse/inventory && npm install && npm test",
-    "test:ordini": "cd warehouse/orders && npm install && npm test",
-    "test:centralSystem": "cd centralized/CentralSystem && npm install && npm test",
-    "test:authentication": "cd centralized/authentication && npm install && npm test",
-    "test:invCloud": "cd cloud/inventory-aggregated && npm install && npm test",
     "test": "npm-run-all test:centralSystem test:authentication test:invCloud test:inventario test:ordini",
     "test:inventario": "cd warehouse/inventory && npm test",
     "test:ordini": "cd warehouse/orders && npm test",
@@ -16,11 +10,11 @@
     "test:authentication": "cd centralized/authentication && npm test",
     "test:invCloud": "cd cloud/inventory-aggregated && npm test",
     "test:cov": "npm-run-all test:cov:centralSystem test:cov:authentication test:cov:invCloud test:cov:inventario test:cov:ordini ",
-    "test:cov:inventario": "cd warehouse/inventory && npm install && npm run test:cov",
-    "test:cov:ordini": "cd warehouse/orders && npm install && npm run test:cov",
-    "test:cov:centralSystem": "cd centralized/CentralSystem && npm install && npm run test:cov",
-    "test:cov:authentication": "cd centralized/authentication && npm install && npm run test:cov",
-    "test:cov:invCloud": "cd cloud/inventory-aggregated && npm install && npm run test:cov",
+    "test:cov:inventario": "cd warehouse/inventory && npm run test:cov",
+    "test:cov:ordini": "cd warehouse/orders && npm run test:cov",
+    "test:cov:centralSystem": "cd centralized/CentralSystem && npm run test:cov",
+    "test:cov:authentication": "cd centralized/authentication && npm run test:cov",
+    "test:cov:invCloud": "cd cloud/inventory-aggregated && npm run test:cov",
     "test:debug": "npm-run-all test:debug:inventario test:debug:ordini",
     "test:debug:inventario": "cd warehouse/inventory && npm run test:debug",
     "test:debug:ordini": "cd warehouse/orders && npm run test:debug || exit 0",
@@ -31,11 +25,5 @@
   },
   "devDependencies": {
     "npm-run-all": "^4.1.5"
-  },
-  "dependencies": {
-    "@types/jest": "^30.0.0",
-    "jest": "^30.1.3",
-    "ts-jest": "^29.4.1",
-    "typescript": "^5.9.2"
   }
 }
