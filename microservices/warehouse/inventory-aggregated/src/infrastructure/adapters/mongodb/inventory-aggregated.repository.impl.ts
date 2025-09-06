@@ -53,11 +53,11 @@ export class InventoryAggregatedRepositoryImpl implements InventoryAggregatedRep
         $group: {
           _id: "$name",
           productIds: { $addToSet: "$productId" },
-          unitPrice: { $sum: "$unitPrice" },
+          unitPrice: { $first: "$unitPrice" },
           quantity: { $sum: "$quantity" },
           quantityReserved: { $sum: "$quantityReserved" },
-          minThres: { $first: "$minThres" },
-          maxThres: { $first: "$maxThres" }
+          minThres: { $sum: "$minThres" },
+          maxThres: { $sum: "$maxThres" }
         }
       }
     ]).exec();

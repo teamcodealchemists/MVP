@@ -141,7 +141,7 @@ export class CommandHandler {
 
       // Mappa ogni prodotto in un riferimento rid
       const collection = products.map(product => ({
-      rid: `get.aggregatedWarehouses.warehouse.${product.warehouseId.warehouseId}.stock.${product.id}`
+      rid: `aggregatedWarehouses.stock.${product.id.id}`
       }));
 
       return Promise.resolve(JSON.stringify({ result: { collection } }));
@@ -159,10 +159,22 @@ export class CommandHandler {
 
       // Mappa ogni prodotto in un riferimento rid
       const collection = products.map(product => ({
-      rid: `get.aggregatedWarehouses.stock.${product.id}`
+      rid: `aggregatedWarehouses.warehouse.${product.warehouseId.warehouseId}.stock.${product.id.id}`
       }));
 
       return Promise.resolve(JSON.stringify({ result: { collection } }));
+    } catch (error) {
+      return this.errorHandler(error);
+    }
+  }
+
+  @MessagePattern('aggregatedWarehouses.inventory')
+  async getInventory(): Promise<string> {
+    try {
+      // Ottieni tutti i prodotti dall'inventario
+      const products = (await this.cloudInventoryEventAdapter.getAll()).productList;
+
+      return Promise.resolve(JSON.stringify({ products }));
     } catch (error) {
       return this.errorHandler(error);
     }
