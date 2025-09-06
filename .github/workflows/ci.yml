@@ -101,6 +101,22 @@ jobs:
           directory: microservices/centralized/authentication
           name: auth
 
+      - name: Install Inventory Aggregate dependencies
+        working-directory: microservices/cloud/inventory-aggregated
+        run: npm install || echo "No tests for inventory-aggregated"
+
+      - name: Run Inventory Aggregate tests
+        working-directory: microservices/cloud/inventory-aggregated
+        run: npm run test:cov || echo "No tests for authentication"
+
+      - name: Upload Inventory Aggregate coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: auth
+          directory: microservices/cloud/inventory-aggregated
+          name: auth
+
       # Commit updated README
       - name: Commit updated README
         run: |

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "test": "npm-run-all test:inventario test:ordini",
+    "test": "npm-run-all test:centralSystem test:authentication test:invCloud test:inventario test:ordini",
     "test:inventario": "cd warehouse/inventory && npm test",
     "test:ordini": "cd warehouse/orders && npm test",
     "test:centralSystem": "cd centralized/CentralSystem && npm test",
