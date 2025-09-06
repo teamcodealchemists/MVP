@@ -48,20 +48,20 @@ describe('OutboundEventHandler', () => {
   it('should emit stockAdded event', async () => {
     const product: ProductDto = { id: { id: 'p3' }, name: 'Prod3', unitPrice: 20, quantity: 8, quantityReserved: 0, minThres: 2, maxThres: 15, warehouseId: { warehouseId: 1 } };
     await handler.handlerStockAdded(product);
-    expect(natsClient.emit).toHaveBeenCalledWith('inventory.stockAdded', { product, warehouseId: product.warehouseId });
+    expect(natsClient.emit).toHaveBeenCalledWith('inventory.stock.added', { product });
   });
 
   it('should emit stockRemoved event', async () => {
     const productId: ProductIdDto = { id: 'p4' };
     const warehouseId: WarehouseIdDto = { warehouseId: 1 };
     await handler.handlerStockRemoved(productId, warehouseId);
-    expect(natsClient.emit).toHaveBeenCalledWith('inventory.stockRemoved', { productId, warehouseId });
+    expect(natsClient.emit).toHaveBeenCalledWith('inventory.stock.removed', { productId , warehouseId });
   });
 
   it('should emit stockUpdated event', async () => {
     const product: ProductDto = { id: { id: 'p5' }, name: 'Prod5', unitPrice: 50, quantity: 5, quantityReserved: 0, minThres: 1, maxThres: 20, warehouseId: { warehouseId: 2 } };
     await handler.handlerStockUpdated(product);
-    expect(natsClient.emit).toHaveBeenCalledWith('inventory.stockUpdated', { product, warehouseId: product.warehouseId });
+    expect(natsClient.emit).toHaveBeenCalledWith('inventory.stock.updated', { product });
   });
 
   it('should emit sufficientProductAvailability event', async () => {
