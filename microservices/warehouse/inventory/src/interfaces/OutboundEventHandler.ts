@@ -29,19 +29,19 @@ export class OutboundEventHandler implements OnModuleInit {
 
   async handlerStockAdded(product: ProductDto): Promise<void>{
     this.logger.log(`stockAdded → ${product.name} @ warehouse ${product.warehouseId}`);
-    this.natsClient.emit("inventory.stockAdded", { product, warehouseId : product.warehouseId });
+    this.natsClient.emit("inventory.stock.added", { product});
     return Promise.resolve();
   }
 
   async handlerStockRemoved(productId: ProductIdDto, warehouseId: WarehouseIdDto): Promise<void>{
     this.logger.log(`stockRemoved → ${productId} @ warehouse ${warehouseId.warehouseId}`);
-    this.natsClient.emit("inventory.stockRemoved", { productId, warehouseId : warehouseId});
+    this.natsClient.emit("inventory.stock.removed", { productId , warehouseId});
     return Promise.resolve();
   }
 
   async handlerStockUpdated(product: ProductDto): Promise<void>{
     this.logger.log(`stockUpdated → ${product.name} @ warehouse ${product.warehouseId}`);
-    this.natsClient.emit("inventory.stockUpdated", { product, warehouseId : product.warehouseId});
+    this.natsClient.emit("inventory.stock.updated", { product});
     return Promise.resolve();
   }
 
