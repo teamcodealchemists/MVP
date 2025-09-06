@@ -1,4 +1,4 @@
-import { WarehouseId } from 'src/domain/warehouseId.entity';
+
 import { Inject, Injectable, Logger, OnModuleInit } from "@nestjs/common";
 import { ClientProxy } from "@nestjs/microservices";
 import { ProductDto } from "./dto/product.dto";
