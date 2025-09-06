@@ -36,55 +36,55 @@ describe('OutboundEventHandler', () => {
   it('should emit belowMinThres event', async () => {
     const product: ProductDto = { id: { id: 'p1' }, name: 'Prod', unitPrice: 10, quantity: 5, quantityReserved: 0, minThres: 1, maxThres: 10, warehouseId: { warehouseId: 1 } };
     await handler.handlerBelowMinThres(product);
-    expect(natsClient.emit).toHaveBeenCalledWith('inventory.belowMinThres', { product });
+    expect(natsClient.emit).toHaveBeenCalledWith('inventory.belowMinThres', JSON.stringify({product}));
   });
 
   it('should emit aboveMaxThres event', async () => {
     const product: ProductDto = { id: { id: 'p2' }, name: 'Prod2', unitPrice: 15, quantity: 20, quantityReserved: 0, minThres: 1, maxThres: 10, warehouseId: { warehouseId: 1 } };
     await handler.handlerAboveMaxThres(product);
-    expect(natsClient.emit).toHaveBeenCalledWith('inventory.aboveMaxThres', { product });
+    expect(natsClient.emit).toHaveBeenCalledWith('inventory.aboveMaxThres', JSON.stringify({product}));
   });
 
   it('should emit stockAdded event', async () => {
     const product: ProductDto = { id: { id: 'p3' }, name: 'Prod3', unitPrice: 20, quantity: 8, quantityReserved: 0, minThres: 2, maxThres: 15, warehouseId: { warehouseId: 1 } };
     await handler.handlerStockAdded(product);
-    expect(natsClient.emit).toHaveBeenCalledWith('inventory.stock.added', { product });
+    expect(natsClient.emit).toHaveBeenCalledWith('inventory.stock.added', JSON.stringify({product}));
   });
 
   it('should emit stockRemoved event', async () => {
     const productId: ProductIdDto = { id: 'p4' };
     const warehouseId: WarehouseIdDto = { warehouseId: 1 };
     await handler.handlerStockRemoved(productId, warehouseId);
-    expect(natsClient.emit).toHaveBeenCalledWith('inventory.stock.removed', { productId , warehouseId });
+    expect(natsClient.emit).toHaveBeenCalledWith('inventory.stock.removed', JSON.stringify({productId, warehouseId}));
   });
 
   it('should emit stockUpdated event', async () => {
     const product: ProductDto = { id: { id: 'p5' }, name: 'Prod5', unitPrice: 50, quantity: 5, quantityReserved: 0, minThres: 1, maxThres: 20, warehouseId: { warehouseId: 2 } };
     await handler.handlerStockUpdated(product);
-    expect(natsClient.emit).toHaveBeenCalledWith('inventory.stock.updated', { product });
+    expect(natsClient.emit).toHaveBeenCalledWith('inventory.stock.updated', JSON.stringify({product}));
   });
 
   it('should emit sufficientProductAvailability event', async () => {
     const orderId: OrderIdDTO = { id: 'order1' };
     await handler.handlerSufficientProductAvailability(orderId);
-    expect(natsClient.emit).toHaveBeenCalledWith('inventory.sufficientAvailability', { orderId });
+    expect(natsClient.emit).toHaveBeenCalledWith('inventory.sufficientAvailability', JSON.stringify({orderId}));
   });
 
   it('should emit reservetionQuantities event', async () => {
     const productQty: ProductQuantityArrayDto = { id: { id: 'order1' }, productQuantityArray: [{ productId: { id: 'p1' }, quantity: 5 }] };
     await handler.handlerReservetionQuantities(productQty);
-    expect(natsClient.emit).toHaveBeenCalledWith('inventory.reservetionQuantities', { product: productQty });
+    expect(natsClient.emit).toHaveBeenCalledWith('inventory.reservetionQuantities', JSON.stringify({product : productQty}));
   });
 
   it('should emit stockShipped event', async () => {
     const orderId: OrderIdDTO = { id: 'order2' };
     await handler.handlerStockShipped(orderId);
-    expect(natsClient.emit).toHaveBeenCalledWith('inventory.stockShipped', { orderId });
+    expect(natsClient.emit).toHaveBeenCalledWith('inventory.stockShipped', JSON.stringify({orderId}));
   });
 
   it('should emit stockReceived event', async () => {
     const orderId: OrderIdDTO = { id: 'order3' };
     await handler.handlerStockReceived(orderId);
-    expect(natsClient.emit).toHaveBeenCalledWith('inventory.stockReceived', { orderId });
+    expect(natsClient.emit).toHaveBeenCalledWith('inventory.stockReceived', JSON.stringify({orderId}));
   });
 });
