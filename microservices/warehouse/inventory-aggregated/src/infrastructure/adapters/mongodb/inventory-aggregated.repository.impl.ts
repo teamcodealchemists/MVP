@@ -55,7 +55,7 @@ export class InventoryAggregatedRepositoryImpl implements InventoryAggregatedRep
           quantity: { $sum: "$quantity" },
           quantityReserved: { $sum: "$quantityReserved" },
           minThres: { $first: "$minThres" },
-          maxThres: { $first: "$maxThres" }
+          maxThres: { $first: "$maxThres" },
         }
       }
     ]).exec();
@@ -86,7 +86,7 @@ export class InventoryAggregatedRepositoryImpl implements InventoryAggregatedRep
       productDoc.quantityReserved,
       productDoc.minThres,
       productDoc.maxThres,
-      new WarehouseId(Number(productDoc.warehouseId)),
+      new WarehouseId(productDoc.warehouseId),
     ));
 
     return Promise.resolve(new InventoryAggregated(products));
