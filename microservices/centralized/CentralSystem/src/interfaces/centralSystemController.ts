@@ -1,5 +1,5 @@
 import { Controller, Logger } from '@nestjs/common';
-import { MessagePattern, Payload } from '@nestjs/microservices';
+import { EventPattern, MessagePattern, Payload } from '@nestjs/microservices';
 import { WarehouseStateDTO } from 'src/interfaces/http/dto/warehouseState.dto';
 import { InboundPortsAdapter } from 'src/infrastructure/adapters/InboundPortsAdapter';
 import { OrderQuantityDTO } from 'src/interfaces/http/dto/orderQuantity.dto';
@@ -18,7 +18,7 @@ export class centralSystemController {
     private readonly inboundPortsAdapter: InboundPortsAdapter,
   ) {}
 
-  @MessagePattern('event.inventory.insufficientQuantity')
+  @EventPattern('event.inventory.insufficientQuantity')
   async handleInsufficientQuantity(@Payload() data : any): Promise<void> {
     try {
       let oQ = new OrderQuantityDTO();
@@ -43,7 +43,7 @@ export class centralSystemController {
     return Promise.resolve();
   }
 
-  @MessagePattern('event.inventory.criticalQuantity.min')
+  @EventPattern('event.inventory.criticalQuantity.min')
   async handleCriticalQuantityMin(@Payload() data: any): Promise<void> {
     try {
       const productDtoInstance = new productDto();
@@ -71,7 +71,7 @@ export class centralSystemController {
   }
 
 
-  @MessagePattern('event.inventory.criticalQuantity.max')
+  @EventPattern('event.inventory.criticalQuantity.max')
   async handleCriticalQuantityMax(@Payload() data: any): Promise<void> {
     try {
       const productDtoInstance = new productDto();
@@ -98,7 +98,7 @@ export class centralSystemController {
     }
   }
 
-  @MessagePattern('event.inventory.getWarehouseState')
+  @EventPattern('event.inventory.getWarehouseState')
   async getWarehouseState(@Payload() data : any): Promise<void> {
     try {
       const warehouseDtos: WarehouseStateDTO[] = data.map((p) => {
