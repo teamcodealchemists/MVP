@@ -43,7 +43,7 @@ services:
     build:
       context: ./microservices/cloud/inventory-aggregated
       dockerfile: Dockerfile
-    container_name: inventory-aggregated-1
+    container_name: inventory-aggregated
     environment:
       - MONGO_URI=mongodb://mongo:27017/inventory-aggregated
       - NATS_URL=nats://nats:4222
