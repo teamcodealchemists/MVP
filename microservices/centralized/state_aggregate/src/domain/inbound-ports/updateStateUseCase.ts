@@ -1,5 +1,5 @@
-import { CloudWarehouseStateDTO } from 'src/interfaces/dto/cloudWarehouseState.dto';
+import { CloudWarehouseStateDTO } from './../../../src/interfaces/dto/cloudWarehouseState.dto';
 
 export interface UpdateStateUseCase {
-    updateState(CloudWarehouseStateDTO): Promise<void>;
+    updateState(CloudWarehouseStateDTO): Promise<string>;
 }

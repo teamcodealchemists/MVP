@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { CloudStateRepository } from '../../../domain/cloudState.repository';
-import type { CloudWarehouseId } from '../../../domain/cloudWarehouseId.entity';
+import { CloudWarehouseId } from '../../../domain/cloudWarehouseId.entity';
 import { CloudWarehouseState } from '../../../domain/cloudWarehouseState.entity';
 import type { CloudStateModel } from './models/cloudState.model';
 
@@ -26,5 +26,10 @@ export class CloudStateRepositoryMongo implements CloudStateRepository {
             { upsert: true },
         ).exec();
         return result.acknowledged;
+    }
+
+    async getAllWarehouseIds(): Promise<CloudWarehouseId[]> {
+        const results = await this.cloudStateModel.find({}, 'cloudWarehouseId').exec();
+        return results.map(doc => new CloudWarehouseId(doc.cloudWarehouseId));
     }
 }

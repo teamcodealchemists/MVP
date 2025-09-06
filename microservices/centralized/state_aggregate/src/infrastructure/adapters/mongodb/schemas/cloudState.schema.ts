@@ -6,7 +6,7 @@ export type CloudStateDocument = CloudState & Document;
 @Schema()
 export class CloudState {
     @Prop({ required: true, unique: true })
-    cloudWarehouseId: string;
+    cloudWarehouseId: number;
 
     @Prop({ required: true })
     state: string;

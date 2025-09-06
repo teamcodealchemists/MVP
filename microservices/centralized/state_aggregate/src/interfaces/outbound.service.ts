@@ -2,7 +2,7 @@ import { Inject, Injectable } from "@nestjs/common";
 import { CloudWarehouseIdDTO } from "./dto/cloudWarehouseId.dto";
 
 
-import { NatsService } from 'src/interfaces/nats/nats.service'; 
+import { NatsService } from '../interfaces/nats/nats.service'; 
 import { CloudHeartbeatDTO } from "./dto/cloudHeartbeat.dto";
 import { CloudWarehouseStateDTO } from "./dto/cloudWarehouseState.dto";
 

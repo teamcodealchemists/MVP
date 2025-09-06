@@ -2,9 +2,9 @@ import { CloudWarehouseStateDTO } from "./dto/cloudWarehouseState.dto";
 import { CloudWarehouseIdDTO } from "./dto/cloudWarehouseId.dto";
 import { CloudHeartbeatDTO } from "./dto/cloudHeartbeat.dto";
 
-import { CloudWarehouseState } from "src/domain/cloudWarehouseState.entity";
-import { CloudWarehouseId } from "src/domain/cloudWarehouseId.entity";
-import { CloudHeartbeat } from "src/domain/cloudHeartbeat.entity";
+import { CloudWarehouseState } from "../domain/cloudWarehouseState.entity";
+import { CloudWarehouseId } from "../domain/cloudWarehouseId.entity";
+import { CloudHeartbeat } from "../domain/cloudHeartbeat.entity";
 
 
 export const DataMapper = {

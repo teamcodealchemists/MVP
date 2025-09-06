@@ -1,5 +1,5 @@
-import { CloudHeartbeatDTO } from 'src/interfaces/dto/cloudHeartbeat.dto';
+import { CloudHeartbeatDTO } from './../../../src/interfaces/dto/cloudHeartbeat.dto';
 
 export interface HeartbeatReceivedEvent {
-    syncReceivedHeartbeat(heartbeat: CloudHeartbeatDTO): Promise<void>;
+    syncReceivedHeartbeat(heartbeat: CloudHeartbeatDTO): Promise<string>;
 }
