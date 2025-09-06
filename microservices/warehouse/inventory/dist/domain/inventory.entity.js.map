@@ -1,1 +1,0 @@
-{"version":3,"file":"inventory.entity.js","sourceRoot":"","sources":["../../src/domain/inventory.entity.ts"],"names":[],"mappings":";;;AAEA,MAAa,SAAS;IAEN;IADZ,YACY,WAAsB;QAAtB,gBAAW,GAAX,WAAW,CAAW;IAC9B,CAAC;IAEL,YAAY;QACR,OAAO,IAAI,CAAC,WAAW,CAAC;IAC5B,CAAC;IACD,cAAc,CAAC,SAAkB;QAC7B,IAAI,CAAC,WAAW,CAAC,IAAI,CAAC,SAAS,CAAC,CAAC;IACrC,CAAC;CACJ;AAXD,8BAWC"}

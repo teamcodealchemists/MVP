@@ -1,77 +1,111 @@
 // DataMapper.ts
-import { productDto } from '../../interfaces/http/dto/product.dto';
-import { productIdDto } from '../../interfaces/http/dto/productId.dto';
-import { inventoryDto } from '../../interfaces/http/dto/inventory.dto';
 import { Product } from '../../domain/product.entity';
 import { ProductId } from '../../domain/productId.entity';
 import { Inventory } from '../../domain/inventory.entity';
 import { WarehouseId } from '../../domain/warehouseId.entity';
-import { warehouseIdDto } from '../../interfaces/http/dto/warehouseId.dto';
-import { belowMinThresDto } from '../../interfaces/http/dto/belowMinThres.dto';
-import { aboveMaxThresDto } from '../../interfaces/http/dto/aboveMaxThres.dto';
-import { productQuantityDto } from '../../interfaces/http/dto/productQuantity.dto';
+import { ProductQuantity } from 'src/domain/productQuantity.entity';
+
+import { ProductDto } from '../../interfaces/dto/product.dto';
+import { ProductIdDto } from '../../interfaces/dto/productId.dto';
+import { InventoryDto } from '../../interfaces/dto/inventory.dto';
+import { WarehouseIdDto } from '../../interfaces/dto/warehouseId.dto';
+import { BelowMinThresDto } from '../../interfaces/dto/belowMinThres.dto';
+import { AboveMaxThresDto } from '../../interfaces/dto/aboveMaxThres.dto';
+import { ProductQuantityDto } from '../../interfaces/dto/productQuantity.dto';
+import { ProductQuantityArrayDto } from 'src/interfaces/dto/productQuantityArray.dto';
+import { OrderId } from 'src/domain/orderId.entity';
 
 export const DataMapper = {
-  toDomainProductId(productIdDTO: productIdDto): ProductId {
+  toDomainProductId(productIdDTO: ProductIdDto): ProductId {
     return new ProductId(productIdDTO.id);
   },
-  toDomainProduct(productDTO: productDto): Product {
+  
+  toDomainProduct(productDTO: ProductDto): Product {
+    const pId = new ProductId(productDTO.id.id);
     return new Product(
-      new ProductId(productDTO.id),
+      pId,
       productDTO.name,
       productDTO.unitPrice,
       productDTO.quantity,
+      productDTO.quantityReserved,
       productDTO.minThres,
       productDTO.maxThres
     );
   },
-  toDomainInventory(inventoryDTO: inventoryDto): Inventory {
+
+  toDomainInventory(inventoryDTO: InventoryDto): Inventory {
     const products = inventoryDTO.productList.map(DataMapper.toDomainProduct);
     return new Inventory(products);
   },
-  toDtoProduct(product: Product): productDto {
-    return {
-      id: product.getId().getId(),
-      name: product.getName(),
-      unitPrice: product.getUnitPrice(),
-      quantity: product.getQuantity(),
-      minThres: product.getMinThres(),
-      maxThres: product.getMaxThres(),
+
+ toDomainProductQuantityArray(productQuantityArrayDto: ProductQuantityArrayDto): { 
+  orderId: OrderId; 
+  productQuantities: ProductQuantity[] 
+  } {
+  const productQuantities = productQuantityArrayDto.productQuantityArray.map(pq =>
+    new ProductQuantity(
+      new ProductId(pq.productId.id),
+      pq.quantity
+    )
+  )
+  return {
+      orderId: new OrderId(productQuantityArrayDto.id.id),
+      productQuantities,
     };
   },
-  toDTOProductId(productId: ProductId): productIdDto {
+
+
+  toDTOProductId(productId: ProductId): ProductIdDto {
     return {
       id: productId.getId(),
     };
   },
-  toDtoInventory(inventory: Inventory): inventoryDto {
+  
+  toDtoInventory(inventory: Inventory): InventoryDto {
     return {
-      productList: inventory.getInventory().map(DataMapper.toDtoProduct),
+      productList: inventory.getInventory().map(product => ({
+        id: { id: product.getId().getId() },
+        name: product.getName(),
+        unitPrice: product.getUnitPrice(),
+        quantity: product.getQuantity(),
+        quantityReserved: product.getQuantityReserved(),
+        minThres: product.getMinThres(),
+        maxThres: product.getMaxThres(),
+        warehouseId: { warehouseId: Number(process.env.WAREHOUSE_ID) },
+      })),
     };
   },
-  toDTO(warehouseId: WarehouseId): warehouseIdDto {
+  toDTO(warehouseId: WarehouseId): WarehouseIdDto {
     return {
-      warehouseId: parseInt(warehouseId.getId(), 10),
+      warehouseId: warehouseId.getId(),
     };
   },
-  toBelowMinDTO(product: Product): belowMinThresDto {
+  toBelowMinDTO(product: Product): BelowMinThresDto {
     return {
-      id: product.getId().getId(),
+      id: { id: product.getId().getId() },
       quantity: product.getQuantity(),
       minThres: product.getMinThres(),
     };
   },
-  toAboveMaxDTO(product: Product): aboveMaxThresDto {
+  toAboveMaxDTO(product: Product): AboveMaxThresDto {
     return {
-      id: product.getId().getId(),
+      id: { id: product.getId().getId() },
       quantity: product.getQuantity(),
       maxThres: product.getMaxThres(),
     };
   },
-  toDTOProductQuantity(productId: ProductId, quantity: number): productQuantityDto {
+  toDTOProductQuantity(product : ProductQuantity): ProductQuantityDto {
     return {
-      productId: { id: productId.getId() },
-      quantity: quantity,
+      productId: { id: product.getId().getId() },
+      quantity: product.getQuantity(),
     };
   },
+  toDomainProductQuantity(dto: ProductQuantityDto): ProductQuantity {
+  return new ProductQuantity(
+    new ProductId(dto.productId.id),
+    dto.quantity
+  );
+  },
+  
+  
 };

@@ -1,13 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { productQuantityArrayDto } from 'src/interfaces/http/dto/productQuantityArray.dto';
-import { InventoryService } from '../../application/inventory.service';
+import { ProductQuantityArrayDto } from 'src/interfaces/dto/productQuantityArray.dto';
 
-@Injectable()
-export class OrderRequestUseCase {
-  constructor(private readonly inventoryService: InventoryService) {}
-
-  orderRequest(dto: productQuantityArrayDto): boolean {
-    //return this.inventoryService.reserveProducts(dto.items);
-    return true;
-  }
+export interface OrderRequestUseCase {
+  orderRequest(dto: ProductQuantityArrayDto): Promise<boolean>;
+  shipOrderRequest(dto : ProductQuantityArrayDto) : Promise<void>;
+  receiveShipment(dto : ProductQuantityArrayDto) : Promise<void>;
 }

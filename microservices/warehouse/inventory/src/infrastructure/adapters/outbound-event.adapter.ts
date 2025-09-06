@@ -1,80 +1,150 @@
-
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { connect, NatsConnection, StringCodec } from 'nats';
 import { Product } from 'src/domain/product.entity';
 import { CriticalThresEventPort } from '../../domain/ports/critical-thres-event.port';
 import { StockAddedPort } from 'src/domain/ports/stock-added.port';
 import { StockRemovedPort } from 'src/domain/ports/stock-removed.port';
 import { StockUpdatedPort } from 'src/domain/ports/stock-updated.port';
 import { ResultProductAvailabilityPublisher } from 'src/domain/ports/result-product-availability.publisher';
-import { RestockingRequestPort } from 'src/domain/ports/restocking-request.port';
+import { ReservetionPort } from 'src/domain/ports/reservetion.port';
+import { OutboundEventHandler } from 'src/interfaces/outboundEventHandler';
+import { ProductDto } from 'src/interfaces/dto/product.dto';
+import { OrderId } from 'src/domain/orderId.entity';
+import { ProductQuantity } from 'src/domain/productQuantity.entity';
+import { WarehouseId } from 'src/domain/warehouseId.entity';
+import { ProductId } from 'src/domain/productId.entity';
+import { ProductIdDto } from 'src/interfaces/dto/productId.dto';
+import { WarehouseIdDto } from 'src/interfaces/dto/warehouseId.dto';
+import { OrderIdDTO } from 'src/interfaces/dto/orderId.dto';
+import { DataMapper } from '../mappers/dataMapper';
+import { ProductQuantityArrayDto } from 'src/interfaces/dto/productQuantityArray.dto';
+import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class OutboundEventAdapter
   implements
-    OnModuleInit,
-    OnModuleDestroy,
     CriticalThresEventPort,
     StockAddedPort,
     StockRemovedPort,
     StockUpdatedPort,
     ResultProductAvailabilityPublisher,
-    RestockingRequestPort
+    ReservetionPort
 {
-  private nc: NatsConnection;
-  private sc = StringCodec();
+  constructor(@Inject() private readonly outboundEventHandler : OutboundEventHandler) {}
 
-  async onModuleInit() {
-    this.nc = await connect({ servers: 'nats://localhost:4222' });
-    console.log('Connected to NATS');
+  async belowMinThres(product: Product , warehouseId : WarehouseId): Promise<void> {
+    const idDto = new ProductIdDto();
+    idDto.id = product.getId().getId();
+    const whIdDto = new WarehouseIdDto();
+    whIdDto.warehouseId = warehouseId.getId();
+    const p: ProductDto = {
+    id: idDto,
+    name: product.getName(),
+    unitPrice: product.getUnitPrice(),
+    quantity: product.getQuantity(),
+    quantityReserved : product.getQuantityReserved(),
+    minThres: product.getMinThres(),
+    maxThres: product.getMaxThres(),
+    warehouseId: whIdDto,
+    };
+    this.outboundEventHandler.handlerBelowMinThres(p);
+    return Promise.resolve();
   }
 
-  async onModuleDestroy() {
-    await this.nc.drain();
-    console.log('Disconnected from NATS');
+  async aboveMaxThres(product: Product, warehouseId : WarehouseId): Promise<void> {
+    const idDto = new ProductIdDto();
+    idDto.id = product.getId().getId();
+    const whIdDto = new WarehouseIdDto();
+    whIdDto.warehouseId = warehouseId.getId();
+    const p: ProductDto = {
+    id: idDto,
+    name: product.getName(),
+    unitPrice: product.getUnitPrice(),
+    quantity: product.getQuantity(),
+    quantityReserved : product.getQuantityReserved(),
+    minThres: product.getMinThres(),
+    maxThres: product.getMaxThres(),
+    warehouseId: whIdDto,
+    };
+    this.outboundEventHandler.handlerBelowMinThres(p);
+    return Promise.resolve();
   }
 
-  belowMinThres(product: Product): void {
-    this.nc.publish('warehouse.critical.belowMin', this.sc.encode(JSON.stringify(product)));
+  async stockAdded(product: Product, warehouseId: WarehouseId): Promise<void> {
+    const idDto = new ProductIdDto();
+    idDto.id = product.getId().getId();
+    const whIdDto = new WarehouseIdDto();
+    whIdDto.warehouseId = warehouseId.getId();
+    const p: ProductDto = {
+    id: idDto,
+    name: product.getName(),
+    unitPrice: product.getUnitPrice(),
+    quantity: product.getQuantity(),
+    quantityReserved : product.getQuantityReserved(),
+    minThres: product.getMinThres(),
+    maxThres: product.getMaxThres(),
+    warehouseId: whIdDto,
+    };
+    return await this.outboundEventHandler.handlerStockAdded(p);
   }
 
-  aboveMaxThres(product: Product): void {
-    this.nc.publish('warehouse.critical.aboveMax', this.sc.encode(JSON.stringify(product)));
+  async stockRemoved(productId: ProductId, warehouseId: WarehouseId): Promise<void> {
+    const whIdDto = new WarehouseIdDto();
+    whIdDto.warehouseId = warehouseId.getId();
+    const idDto = new ProductIdDto();
+    idDto.id = productId.getId();
+    this.outboundEventHandler.handlerStockRemoved(idDto,whIdDto);
+    return Promise.resolve();
   }
 
-  stockAdded(product: Product, warehouseId: string): void {
-    this.nc.publish(
-      'warehouse.stock.added',
-      this.sc.encode(JSON.stringify({ product, warehouseId })),
+  async stockUpdated(product: Product, warehouseId: WarehouseId): Promise<void> {
+    const idDto = new ProductIdDto();
+    idDto.id = product.getId().getId();
+    const whIdDto = new WarehouseIdDto();
+    whIdDto.warehouseId = warehouseId.getId();
+    const p: ProductDto = {
+    id: idDto,
+    name: product.getName(),
+    unitPrice: product.getUnitPrice(),
+    quantity: product.getQuantity(),
+    quantityReserved : product.getQuantityReserved(),
+    minThres: product.getMinThres(),
+    maxThres: product.getMaxThres(),
+    warehouseId: whIdDto,
+    };
+    this.outboundEventHandler.handlerStockUpdated(p);
+    return Promise.resolve();
+  }
+
+  async sufficientProductAvailability(order : OrderId): Promise<void> {
+     const oIdDto = new OrderIdDTO();
+     oIdDto.id = order.getId();
+     this.outboundEventHandler.handlerSufficientProductAvailability(oIdDto);
+    return Promise.resolve();
+  }
+
+  async reservedQuantities(orderId: OrderId, product : ProductQuantity[]): Promise<void> {
+    const prodDtos = product.map(pq =>
+      DataMapper.toDTOProductQuantity(pq),
     );
+    const oIdDto = new OrderIdDTO();
+    oIdDto.id = orderId.getId();
+    const prodQDtos = new ProductQuantityArrayDto();
+    prodQDtos.id = oIdDto;
+    prodQDtos.productQuantityArray = prodDtos;
+    this.outboundEventHandler.handlerReservetionQuantities(prodQDtos);
+    return Promise.resolve();
   }
 
-  stockRemoved(productId: string, warehouseId: string): void {
-    this.nc.publish(
-      'warehouse.stock.removed',
-      this.sc.encode(JSON.stringify({ productId, warehouseId })),
-    );
+  async stockShipped(orderId : OrderId): Promise<void>{
+    const oIdDto = new OrderIdDTO();
+    oIdDto.id = orderId.getId();
+    this.outboundEventHandler.handlerStockShipped(oIdDto);
+    return Promise.resolve();
   }
 
-  stockUpdated(product: Product, warehouseId: string): void {
-    this.nc.publish(
-      'warehouse.stock.updated',
-      this.sc.encode(JSON.stringify({ product, warehouseId })),
-    );
-  }
-
-  insufficientProductAvailability(): void {
-    this.nc.publish('warehouse.availability.insufficient', this.sc.encode('{}'));
-  }
-
-  sufficientProductAvailability(): void {
-    this.nc.publish('warehouse.availability.sufficient', this.sc.encode('{}'));
-  }
-
-  requestRestock(productId: string, number: number): void {
-    this.nc.publish(
-      'warehouse.restock.request',
-      this.sc.encode(JSON.stringify({ productId, number })),
-    );
+  async stockReceived(orderId : OrderId): Promise<void>{
+    const oIdDto = new OrderIdDTO();
+    oIdDto.id = orderId.getId();
+    this.outboundEventHandler.handlerStockReceived(oIdDto);
+    return Promise.resolve();
   }
 }

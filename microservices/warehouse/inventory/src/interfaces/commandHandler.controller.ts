@@ -1,122 +1,143 @@
-import { Controller } from '@nestjs/common';
-import { MessagePattern } from '@nestjs/microservices';
-import { InventoryService } from 'src/application/inventory.service';
-import { productDto } from '../interfaces/http/dto/product.dto';
-import { productIdDto } from '../interfaces/http/dto/productId.dto';
-import { DataMapper} from '../infrastructure/mappers/dataMapper';
-import { plainToInstance } from 'class-transformer';
-import { Product } from 'src/domain/product.entity';
-import { Inventory } from 'src/domain/inventory.entity';
+import { Controller, Logger } from '@nestjs/common';
+import { Ctx, MessagePattern, Payload } from '@nestjs/microservices';
+import { ProductDto } from './dto/product.dto';
+import { ProductIdDto } from './dto/productId.dto';
+import { InboundEventListener } from 'src/infrastructure/adapters/inbound-event.adapter';
+import { validateOrReject } from 'class-validator';
 
-
+const logger = new Logger('commandHandler');
 @Controller()
 export class CommandHandler {
-  constructor(private readonly inventoryService: InventoryService) {}
+  constructor(private readonly inboundEventListener: InboundEventListener) { }
 
- @MessagePattern(`api.warehouse.${process.env.WAREHOUSE_ID}.newStock`)
-async handleNewStock(payload: any): Promise<void> {
-  const data = typeof payload === 'string' ? payload : payload?.data ? payload.data.toString() : payload;
+  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.stock.new`)
+  async handleNewStock(@Payload('params') payload: any): Promise<string> {
 
-  const productObj = JSON.parse(data);
+    const productObj = payload;
 
-  const productDTO: productDto = {
-    id: productObj.id,
-    name: productObj.name,
-    unitPrice: productObj.unitPrice,
-    quantity: productObj.quantity,
-    minThres: productObj.minThres,
-    maxThres: productObj.maxThres
-  };
+    logger.log('Received new stock payload:', productObj);
 
-  const product = DataMapper.toDomainProduct(productDTO);
-  return this.inventoryService.addProduct(product);
-} 
+    const productDTO: ProductDto = new ProductDto();
+    const productIdDto = new ProductIdDto();
+    productIdDto.id = productObj.id as string;
+    productDTO.id = productIdDto;
+    productDTO.name = productObj.name;
+    productDTO.unitPrice = productObj.unitPrice;
+    productDTO.quantity = productObj.quantity;
+    productDTO.quantityReserved = productObj.quantityReserved ?? 0;
+    productDTO.minThres = productObj.minThres;
+    productDTO.maxThres = productObj.maxThres;
+    productDTO.warehouseId = productObj.warehouseId ?? process.env.WAREHOUSE_ID;
 
-
-  @MessagePattern(`api.warehouse.${process.env.WAREHOUSE_ID}.removeStock`)
-async handleRemoveStock(payload: any): Promise<boolean> {
- 
-  const data =
-    typeof payload === 'string'
-      ? payload
-      : payload?.data
-      ? payload.data.toString()
-      : payload;
-
-
-  const productObj = JSON.parse(data);
-  const productIdDTO: productIdDto = {
-    id: productObj.id
-  };
-
-
-  const productId = DataMapper.toDomainProductId(productIdDTO);
-  return this.inventoryService.removeProduct(productId);
-
-  }
- 
- 
-
-   @MessagePattern(`api.warehouse.${process.env.WAREHOUSE_ID}.editStock`)
-  async handleEditStock(payload: any): Promise<void> {
-  
-  const data =
-    typeof payload === 'string'
-      ? payload
-      : payload?.data
-      ? payload.data.toString()
-      : payload;
-
-  const productObj = JSON.parse(data);
-
-
-  const productDTO: productDto = {
-    id: productObj.id,
-    name: productObj.name,
-    unitPrice: productObj.unitPrice,
-    quantity: productObj.quantity,
-    minThres: productObj.minThres,
-    maxThres: productObj.maxThres
-  };
-
-  const product = DataMapper.toDomainProduct(productDTO);
-  console.log (product);
-  return this.inventoryService.editProduct(product)
+    try {
+      await validateOrReject(productDTO);
+      await this.inboundEventListener.newStock(productDTO);
+      let RID = `warehouse.${process.env.WAREHOUSE_ID}.stock.${productDTO.id.id}`;
+      return Promise.resolve(JSON.stringify({ resource: { rid: RID } }));
+    } catch (error) {
+      logger.error('Error in handleNewStock:', error);
+      return await this.errorHandler(error);
+    }
   }
 
-  
+  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.stock.*.delete`)
+  async handleRemoveStock(@Ctx() context: any): Promise<string> {
 
-  @MessagePattern(`api.warehouse.${process.env.WAREHOUSE_ID}.getProduct`)
-  async handleGetProduct(payload: any): Promise<Product | null> {
+    // Estrae l'ID prodotto dalla subject del messaggio, dove l'asterisco (*) rappresenta l'ID
+    const subjectParts = context.getSubject().split('.');
+    const itemIdStr = subjectParts[subjectParts.length - 2] ?? null;
 
-  const data =
-    typeof payload === 'string'
-      ? payload
-      : payload?.data
-      ? payload.data.toString()
-      : payload;
 
-  let productIdObj: { id: string };
+    const productIdDTO: ProductIdDto = new ProductIdDto();
+    productIdDTO.id = itemIdStr;
 
-  try {
-    productIdObj = JSON.parse(data);
-  } catch (err) {
-    console.error('[handleGetProduct] JSON parsing error:', err);
-    return null;
+    try {
+      await validateOrReject(productIdDTO);
+      await this.inboundEventListener.removeStock(productIdDTO);
+      return Promise.resolve(JSON.stringify({ result: `Product with ID ${itemIdStr} removed` }));
+    } catch (error) {
+      logger.error('Error in handleRemoveStock:', error);
+      return await this.errorHandler(error);
+    }
   }
 
-  const productIdDTO: productIdDto = {
-    id: productIdObj.id,
-  };
+  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.stock.*.set`)
+  async handleEditStock(@Payload('params') payload: any, @Ctx() context: any): Promise<string> {
 
-  const productId = DataMapper.toDomainProductId(productIdDTO);
-  return this.inventoryService.getProduct(productId);
+    const subjectParts = context.getSubject().split('.');
+    const itemIdStr = subjectParts[subjectParts.length - 2] ?? null;
+
+    const productObj = payload;
+
+    logger.log('Received edit stock payload:', productObj);
+
+    const productDTO: ProductDto = new ProductDto();
+    const productIdDto = new ProductIdDto();
+    productIdDto.id = itemIdStr as string;
+    productDTO.id = productIdDto;
+    productDTO.name = productObj.name;
+    productDTO.unitPrice = productObj.unitPrice;
+    productDTO.quantity = productObj.quantity;
+    productDTO.quantityReserved = productObj.quantityReserved ?? 0;
+    productDTO.minThres = productObj.minThres;
+    productDTO.maxThres = productObj.maxThres;
+    productDTO.warehouseId = productObj.warehouseId ?? process.env.WAREHOUSE_ID;
+
+    try {
+      await validateOrReject(productDTO);
+      await this.inboundEventListener.editStock(productDTO);
+      return Promise.resolve(JSON.stringify({ result: `Product with ID ${itemIdStr} updated` }));
+    } catch (error) {
+      logger.error('Error in handleEditStock:', error);
+      return await this.errorHandler(error);
+    }
+  }
+
+  @MessagePattern(`get.warehouse.${process.env.WAREHOUSE_ID}.stock.*`)
+  async handleGetProduct(@Ctx() context: any): Promise<string> {
+
+    // Estrae l'ID prodotto dalla subject del messaggio, dove l'asterisco (*) rappresenta l'ID
+    const itemIdStr = context.getSubject().split('.').pop();
+
+    const productIdDTO: ProductIdDto = new ProductIdDto();
+    productIdDTO.id = itemIdStr;
+
+    try {
+      await validateOrReject(productIdDTO);
+      const result = await this.inboundEventListener.handleGetProduct(productIdDTO);
+      return Promise.resolve(JSON.stringify({ result: { model: result } }));
+    } catch (error) {
+      logger.error('Error in handleGetProduct:', error);
+      return await this.errorHandler(error);
+    }
+  }
+
+  @MessagePattern(`get.warehouse.${process.env.WAREHOUSE_ID}.inventory`)
+  async handleGetInventoryCollection(): Promise<string> {
+    // Ottieni tutti i prodotti dall'inventario
+    const products = (await this.inboundEventListener.getInventory()).getInventory();
+
+    // Mappa ogni prodotto in un riferimento rid
+    const collection = products.map(product => ({
+      rid: `warehouse.${process.env.WAREHOUSE_ID}.stock.${product.getId()}`
+    }));
+
+    return Promise.resolve(JSON.stringify({ result: { collection } }));
+  }
+
+  private async errorHandler(error: any): Promise<string> {
+    let message: string;
+      if (Array.isArray(error)) {
+        // class-validator errors: estrai i messaggi di constraint
+        message = error
+          .map(e => Object.values(e.constraints ?? {}).join(', '))
+          .filter(Boolean)
+          .join('; ');
+
+        return Promise.resolve(JSON.stringify({ error: { code: 'system.invalidParams', message } }));
+      } else {
+        return Promise.resolve(JSON.stringify({ error: { code: 'system.internalError', message: error?.message || 'Unknown error' }, meta: {status: 404} }));
+      }
+  }
 }
 
-
-  @MessagePattern(`api.warehouse.${process.env.WAREHOUSE_ID}.getInventory`)
-  async handleGetInventory(): Promise<Inventory> {
-    return this.inventoryService.getInventory();
-  }
-
-}

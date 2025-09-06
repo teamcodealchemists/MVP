@@ -5,23 +5,25 @@ import { InventoryRepositoryModule } from 'src/infrastructure/adapters/mongodb/i
 import { CommandHandler } from 'src/interfaces/commandHandler.controller';
 import { InventoryRepositoryMongo } from 'src/infrastructure/adapters/mongodb/inventory.repository.impl';
 import { OutboundEventAdapter } from 'src/infrastructure/adapters/outbound-event.adapter';
-import { InboundEventListener } from 'src/infrastructure/adapters/inbound-event.listener';
-import { ProductAddQuantityUseCase } from 'src/domain/use-cases/product-add-quantity.usecase';
-import { OrderRequestUseCase } from 'src/domain/use-cases/order-request.usecase';
+import { InboundEventListener } from 'src/infrastructure/adapters/inbound-event.adapter';
+import { AccessController } from 'src/interfaces/access.controller';
+import { InboundEventController } from 'src/interfaces/inboundEvent.controller';
+import { OutboundEventHandler } from 'src/interfaces/outboundEventHandler';
+import { NatsClientModule } from 'src/interfaces/nats/natsClientModule/natsClient.module';
+
 
 @Module({
   imports: [
-    
-    MongooseModule.forRoot('mongodb://localhost:27017/inventorydb'), 
+    MongooseModule.forRoot(process.env.MONGO_URI || 'mongodb://localhost:27017/inventorydb'), 
     InventoryRepositoryModule,
+    NatsClientModule
   ],
-  controllers: [CommandHandler],
-  providers: [ 
-    InventoryService,
+  controllers: [CommandHandler, AccessController, InboundEventController],
+  providers: [
     OutboundEventAdapter,
+    OutboundEventHandler,
     InboundEventListener,
-     ProductAddQuantityUseCase,  
-    OrderRequestUseCase,
+    InventoryService,
     {
       provide: 'INVENTORYREPOSITORY',
       useClass: InventoryRepositoryMongo,

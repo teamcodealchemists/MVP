@@ -1,105 +1,146 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { getModelToken } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { InventoryRepositoryMongo } from '../../src/infrastructure/adapters/mongodb/inventory.repository.impl';
-import { Product } from '../../src/domain/product.entity';
-import { ProductId } from '../../src/domain/productId.entity';
-import { ProductQuantity } from '../../src/domain/productQuantity.entity';
+import { InventoryRepositoryMongo } from "../../src/infrastructure/adapters/mongodb/inventory.repository.impl";
+import { Product } from "src/domain/product.entity";
+import { ProductId } from "src/domain/productId.entity";
+import { Inventory } from "src/domain/inventory.entity";
 
-//prendiamo inventory.repository.spect.ts e mockiamo model di mongo e verifichiamo i metodi che facciano effettivamente quello che devono fare
-describe('InventoryRepository : Test sul file src/infrastructure/adapters/mongodb/inventory.repository.impl.ts', () => {
-  let repository: InventoryRepositoryMongo;
-  let productModel: jest.Mocked<Model<any>>;
+describe("InventoryRepositoryMongo", () => {
+  let repo: InventoryRepositoryMongo;
+  let productModel: any;
 
- beforeEach(async () => {
-    //Andiamo a creare dei mock di metodi statici di Mongoose che la nostra repository usa 
-    const mockStaticMethods = {
+  const makeProduct = (
+    id: string,
+    qty = 10,
+    reserved = 0,
+    min = 2,
+    max = 20
+  ) =>
+    new Product(new ProductId(id), `Product-${id}`, 100, qty, reserved, min, max);
+
+  beforeEach(() => {
+    productModel = {
+      save: jest.fn(),
       findOne: jest.fn(),
-      find: jest.fn(),
       deleteOne: jest.fn(),
       updateOne: jest.fn(),
+      find: jest.fn(),
     };
-    //Creamo un altro mock dove restituisce oggetto con metodo save(che è presente nell' addProduct dove fa await newProduct.save();, che anche esso è un mock)
-    const mockModel = jest.fn().mockImplementation(() => ({
-      save: jest.fn().mockResolvedValue({}),
-    }));
-    //Aggiungiamo i metodi statici mockati direttamente nel costruttore di mockModel
-    Object.assign(mockModel, mockStaticMethods);
 
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        InventoryRepositoryMongo,
-        {
-          provide: getModelToken('Product'),
-          useValue: mockModel,
-        },
-      ],
-    }).compile();
-    //recuperiamo repository reale 
-    repository = module.get<InventoryRepositoryMongo>(InventoryRepositoryMongo);
-    //recuperiamo il mock del modello
-    productModel = module.get(getModelToken('Product'));
+    // Simula "new this.productModel(...)"
+    const productModelConstructor = jest.fn().mockImplementation((values) => ({
+      ...values,
+      save: productModel.save,
+    }));
+
+    Object.assign(productModelConstructor, productModel);
+
+    repo = new InventoryRepositoryMongo(productModelConstructor as any);
   });
 
-  it('addProduct() deve salvare correttamente un nuovo prodotto', async () => {
-    //Creo una mock che simula il metodo save() di Mongoose ps) riassunto :Serve solo a intercettare la chiamata a save senza scrivere su MongoDB
-    const mockSave = jest.fn().mockResolvedValue({});
-    const MockedModel = jest.fn().mockImplementation(() => ({
-        save: mockSave,
-    }));
-    //Creamo un'istanza della repository, e passiamo MockedModel, così quando addProduct() chiama il new this.productModel(), userà il mock e non Mongo
-    repository = new InventoryRepositoryMongo(MockedModel as any);
-    const product = new Product(new ProductId('p1'), 'Test', 10, 5, 1, 20);
-    await repository.addProduct(product);
-    expect(MockedModel).toHaveBeenCalledWith({
-        id: 'p1',
-        name: 'Test',
-        unitPrice: 10,
-        quantity: 5,
-        minThres: 1,
-        maxThres: 20,
-    });
-    expect(mockSave).toHaveBeenCalled();
+  // --------------------------------
+  // addProduct
+  // --------------------------------
+  it("should add a product and call save()", async () => {
+    const product = makeProduct("p1");
+    await repo.addProduct(product);
+
+    expect(productModel.save).toHaveBeenCalled();
   });
 
-  it('removeById() deve rimuovere un prodotto esistente e restituire true', async () => {
-    productModel.deleteOne.mockReturnValue({
-      exec: jest.fn().mockResolvedValue({ deletedCount: 1 }),
-    } as any);
+  // --------------------------------
+  // removeById
+  // --------------------------------
+  it("should remove product by id", async () => {
+    productModel.deleteOne.mockReturnValue({ exec: () => ({ deletedCount: 1 }) });
 
-    const result = await repository.removeById(new ProductId('p1'));
+    const result = await repo.removeById(new ProductId("p1"));
     expect(result).toBe(true);
+    expect(productModel.deleteOne).toHaveBeenCalledWith({ id: "p1" });
   });
 
-  it('updateProduct() deve aggiornare i campi di un prodotto esistente', async () => {
-    productModel.updateOne.mockReturnValue({
-      exec: jest.fn().mockResolvedValue({ modifiedCount: 1 }),
-    } as any);
+  it("should return false if product not found on remove", async () => {
+    productModel.deleteOne.mockReturnValue({ exec: () => ({ deletedCount: 0 }) });
 
-    const product = new Product(new ProductId('p1'), 'Aggiornato', 20, 7, 2, 25);
-    await repository.updateProduct(product);
+    const result = await repo.removeById(new ProductId("p1"));
+    expect(result).toBe(false);
+  });
+
+  // --------------------------------
+  // updateProduct
+  // --------------------------------
+  it("should update product by id", async () => {
+    productModel.updateOne.mockReturnValue({ exec: () => ({ nModified: 1 }) });
+    const product = makeProduct("p1", 15);
+
+    await repo.updateProduct(product);
+
     expect(productModel.updateOne).toHaveBeenCalledWith(
       { id: "p1" },
-      expect.objectContaining({ name: 'Aggiornato', unitPrice: 20 }),
+      expect.objectContaining({
+        name: "Product-p1",
+        quantity: 15,
+      }),
     );
   });
 
-  it('getById() deve restituire un prodotto se esiste', async () => {
+  // --------------------------------
+  // getById
+  // --------------------------------
+  it("should return Product if found", async () => {
     productModel.findOne.mockReturnValue({
-      exec: jest.fn().mockResolvedValue({
-        id: 'p1',
-        name: 'Test',
-        unitPrice: 10,
+      exec: () => ({
+        id: "p1",
+        name: "Test",
+        unitPrice: 100,
         quantity: 5,
+        quantityReserved: 2,
         minThres: 1,
-        maxThres: 20,
+        maxThres: 10,
       }),
-    } as any);
+    });
 
-    const product = await repository.getById(new ProductId('p1'));
-    expect(product).not.toBeNull();
-    if (product) {
-        expect(product.getName()).toBe('Test');
-    }
+    const product = await repo.getById(new ProductId("p1"));
+    expect(product?.getId()).toBe("p1");
+    expect(product?.getQuantity()).toBe(5);
+  });
+
+  it("should return null if not found", async () => {
+    productModel.findOne.mockReturnValue({ exec: () => null });
+
+    const result = await repo.getById(new ProductId("pX"));
+    expect(result).toBeNull();
+  });
+
+  // --------------------------------
+  // getAllProducts
+  // --------------------------------
+  it("should return Inventory with all products", async () => {
+    productModel.find.mockReturnValue({
+      exec: () => [
+        {
+          id: "p1",
+          name: "P1",
+          unitPrice: 10,
+          quantity: 5,
+          quantityReserved: 0,
+          minThres: 1,
+          maxThres: 20,
+        },
+        {
+          id: "p2",
+          name: "P2",
+          unitPrice: 15,
+          quantity: 8,
+          quantityReserved: 1,
+          minThres: 2,
+          maxThres: 30,
+        },
+      ],
+    });
+
+    const inventory = await repo.getAllProducts();
+    expect(inventory).toBeInstanceOf(Inventory);
+    expect(inventory.getInventory().length).toBe(2);
+    const products = inventory.getInventory();
+    expect(products.map(p => p.getId())).toEqual(["p1", "p2"]);
   });
 });

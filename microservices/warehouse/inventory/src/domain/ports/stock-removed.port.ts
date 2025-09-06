@@ -1,5 +1,6 @@
 import { ProductId } from "../productId.entity";
+import { WarehouseId } from "../warehouseId.entity";
 
 export interface StockRemovedPort {
-  stockRemoved(productId: string, warehouseId: string): void;
+  stockRemoved(productId: ProductId, warehouseId: WarehouseId): Promise<void>;
 }

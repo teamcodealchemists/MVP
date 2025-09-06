@@ -7,17 +7,19 @@ services:
     build:
       context: ./microservices/warehouse/inventory
       dockerfile: Dockerfile
+    container_name: inventory-1
     environment:
-      - NODE_ENV=development
+      - MONGO_URI=mongodb://mongo:27017/inventory
       - WAREHOUSE_ID=1
-      - MONGO_URI=mongodb://mongodb:27017/inventory_db 
+      - NATS_URL=nats://nats:4222
     volumes:
       - ./microservices/warehouse/inventory/src:/usr/src/app/src
     networks:
       - shared-warehouses
     depends_on:
+      - mongo
       - nats
-      - mongodb
+      - resgate
 
   orders:
     build:
@@ -37,6 +39,22 @@ services:
 #                         Cloud Microservices                              #
 #==========================================================================#
 
+  inventory-aggregated:
+    build:
+      context: ./microservices/cloud/inventory-aggregated
+      dockerfile: Dockerfile
+    container_name: inventory-aggregated-1
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/inventory-aggregated
+      - NATS_URL=nats://nats:4222
+    volumes:
+      - ./microservices/cloud/inventory-aggregated/src:/usr/src/app/src
+    networks:
+      - shared-warehouses
+    depends_on:
+      - mongo
+      - nats
+      - resgate
 
 #==========================================================================#
 #                 Centralized System Microservices                         #

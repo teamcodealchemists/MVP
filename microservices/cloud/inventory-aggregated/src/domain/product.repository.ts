@@ -1,0 +1,13 @@
+import { InventoryAggregated } from "./inventory-aggregated.entity";
+import { Product } from "./product.entity";
+import { ProductId } from "./productId.entity";
+
+
+export interface InventoryRepository {
+    getById(id: ProductId): Promise<Product | null>;
+    getAllProducts(): Promise<InventoryAggregated>;
+    addProduct(product: Product): Promise<void>;
+    removeById(id: ProductId): Promise<boolean>;
+    updateProduct(editedProduct: Product): Promise<void>;
+    checkProductExistence(id: ProductId): Promise<boolean>
+}

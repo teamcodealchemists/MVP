@@ -1,4 +1,5 @@
+import { OrderId } from "../orderId.entity";
+
 export interface ResultProductAvailabilityPublisher {
-  insufficientProductAvailability(): void;
-  sufficientProductAvailability(): void;
+  sufficientProductAvailability(order : OrderId): Promise<void>;
 }

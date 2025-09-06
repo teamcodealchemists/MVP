@@ -6,6 +6,7 @@ export class Product {
         private name: string,
         private unitPrice: number,
         private quantity: number,
+        private quantityReserved: number,
         private minThres: number,
         private maxThres: number
     ) { }
@@ -22,6 +23,9 @@ export class Product {
     getQuantity(): number {
         return this.quantity;
     }
+    getQuantityReserved(): number {
+        return this.quantityReserved;
+    }
     getMinThres(): number {
         return this.minThres;
     }
@@ -37,6 +41,9 @@ export class Product {
     }    
     setQuantity(newQuantity): void {
         this.quantity = newQuantity;
+    }
+    setQuantityReserved(newQuantityReserved): void {
+        this.quantityReserved = newQuantityReserved;
     }
     setMinThres(newMinThres): void {
         this.minThres = newMinThres;
