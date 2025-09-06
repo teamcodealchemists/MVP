@@ -1,5 +1,5 @@
-import { InventoryAggregated } from "src/domain/inventory-aggregated.entity";
+import { SyncInventoryDTO } from "src/interfaces/dto/syncInventory.dto";
 
 export interface GetAllProductsUseCase {
-    getAllProducts(): Promise<InventoryAggregated>;
+    getAllProducts(): Promise<SyncInventoryDTO>;
 }

@@ -22,7 +22,7 @@ export class InventoryAggregatedRepositoryImpl implements InventoryAggregatedRep
       name: product.getName(),
       unitPrice: product.getUnitPrice(),
       quantity: product.getQuantity(),
-      quantityReserved: product.getQuantityReserved(),
+      quantityReserved : product.getQuantityReserved(),
       minThres: product.getMinThres(),
       maxThres: product.getMaxThres(),
     });

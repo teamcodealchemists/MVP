@@ -22,6 +22,9 @@ export class SyncProduct extends Document {
   quantityReserved!: number;
 
   @Prop({ required: true })
+  quantityReserved!: number;
+
+  @Prop({ required: true })
   minThres!: number;
 
   @Prop({ required: true })

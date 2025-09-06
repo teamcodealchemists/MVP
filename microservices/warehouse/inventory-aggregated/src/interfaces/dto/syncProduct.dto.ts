@@ -1,7 +1,9 @@
 import { IsString, IsNotEmpty, IsNumber, Min, IsUUID, IsOptional, isNumber } from 'class-validator';
+import { SyncWarehouseIdDTO } from './syncWarehouseId.dto';
+import { Type } from 'class-transformer';
 
 export class SyncProductDTO {
-  @IsUUID()
+  @IsString()
   id!: string;
 
   @IsString()
@@ -14,6 +16,10 @@ export class SyncProductDTO {
   @IsNumber()
   quantity!: number;
 
+  @IsNotEmpty()
+  @IsNumber()
+  quantityReserved : number;
+
   @IsNumber()
   @Min(0)
   minThres!: number;
@@ -22,7 +28,8 @@ export class SyncProductDTO {
   @Min(0)
   maxThres!: number;
 
-
-  warehouseId!:string;
+  @IsNotEmpty()
+  @Type(() => SyncWarehouseIdDTO)
+  warehouseId : SyncWarehouseIdDTO;
 
 }

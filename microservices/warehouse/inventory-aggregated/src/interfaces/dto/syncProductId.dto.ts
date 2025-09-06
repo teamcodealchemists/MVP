@@ -1,5 +1,5 @@
-import { IsUUID } from "class-validator";
+import { IsString } from "class-validator";
 export class SyncProductIdDTO {
-  @IsUUID()
+  @IsString()
   id!: string;
 }

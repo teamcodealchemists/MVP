@@ -34,8 +34,8 @@ export class Product {
     getMaxThres(): number {
         return this.maxThres;
     }
-    getWarehouseId(): number{
-        return this.warehouseId.getId();
+    getWarehouseId(): WarehouseId{
+        return this.warehouseId;
     }
 
     setName(newName: string): void {

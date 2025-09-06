@@ -12,14 +12,16 @@ import { InventoryAggregated } from '../../domain/inventory-aggregated.entity';
 export class CloudDataMapper {
 
   toDomainProduct(syncProductDTO: SyncProductDTO): Product {
+  let wId = new WarehouseId(syncProductDTO.warehouseId.warehouseId);
   return new Product(
   new ProductId(syncProductDTO.id),
   syncProductDTO.name,
   syncProductDTO.unitPrice,
   syncProductDTO.quantity,
+  syncProductDTO.quantityReserved,
   syncProductDTO.minThres,
   syncProductDTO.maxThres,
-  new WarehouseId(syncProductDTO.warehouseId),
+  wId,
 );
 
   }
@@ -29,7 +31,7 @@ export class CloudDataMapper {
   }
 
   toDomainWarehouseId(syncWarehouseIdDTO: SyncWarehouseIdDTO): WarehouseId {
-    return new WarehouseId(syncWarehouseIdDTO.warehouseId.toString());
+    return new WarehouseId(syncWarehouseIdDTO.warehouseId);
   }
 
   toDomainInventoryAggregated(syncInventoryDTO: SyncInventoryDTO): InventoryAggregated {
@@ -41,14 +43,17 @@ export class CloudDataMapper {
 
 
   toDTOProduct(product: Product): SyncProductDTO {
+    let wIdDto = new SyncWarehouseIdDTO();
+    wIdDto.warehouseId = product.getWarehouseId().getId();
     return {
       id: product.getId().getId(),
       name: product.getName(),
       unitPrice: product.getUnitPrice(),
       quantity: product.getQuantity(),
+      quantityReserved: product.getQuantityReserved(),
       minThres: product.getMinThres(),
       maxThres: product.getMaxThres(),
-      warehouseId: product.getWarehouseId(),
+      warehouseId: wIdDto,
     };
   }
 
