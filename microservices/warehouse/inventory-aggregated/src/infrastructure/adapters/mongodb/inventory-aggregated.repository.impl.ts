@@ -29,8 +29,8 @@ export class InventoryAggregatedRepositoryImpl implements InventoryAggregatedRep
     await doc.save();
   }
 
-  async removeById(id: ProductId): Promise<void> {
-    await this.productModel.deleteOne({ id: id.getId() }).exec();
+  async removeProduct(id: ProductId, warehouseId: WarehouseId): Promise<void> {
+    await this.productModel.deleteOne({ id: id.getId(), warehouseId: warehouseId.getId() }).exec();
   }
 
   async updateProduct(product: Product): Promise<void> {

@@ -6,7 +6,7 @@ import { WarehouseId } from "./warehouseId.entity";
 export interface InventoryAggregatedRepository {
   addProduct(product: Product): Promise<void>;
   updateProduct(product: Product): Promise<void>;
-  removeById(id: ProductId): Promise<void>;
+  removeProduct(id: ProductId, warehouseId: WarehouseId): Promise<void>;
   getAll(): Promise<InventoryAggregated>;
   getAllProducts(): Promise<InventoryAggregated>;
   getProduct(id: ProductId, warehouseId: WarehouseId): Promise<Product | null>;

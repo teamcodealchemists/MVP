@@ -1,5 +1,5 @@
 import { Controller } from '@nestjs/common';
-import { Ctx, MessagePattern } from '@nestjs/microservices';
+import { Ctx, MessagePattern, Payload } from '@nestjs/microservices';
 import { SyncProductDTO } from './dto/syncProduct.dto';
 import { SyncProductIdDTO } from './dto/syncProductId.dto';
 import { CloudInventoryEventAdapter } from 'src/infrastructure/adapters/inventory-aggregated-event.adapter';
@@ -10,25 +10,26 @@ export class commandHandler {
   constructor(private readonly cloudInventoryEventAdapter : CloudInventoryEventAdapter
   ) {}
 
-  @MessagePattern('warehouse.stock.added')
-  async syncAddedStock(payload: any): Promise<void> {
-    console.log(payload);
-    const dto: SyncProductDTO = typeof payload === 'string' ? JSON.parse(payload) : payload;
+  @MessagePattern('inventory.stock.added')
+  async syncAddedStock(@Payload() dto: SyncProductDTO): Promise<void> {
+    console.log(dto);
     await this.cloudInventoryEventAdapter.syncAddedStock(dto);
   }
 
-  @MessagePattern('warehouse.stock.removed')
-  async syncRemovedStock(payload: any): Promise<void> {
+  @MessagePattern('inventory.stock.removed')
+  async syncRemovedStock(@Payload() payload: any): Promise<void> {
     console.log(payload);
-    const dto: SyncProductIdDTO = typeof payload === 'string' ? JSON.parse(payload) : payload;
-    await this.cloudInventoryEventAdapter.syncRemovedStock(dto);
+
+    const dto: SyncProductIdDTO = { id: payload.productId };
+    const warehouseDto: SyncWarehouseIdDTO = { warehouseId: payload.warehouseId };
+
+    await this.cloudInventoryEventAdapter.syncRemovedStock(dto, warehouseDto);
   }
 
 
-  @MessagePattern('warehouse.stock.updated')
-  async syncEditedStock(payload: any): Promise<void> {
-    console.log(payload);
-    const dto: SyncProductDTO = typeof payload === 'string' ? JSON.parse(payload) : payload;
+  @MessagePattern('inventory.stock.updated')
+  async syncEditedStock(@Payload() dto: SyncProductDTO): Promise<void> {
+    console.log(dto);
     await this.cloudInventoryEventAdapter.syncEditedStock(dto);
   }
 
@@ -69,11 +70,11 @@ export class commandHandler {
   async getAllProducts(): Promise<string> {
     try {
       // Ottieni tutti i prodotti dall'inventario
-      const products = (await this.cloudInventoryEventAdapter.getAllProducts()).getInventory();
+      const products = (await this.cloudInventoryEventAdapter.getAllProducts()).productList;
 
       // Mappa ogni prodotto in un riferimento rid
       const collection = products.map(product => ({
-      rid: `get.aggregatedWarehouses.warehouse.${product.getWarehouseId()}.stock.${product.getId()}`
+      rid: `get.aggregatedWarehouses.warehouse.${product.warehouseId.warehouseId}.stock.${product.id}`
       }));
 
       return Promise.resolve(JSON.stringify({ result: { collection } }));
@@ -87,11 +88,11 @@ export class commandHandler {
   async getAll(): Promise<string> {
     try {
       // Ottieni tutti i prodotti dall'inventario
-      const products = (await this.cloudInventoryEventAdapter.getAll()).getInventory();
+      const products = (await this.cloudInventoryEventAdapter.getAll()).productList;
 
       // Mappa ogni prodotto in un riferimento rid
       const collection = products.map(product => ({
-      rid: `get.aggregatedWarehouses.stock.${product.getId()}`
+      rid: `get.aggregatedWarehouses.stock.${product.id}`
       }));
 
       return Promise.resolve(JSON.stringify({ result: { collection } }));

@@ -35,8 +35,8 @@ export class CloudInventoryEventAdapter implements
     return Promise.resolve(await this.InventoryAggregatedService.updateProduct(this.CloudDataMapper.toDomainProduct(dto)));
   }
 
-  async syncRemovedStock(dto: SyncProductIdDTO): Promise<void> {
-    return Promise.resolve(await this.InventoryAggregatedService.removeProduct(this.CloudDataMapper.toDomainProductId(dto)));
+  async syncRemovedStock(idDto: SyncProductIdDTO, warehouseIdDto: SyncWarehouseIdDTO): Promise<void> {
+    return Promise.resolve(await this.InventoryAggregatedService.removeProduct(this.CloudDataMapper.toDomainProductId(idDto), this.CloudDataMapper.toDomainWarehouseId(warehouseIdDto)));
   }
 
   async getAll(): Promise<SyncInventoryDTO> {

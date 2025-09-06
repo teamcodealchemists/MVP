@@ -22,8 +22,8 @@ export class InventoryAggregatedService {
     return await this.repository.updateProduct(product);
   }
 
-  async removeProduct(id: ProductId): Promise<void> {
-    return await this.repository.removeById(id);
+  async removeProduct(id: ProductId, warehouseId: WarehouseId): Promise<void> {
+    return await this.repository.removeProduct(id, warehouseId);
   }
 
   async getAllProducts(): Promise<InventoryAggregated> {
