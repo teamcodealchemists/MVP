@@ -116,6 +116,22 @@ jobs:
           flags: aggregateInv
           files: MVP/coverage/cloud/inventoryAggregated/coverage-summary.json
           name: Inventory Aggregate
+      
+      - name: Install Routing
+        working-directory: microservices/centralized/routing
+        run: npm install || echo "No tests for routing"
+
+      - name: Run Routing tests
+        working-directory: microservices/cloud/inventory-aggregated
+        run: npm run test:cov || echo "No tests for authentication"
+
+      - name: Upload Routing coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: routing
+          files: MVP/coverage/centralized/Routing/coverage-summary.json
+          name: Routing
 
       # Commit updated README
       - name: Commit updated README
