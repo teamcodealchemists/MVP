@@ -1,8 +1,0 @@
-{
-  "dependencies": {
-    "@nestjs/microservices": "^11.1.6",
-    "mongoose": "^8.18.0",
-    "nats": "^2.29.3",
-    "uuid": "^11.1.0"
-  }
-}
