@@ -23,59 +23,55 @@ export class OutboundEventHandler implements OnModuleInit {
   
   async handlerBelowMinThres(product: ProductDto): Promise<void> {
     this.logger.warn(`belowMinThres → ${product.name}`);
-    this.natsClient.emit("inventory.belowMinThres", { product });
+    this.natsClient.emit("inventory.belowMinThres", JSON.stringify({ product }));
     return Promise.resolve();
   }
 
   async handlerAboveMaxThres(product: ProductDto): Promise<void> {
     this.logger.warn(`aboveMaxThres → ${product.name}`);
-    this.natsClient.emit("inventory.aboveMaxThres", { product});
+    this.natsClient.emit("inventory.aboveMaxThres", JSON.stringify({ product }));
     return Promise.resolve();
   }
 
   async handlerStockAdded(product: ProductDto): Promise<void>{
     this.logger.log(`stockAdded → ${product.name} @ warehouse ${product.warehouseId.warehouseId}`);
-    try {
-      this.natsClient.emit('inventory.stock.added', JSON.stringify({ product }));
-    } catch (error) {
-      this.logger.error('Error emitting stockAdded event', error);
-    }
+    this.natsClient.emit('inventory.stock.added', JSON.stringify({ product }));
     return Promise.resolve();
   }
 
   async handlerStockRemoved(productId: ProductIdDto, warehouseId: WarehouseIdDto): Promise<void>{
     this.logger.log(`stockRemoved → ${productId} @ warehouse ${warehouseId.warehouseId}`);
-    this.natsClient.emit("inventory.stock.removed", { productId , warehouseId});
+    this.natsClient.emit("inventory.stock.removed", JSON.stringify({ productId , warehouseId}));
     return Promise.resolve();
   }
 
   async handlerStockUpdated(product: ProductDto): Promise<void>{
     this.logger.log(`stockUpdated → ${product.name} @ warehouse ${product.warehouseId.warehouseId}`);
-    this.natsClient.emit("inventory.stock.updated", { product});
+    this.natsClient.emit("inventory.stock.updated", JSON.stringify({ product }));
     return Promise.resolve();
   }
 
   async handlerSufficientProductAvailability(orderId : OrderIdDTO): Promise<void> {
     this.logger.log("sufficientProductAvailability");
-    this.natsClient.emit("inventory.sufficientAvailability", {orderId});
+    this.natsClient.emit("inventory.sufficientAvailability", JSON.stringify({orderId}));
     return Promise.resolve();
   }
 
   async handlerReservetionQuantities(product : ProductQuantityArrayDto): Promise<void> {
     this.logger.log(`reservetion → ${product.productQuantityArray}, qty=${product.productQuantityArray}`);
-    this.natsClient.emit("inventory.reservetionQuantities", {product});
+    this.natsClient.emit("inventory.reservetionQuantities", JSON.stringify({product}));
     return Promise.resolve();
   }
   
   async handlerStockShipped(orderId : OrderIdDTO): Promise<void> {
 
-    this.natsClient.emit("inventory.stockShipped", { orderId });  //su questo file spec se si modificano qualsiasi stringa bisogna controllare
+    this.natsClient.emit("inventory.stockShipped", JSON.stringify({ orderId }));  //su questo file spec se si modificano qualsiasi stringa bisogna controllare
     return Promise.resolve();
   }
 
   async handlerStockReceived(orderId : OrderIdDTO): Promise<void> {
-   
-    this.natsClient.emit("inventory.stockReceived", { orderId });
+
+    this.natsClient.emit("inventory.stockReceived", JSON.stringify({ orderId }));  //su questo file spec se si modificano qualsiasi stringa bisogna controllare
     return Promise.resolve();
   }
 }
