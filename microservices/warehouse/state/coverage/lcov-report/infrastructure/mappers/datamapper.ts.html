@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">45.45% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>5/11</span>
+                <span class='fraction'>11/11</span>
             </div>
         
             
@@ -37,16 +37,16 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">16.66% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>1/6</span>
+                <span class='fraction'>6/6</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">45.45% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>5/11</span>
+                <span class='fraction'>11/11</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -106,37 +106,37 @@
 <a name='L41'></a><a href='#L41'>41</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -156,27 +156,27 @@ export const DataMapper = {
     return new WarehouseId(dto.id);
   },
 &nbsp;
-<span class="fstat-no" title="function not covered" >  toDomainWarehouseState(</span>dto: WarehouseStateDTO): WarehouseState {
-<span class="cstat-no" title="statement not covered" >    return new WarehouseState(dto.state);</span>
+  toDomainWarehouseState(dto: WarehouseStateDTO): WarehouseState {
+    return new WarehouseState(dto.state);
   },
 &nbsp;
-<span class="fstat-no" title="function not covered" >  toDomainHeartbeat(</span>dto: HeartbeatDTO): Heartbeat {
-    const warehouseId = <span class="cstat-no" title="statement not covered" >new WarehouseId(dto.warehouseId);</span>
-<span class="cstat-no" title="statement not covered" >    return new Heartbeat(dto.heartbeatMsg, dto.timestamp, warehouseId);</span>
+  toDomainHeartbeat(dto: HeartbeatDTO): Heartbeat {
+    const warehouseId = new WarehouseId(dto.warehouseId);
+    return new Heartbeat(dto.heartbeatMsg, dto.timestamp, warehouseId);
   },
 &nbsp;
   
-<span class="fstat-no" title="function not covered" >  toDTOWarehouseId(</span>entity: WarehouseId): WarehouseIdDTO {
-<span class="cstat-no" title="statement not covered" >    return { id: entity.getId() };</span>
+  toDTOWarehouseId(entity: WarehouseId): WarehouseIdDTO {
+    return { id: entity.getId() };
   },
 &nbsp;
-<span class="fstat-no" title="function not covered" >  toDTOWarehouseState(</span>entity: WarehouseState): WarehouseStateDTO {
-<span class="cstat-no" title="statement not covered" >    return { state: entity.getState() };</span>
+  toDTOWarehouseState(entity: WarehouseState): WarehouseStateDTO {
+    return { state: entity.getState() };
   },
 &nbsp;
 &nbsp;
-<span class="fstat-no" title="function not covered" >  toDTOHeartbeat(</span>entity: Heartbeat): HeartbeatDTO {
-<span class="cstat-no" title="statement not covered" >    return {</span>
+  toDTOHeartbeat(entity: Heartbeat): HeartbeatDTO {
+    return {
       heartbeatMsg: entity.getHeartbeatMsg(),
       timestamp: entity.getTimestamp(),
       warehouseId: entity.getId(),
@@ -190,7 +190,7 @@ export const DataMapper = {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-09-06T15:07:03.234Z
+                at 2025-09-06T15:37:28.926Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
