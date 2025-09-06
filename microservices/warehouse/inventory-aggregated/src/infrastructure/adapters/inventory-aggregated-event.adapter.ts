@@ -11,6 +11,7 @@ import { SyncWarehouseIdDTO } from '../../interfaces/dto/syncWarehouseId.dto';
 import { CloudDataMapper } from '../mappers/cloud-data.mapper';
 import { InventoryAggregatedService } from './../../application/inventory-aggregated.service';
 import { GetStockUseCase } from 'src/domain/ports/inbound/getStockUseCase.port';
+import { SyncInventoryDTO } from 'src/interfaces/dto/syncInventory.dto';
 
 @Injectable()
 export class CloudInventoryEventAdapter implements 
