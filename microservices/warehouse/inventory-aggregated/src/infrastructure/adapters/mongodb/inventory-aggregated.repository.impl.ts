@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Product } from '../../../domain/product.entity';
@@ -8,6 +8,8 @@ import { CloudDataMapper } from '../../mappers/cloud-data.mapper';
 import { ProductId } from '../../../domain/productId.entity';
 import { WarehouseId } from '../../../domain/warehouseId.entity';
 import { InventoryAggregated } from 'src/domain/inventory-aggregated.entity';
+
+const logger = new Logger('InventoryAggregatedRepositoryImpl');
 
 @Injectable()
 export class InventoryAggregatedRepositoryImpl implements InventoryAggregatedRepository {
@@ -30,18 +32,18 @@ export class InventoryAggregatedRepositoryImpl implements InventoryAggregatedRep
   }
 
   async removeProduct(id: ProductId, warehouseId: WarehouseId): Promise<void> {
-    await this.productModel.deleteOne({ id: id.getId(), warehouseId: warehouseId.getId() }).exec();
+    await this.productModel.deleteOne({ productId: id.getId(), warehouseId: warehouseId.getId() }).exec();
   }
 
   async updateProduct(product: Product): Promise<void> {
-    await this.productModel.updateOne({ productId: product.getId() }, {
+    await this.productModel.updateOne({ productId: product.getId().getId() }, {
       name: product.getName(),
       unitPrice: product.getUnitPrice(),
       quantity: product.getQuantity(),
       quantityReserved: product.getQuantityReserved(),
       minThres: product.getMinThres(),
       maxThres: product.getMaxThres(),
-      warehouseId: product.getWarehouseId(),
+      warehouseId: product.getWarehouseId().getId(),
     }).exec();
   }
 
@@ -114,20 +116,20 @@ export class InventoryAggregatedRepositoryImpl implements InventoryAggregatedRep
       {
       $group: {
         _id: "$productId",
+        productId: { $first: "$productId" },
         name: { $first: "$name" },
-        unitPrice: { $sum: "$unitPrice" },
+        unitPrice: { $first: "$unitPrice" },
         quantity: { $sum: "$quantity" },
         quantityReserved: { $sum: "$quantityReserved" },
-        minThres: { $first: "$minThres" },
-        maxThres: { $first: "$maxThres" },
+        minThres: { $sum: "$minThres" },
+        maxThres: { $sum: "$maxThres" },
         warehouseId: { $first: "$warehouseId" }
       }
       }
     ]).exec();
     const productDoc = docs[0];
-    if (!productDoc) return null;
     return Promise.resolve(new Product(
-      new ProductId(productDoc.productId),
+      new ProductId(productDoc._id),
       productDoc.name,
       productDoc.unitPrice,
       productDoc.quantity,
@@ -137,5 +139,4 @@ export class InventoryAggregatedRepositoryImpl implements InventoryAggregatedRep
       new WarehouseId(0),
     ));
   }
-
 }

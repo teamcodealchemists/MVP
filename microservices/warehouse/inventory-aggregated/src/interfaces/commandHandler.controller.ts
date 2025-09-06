@@ -13,11 +13,13 @@ export class CommandHandler {
   @EventPattern('inventory.stock.added')
   async syncAddedStock(@Payload() payload: any): Promise<void> {
     const dto = payload.product;
+
     const warehouseIdDTO = new SyncWarehouseIdDTO();
     warehouseIdDTO.warehouseId = dto.warehouseId.warehouseId;
     const productIdDTO = new SyncProductIdDTO();
     productIdDTO.id = dto.id.id;
     const syncDTO = new SyncProductDTO();
+
     syncDTO.id = productIdDTO;
     syncDTO.name = dto.name;
     syncDTO.unitPrice = dto.unitPrice;
@@ -26,27 +28,48 @@ export class CommandHandler {
     syncDTO.minThres = dto.minThres;
     syncDTO.maxThres = dto.maxThres;
     syncDTO.warehouseId = warehouseIdDTO;
-    
-    console.log(syncDTO);
+
     await validateOrReject(syncDTO);
     await this.cloudInventoryEventAdapter.syncAddedStock(syncDTO);
   }
 
   @EventPattern('inventory.stock.removed')
   async syncRemovedStock(@Payload() payload: any): Promise<void> {
-    console.log(payload);
+    const warehouseid = payload.warehouseId;
+    const productid = payload.productId;
 
-    const dto: SyncProductIdDTO = { id: payload.productId };
-    const warehouseDto: SyncWarehouseIdDTO = { warehouseId: payload.warehouseId };
+    const dto = new SyncProductIdDTO();
+    dto.id = productid.id;
+    const warehouseDto = new SyncWarehouseIdDTO();
+    warehouseDto.warehouseId = warehouseid.warehouseId;
+
+    await validateOrReject(dto);
+    await validateOrReject(warehouseDto);
 
     await this.cloudInventoryEventAdapter.syncRemovedStock(dto, warehouseDto);
   }
 
 
   @EventPattern('inventory.stock.updated')
-  async syncEditedStock(@Payload() dto: SyncProductDTO): Promise<void> {
-    console.log(dto);
-    await this.cloudInventoryEventAdapter.syncEditedStock(dto);
+  async syncEditedStock(@Payload() payload: any): Promise<void> {
+    const dto = payload.product;
+
+    const warehouseIdDTO = new SyncWarehouseIdDTO();
+    warehouseIdDTO.warehouseId = dto.warehouseId.warehouseId;
+    const productIdDTO = new SyncProductIdDTO();
+    productIdDTO.id = dto.id.id;
+    const syncDTO = new SyncProductDTO();
+
+    syncDTO.id = productIdDTO;
+    syncDTO.name = dto.name;
+    syncDTO.unitPrice = dto.unitPrice;
+    syncDTO.quantity = dto.quantity;
+    syncDTO.quantityReserved = dto.quantityReserved || 0;
+    syncDTO.minThres = dto.minThres;
+    syncDTO.maxThres = dto.maxThres;
+    syncDTO.warehouseId = warehouseIdDTO;
+
+    await this.cloudInventoryEventAdapter.syncEditedStock(syncDTO);
   }
 
 
@@ -57,10 +80,24 @@ export class CommandHandler {
   @MessagePattern('get.aggregatedWarehouses.stock.*')
   async getProductAggregated(@Ctx() context: any): Promise<string> {
     try {
-      const id: SyncProductIdDTO = { id: context.getPattern().split('.').pop() || '' };
+      const pattern = context.getSubject(); // fallback if pattern is not present
+      const id = new SyncProductIdDTO();
+      id.id = pattern.split('.').pop() || '';
       await validateOrReject(id);
       const product = await this.cloudInventoryEventAdapter.getProductAggregated(id);
-      return JSON.stringify({ result: { model: product } });
+      if (!product) {
+        return JSON.stringify({ error: { code: 'system.notFound', message: 'Product not found' }, meta: {status: 404} });
+      }
+      return JSON.stringify({ result: { model: {
+        id: product.id.id,
+        name: product.name,
+        unitPrice: product.unitPrice,
+        quantity: product.quantity,
+        quantityReserved: product.quantityReserved,
+        minThres: product.minThres,
+        maxThres: product.maxThres,
+        warehouseId: product.warehouseId.warehouseId,
+      } } });
     } catch (error) {
       return this.errorHandler(error);
     }
@@ -69,13 +106,27 @@ export class CommandHandler {
   @MessagePattern('get.aggregatedWarehouses.warehouse.*.stock.*')
   async getProduct(@Ctx() context: any): Promise<string> {
     try {
-      const patternParts = context.getPattern().split('.');
-      const warehouseId: SyncWarehouseIdDTO = { warehouseId: patternParts[3] || '' };
-      const productId: SyncProductIdDTO = { id: patternParts[5] || '' };
+      const patternParts = (context.getSubject()).split('.');
+      const warehouseId = new SyncWarehouseIdDTO();
+      warehouseId.warehouseId = Number(patternParts[3]);
+      const productId = new SyncProductIdDTO();
+      productId.id = patternParts[5];
       await validateOrReject(warehouseId);
       await validateOrReject(productId);
       const product = await this.cloudInventoryEventAdapter.getProduct(productId, warehouseId);
-      return JSON.stringify({ result: { model: product } });
+      if (!product) {
+        return JSON.stringify({ error: { code: 'system.notFound', message: 'Product not found' }, meta: {status: 404} });
+      }
+      return JSON.stringify({ result: { model: {
+        id: product.id.id,
+        name: product.name,
+        unitPrice: product.unitPrice,
+        quantity: product.quantity,
+        quantityReserved: product.quantityReserved,
+        minThres: product.minThres,
+        maxThres: product.maxThres,
+        warehouseId: product.warehouseId.warehouseId,
+      } } });
     }
     catch (error) {
       return this.errorHandler(error);
