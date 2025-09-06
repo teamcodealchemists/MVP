@@ -18,8 +18,10 @@ export class RoutingService {
     if (!sourceAddressObj) {
       throw new Error("Magazzino sorgente non trovato");
     }
+    console.log('SourceAddressObj:', sourceAddressObj);
     const sourceAddress = sourceAddressObj.getAddress();
     const [sourceLat, sourceLon] = await geocodeAddress(sourceAddress);
+    console.log(`SourceAddress: ${sourceAddress}, Lat: ${sourceLat}, Lon: ${sourceLon}`);
 
     // Ottieni tutti gli indirizzi dei magazzini
     const allAddresses = await this.RoutingRepository.getAllWarehouseAddresses();
@@ -35,6 +37,7 @@ export class RoutingService {
         })
     );
 
+    console.log(distances);
     return distances
       .sort((a, b) => a.distance - b.distance)
       .map(d => d.id);

@@ -19,6 +19,7 @@ export async function geocodeAddress(address: string): Promise<[number, number]>
 
   const coords: [number, number] = [parseFloat(res.data[0].lat), parseFloat(res.data[0].lon)];
   cache.set(address, coords); // cache in memoria
+  console.log(`Geocoded ${address} to ${coords[0]}, ${coords[1]}`);
   return coords;
 }
 
