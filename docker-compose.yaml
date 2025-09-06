@@ -54,14 +54,14 @@ services:
 
   inventory-aggregated:
     build:
-      context: ./microservices/warehouse/inventory-aggregated
+      context: ./microservices/cloud/inventory-aggregated
       dockerfile: Dockerfile
     container_name: inventory-aggregated-1
     environment:
       - MONGO_URI=mongodb://mongo:27017/inventory-aggregated
       - NATS_URL=nats://nats:4222
     volumes:
-      - ./microservices/warehouse/inventory-aggregated/src:/usr/src/app/src
+      - ./microservices/cloud/inventory-aggregated/src:/usr/src/app/src
     networks:
       - shared-warehouses
     depends_on:
