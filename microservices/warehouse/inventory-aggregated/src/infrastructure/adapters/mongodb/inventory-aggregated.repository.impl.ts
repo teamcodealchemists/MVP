@@ -17,8 +17,8 @@ export class InventoryAggregatedRepositoryImpl implements InventoryAggregatedRep
 
   async addProduct(product: Product): Promise<void> {
     const doc = new this.productModel({
-      warehouseId: product.getWarehouseId(),
-      productId: product.getId(),
+      warehouseId: product.getWarehouseId().getId(),
+      productId: product.getId().getId(),
       name: product.getName(),
       unitPrice: product.getUnitPrice(),
       quantity: product.getQuantity(),

@@ -16,17 +16,17 @@ export class CommandHandler {
     const warehouseIdDTO = new SyncWarehouseIdDTO();
     warehouseIdDTO.warehouseId = dto.warehouseId.warehouseId;
     const productIdDTO = new SyncProductIdDTO();
-    productIdDTO.id = dto.id.id; 
-    const syncDTO: SyncProductDTO = {
-      id: productIdDTO,
-      name: dto.name,
-      unitPrice: dto.unitPrice,
-      quantity: dto.quantity,
-      quantityReserved: dto.quantityReserved || 0,
-      minThres: dto.minThres,
-      maxThres: dto.maxThres,
-      warehouseId: warehouseIdDTO,
-    };
+    productIdDTO.id = dto.id.id;
+    const syncDTO = new SyncProductDTO();
+    syncDTO.id = productIdDTO;
+    syncDTO.name = dto.name;
+    syncDTO.unitPrice = dto.unitPrice;
+    syncDTO.quantity = dto.quantity;
+    syncDTO.quantityReserved = dto.quantityReserved || 0;
+    syncDTO.minThres = dto.minThres;
+    syncDTO.maxThres = dto.maxThres;
+    syncDTO.warehouseId = warehouseIdDTO;
+    
     console.log(syncDTO);
     await validateOrReject(syncDTO);
     await this.cloudInventoryEventAdapter.syncAddedStock(syncDTO);

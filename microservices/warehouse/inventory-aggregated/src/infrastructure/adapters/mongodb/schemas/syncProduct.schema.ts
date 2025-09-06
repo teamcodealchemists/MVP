@@ -4,28 +4,28 @@ import { Document } from 'mongoose';
 @Schema()
 export class SyncProduct extends Document {
   @Prop({ required: true })
-  warehouseId!: number;
+  warehouseId: number;
 
   @Prop({ required: true })
-  productId!: string;
+  productId: string;
 
   @Prop({ required: true })
-  name!: string;
+  name: string;
 
   @Prop({ required: true })
-  unitPrice!: number;
+  unitPrice: number;
 
   @Prop({ required: true })
-  quantity!: number;
+  quantity: number;
 
   @Prop({ required: true })
-  quantityReserved!: number;
+  quantityReserved: number;
 
   @Prop({ required: true })
-  minThres!: number;
+  minThres: number;
 
   @Prop({ required: true })
-  maxThres!: number;
+  maxThres: number;
 }
 
 export const SyncProductSchema = SchemaFactory.createForClass(SyncProduct);
