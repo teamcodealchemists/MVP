@@ -1,22 +1,38 @@
 import { Controller } from '@nestjs/common';
-import { Ctx, MessagePattern, Payload } from '@nestjs/microservices';
+import { Ctx, EventPattern, MessagePattern, Payload } from '@nestjs/microservices';
 import { SyncProductDTO } from './dto/syncProduct.dto';
 import { SyncProductIdDTO } from './dto/syncProductId.dto';
 import { CloudInventoryEventAdapter } from 'src/infrastructure/adapters/inventory-aggregated-event.adapter';
 import { validateOrReject } from 'class-validator';
 import { SyncWarehouseIdDTO } from './dto/syncWarehouseId.dto';
 @Controller()
-export class commandHandler {
+export class CommandHandler {
   constructor(private readonly cloudInventoryEventAdapter : CloudInventoryEventAdapter
   ) {}
 
-  @MessagePattern('inventory.stock.added')
-  async syncAddedStock(@Payload() dto: SyncProductDTO): Promise<void> {
-    console.log(dto);
-    await this.cloudInventoryEventAdapter.syncAddedStock(dto);
+  @EventPattern('inventory.stock.added')
+  async syncAddedStock(@Payload() payload: any): Promise<void> {
+    const dto = payload.product;
+    const warehouseIdDTO = new SyncWarehouseIdDTO();
+    warehouseIdDTO.warehouseId = dto.warehouseId.warehouseId;
+    const productIdDTO = new SyncProductIdDTO();
+    productIdDTO.id = dto.id.id; 
+    const syncDTO: SyncProductDTO = {
+      id: productIdDTO,
+      name: dto.name,
+      unitPrice: dto.unitPrice,
+      quantity: dto.quantity,
+      quantityReserved: dto.quantityReserved || 0,
+      minThres: dto.minThres,
+      maxThres: dto.maxThres,
+      warehouseId: warehouseIdDTO,
+    };
+    console.log(syncDTO);
+    await validateOrReject(syncDTO);
+    await this.cloudInventoryEventAdapter.syncAddedStock(syncDTO);
   }
 
-  @MessagePattern('inventory.stock.removed')
+  @EventPattern('inventory.stock.removed')
   async syncRemovedStock(@Payload() payload: any): Promise<void> {
     console.log(payload);
 
@@ -27,7 +43,7 @@ export class commandHandler {
   }
 
 
-  @MessagePattern('inventory.stock.updated')
+  @EventPattern('inventory.stock.updated')
   async syncEditedStock(@Payload() dto: SyncProductDTO): Promise<void> {
     console.log(dto);
     await this.cloudInventoryEventAdapter.syncEditedStock(dto);

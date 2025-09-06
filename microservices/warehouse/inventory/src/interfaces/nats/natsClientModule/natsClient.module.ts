@@ -11,7 +11,7 @@ import { OutboundRequestSerializer } from 'src/interfaces/nats/natsMessagesForma
         transport: Transport.NATS,
         options: {
           // Configura qui i parametri di connessione NATS se necessario
-          servers: [process.env.NATS_URL || 'nats://nats'],
+          servers: [process.env.NATS_URL || 'nats://nats:4222'],
           serializer: new OutboundRequestSerializer(),
         }
       }

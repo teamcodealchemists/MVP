@@ -68,7 +68,6 @@ services:
       - mongo
       - nats
       - resgate
-      - inventory
 
 networks:
   shared-warehouses:

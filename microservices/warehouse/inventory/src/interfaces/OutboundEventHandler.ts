@@ -1,3 +1,4 @@
+import { WarehouseId } from 'src/domain/warehouseId.entity';
 import { Inject, Injectable, Logger, OnModuleInit } from "@nestjs/common";
 import { ClientProxy } from "@nestjs/microservices";
 import { ProductDto } from "./dto/product.dto";
@@ -13,8 +14,13 @@ export class OutboundEventHandler implements OnModuleInit {
   ) {}
   
   async onModuleInit() {
-    await this.natsClient.connect();
+    try {
+      await this.natsClient.connect();
+    } catch (error) {
+      this.logger.error('Error connecting to NATS service', error);
+    }
   }
+  
   async handlerBelowMinThres(product: ProductDto): Promise<void> {
     this.logger.warn(`belowMinThres → ${product.name}`);
     this.natsClient.emit("inventory.belowMinThres", { product });
@@ -28,8 +34,12 @@ export class OutboundEventHandler implements OnModuleInit {
   }
 
   async handlerStockAdded(product: ProductDto): Promise<void>{
-    this.logger.log(`stockAdded → ${product.name} @ warehouse ${product.warehouseId}`);
-    this.natsClient.emit("inventory.stock.added", { product});
+    this.logger.log(`stockAdded → ${product.name} @ warehouse ${product.warehouseId.warehouseId}`);
+    try {
+      this.natsClient.emit('inventory.stock.added', JSON.stringify({ product }));
+    } catch (error) {
+      this.logger.error('Error emitting stockAdded event', error);
+    }
     return Promise.resolve();
   }
 
@@ -40,7 +50,7 @@ export class OutboundEventHandler implements OnModuleInit {
   }
 
   async handlerStockUpdated(product: ProductDto): Promise<void>{
-    this.logger.log(`stockUpdated → ${product.name} @ warehouse ${product.warehouseId}`);
+    this.logger.log(`stockUpdated → ${product.name} @ warehouse ${product.warehouseId.warehouseId}`);
     this.natsClient.emit("inventory.stock.updated", { product});
     return Promise.resolve();
   }

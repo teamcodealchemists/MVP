@@ -14,7 +14,7 @@ export class CloudDataMapper {
   toDomainProduct(syncProductDTO: SyncProductDTO): Product {
   let wId = new WarehouseId(syncProductDTO.warehouseId.warehouseId);
   return new Product(
-  new ProductId(syncProductDTO.id),
+  new ProductId(syncProductDTO.id.id),
   syncProductDTO.name,
   syncProductDTO.unitPrice,
   syncProductDTO.quantity,
@@ -46,7 +46,7 @@ export class CloudDataMapper {
     let wIdDto = new SyncWarehouseIdDTO();
     wIdDto.warehouseId = product.getWarehouseId().getId();
     return {
-      id: product.getId().getId(),
+      id: this.toDTOProductId(product.getId()),
       name: product.getName(),
       unitPrice: product.getUnitPrice(),
       quantity: product.getQuantity(),
