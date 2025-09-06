@@ -1,12 +1,10 @@
 import { Controller } from '@nestjs/common';
-import { EventPattern, MessagePattern } from '@nestjs/microservices';
-import { InventoryAggregatedService } from '../application/inventory-aggregated.service';
+import { Ctx, MessagePattern } from '@nestjs/microservices';
 import { SyncProductDTO } from './dto/syncProduct.dto';
 import { SyncProductIdDTO } from './dto/syncProductId.dto';
-import { SyncInventoryDTO } from './dto/syncInventory.dto';
-import { CloudDataMapper } from '../infrastructure/mappers/cloud-data.mapper';
 import { CloudInventoryEventAdapter } from 'src/infrastructure/adapters/inventory-aggregated-event.adapter';
-import { InventoryAggregated } from 'src/domain/inventory-aggregated.entity';
+import { validateOrReject } from 'class-validator';
+import { SyncWarehouseIdDTO } from './dto/syncWarehouseId.dto';
 @Controller()
 export class commandHandler {
   constructor(private readonly cloudInventoryEventAdapter : CloudInventoryEventAdapter
@@ -34,18 +32,69 @@ export class commandHandler {
     await this.cloudInventoryEventAdapter.syncEditedStock(dto);
   }
 
+
+  // --------------------------------------
+  //                GETTERS
+  // --------------------------------------
+
+  @MessagePattern('get.aggregatedWarehouses.stock.*')
+  async getProductAggregated(@Ctx() context: any): Promise<string> {
+    try {
+      const id: SyncProductIdDTO = { id: context.getPattern().split('.').pop() || '' };
+      await validateOrReject(id);
+      const product = await this.cloudInventoryEventAdapter.getProductAggregated(id);
+      return JSON.stringify({ result: { model: product } });
+    } catch (error) {
+      return this.errorHandler(error);
+    }
+  }
+
+  @MessagePattern('get.aggregatedWarehouses.warehouse.*.stock.*')
+  async getProduct(@Ctx() context: any): Promise<string> {
+    try {
+      const patternParts = context.getPattern().split('.');
+      const warehouseId: SyncWarehouseIdDTO = { warehouseId: patternParts[3] || '' };
+      const productId: SyncProductIdDTO = { id: patternParts[5] || '' };
+      await validateOrReject(warehouseId);
+      await validateOrReject(productId);
+      const product = await this.cloudInventoryEventAdapter.getProduct(productId, warehouseId);
+      return JSON.stringify({ result: { model: product } });
+    }
+    catch (error) {
+      return this.errorHandler(error);
+    }
+  }
+
   @MessagePattern('get.aggregatedWarehouses.allProducts')
   async getAllProducts(): Promise<string> {
-    const products = await this.cloudInventoryEventAdapter.getAllProducts();
-    return { productList: products.map(p => this.mapper.toDTOProduct(p)) };
+    try {
+      // Ottieni tutti i prodotti dall'inventario
+      const products = (await this.cloudInventoryEventAdapter.getAllProducts()).getInventory();
+
+      // Mappa ogni prodotto in un riferimento rid
+      const collection = products.map(product => ({
+      rid: `get.aggregatedWarehouses.warehouse.${product.getWarehouseId()}.stock.${product.getId()}`
+      }));
+
+      return Promise.resolve(JSON.stringify({ result: { collection } }));
+    } catch (error) {
+      return this.errorHandler(error);
+    }
   }
 
   // UseCase: ottenere inventario completo (puoi adattarlo se differisce da getAllProducts)
   @MessagePattern('get.aggregatedWarehouses.all')
   async getAll(): Promise<string> {
     try {
-      const products = await this.cloudInventoryEventAdapter.getAllProducts();
-      return { productList: products.map(p => this.mapper.toDTOProduct(p)) };
+      // Ottieni tutti i prodotti dall'inventario
+      const products = (await this.cloudInventoryEventAdapter.getAll()).getInventory();
+
+      // Mappa ogni prodotto in un riferimento rid
+      const collection = products.map(product => ({
+      rid: `get.aggregatedWarehouses.stock.${product.getId()}`
+      }));
+
+      return Promise.resolve(JSON.stringify({ result: { collection } }));
     } catch (error) {
       return this.errorHandler(error);
     }
