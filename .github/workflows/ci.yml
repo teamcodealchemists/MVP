@@ -98,7 +98,7 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: auth
-          directory: MVP/coverage/centralized/authentication
+          directory: MVP/coverage/centralized/authentication/coverage-summary.json
           name: auth
 
       - name: Install Inventory Aggregate dependencies
@@ -113,9 +113,9 @@ jobs:
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          flags: auth
-          directory: MVP/coverage/cloud/inventory-aggregated
-          name: auth
+          flags: aggregateInv
+          directory: MVP/coverage/cloud/inventory-aggregated/coverage-summary.json
+          name: Inventory Aggregate
 
       # Commit updated README
       - name: Commit updated README
