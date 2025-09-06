@@ -7,6 +7,7 @@ export class Product {
         private name: string,
         private unitPrice: number,
         private quantity: number,
+        private quantityReserved: number,
         private minThres: number,
         private maxThres: number,
         private warehouseId: WarehouseId
@@ -30,8 +31,8 @@ export class Product {
     getMaxThres(): number {
         return this.maxThres;
     }
-    getWarehouseId(): string{
-        return this.warehouseId.getId();
+    getWarehouseId(): WarehouseId{
+        return this.warehouseId;
     }
 
     setName(newName: string): void {
@@ -48,5 +49,8 @@ export class Product {
     }
     setMaxThres(newMaxThres: number): void {
         this.maxThres = newMaxThres;
+    }
+    getQuantityReserved(): number {
+        return this.quantityReserved;
     }
 }

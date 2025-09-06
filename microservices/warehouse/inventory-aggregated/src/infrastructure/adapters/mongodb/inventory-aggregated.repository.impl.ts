@@ -22,6 +22,7 @@ export class InventoryAggregatedRepositoryImpl implements InventoryAggregatedRep
       name: product.getName(),
       unitPrice: product.getUnitPrice(),
       quantity: product.getQuantity(),
+      quantityReserved : product.getQuantityReserved(),
       minThres: product.getMinThres(),
       maxThres: product.getMaxThres(),
     });
@@ -52,9 +53,10 @@ async getById(id: ProductId): Promise<Product | null> {
     productDoc.name,
     productDoc.unitPrice,
     productDoc.quantity,
+    productDoc.quantityReserved,
     productDoc.minThres,
     productDoc.maxThres,
-    new WarehouseId(Number(productDoc.warehouseId)),
+    new WarehouseId(productDoc.warehouseId),
   ));
 }
 
@@ -66,6 +68,7 @@ async getById(id: ProductId): Promise<Product | null> {
           productIds: { $addToSet: "$productId" },
           unitPrice: { $sum: "$unitPrice" },
           quantity: { $sum: "$quantity" },
+          quantityReserved: { $sum: "$quantityReserved" },
           minThres: { $first: "$minThres" },
           maxThres: { $first: "$maxThres" }
         }
@@ -79,6 +82,7 @@ async getById(id: ProductId): Promise<Product | null> {
         doc._id, // name
         doc.unitPrice,
         doc.quantity,
+        doc.quantityReserved,
         doc.minThres,
         doc.maxThres,
         new WarehouseId(0), // Aggregated, no specific warehouse
@@ -94,6 +98,7 @@ async getById(id: ProductId): Promise<Product | null> {
       productDoc.name,
       productDoc.unitPrice,
       productDoc.quantity,
+      productDoc.quantityReserved,
       productDoc.minThres,
       productDoc.maxThres,
       new WarehouseId(Number(productDoc.warehouseId)),

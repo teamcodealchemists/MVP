@@ -26,22 +26,24 @@ export class CloudInventoryEventAdapter implements
     ) {}
 
   async syncAddedStock(dto: SyncProductDTO): Promise<void> {
-    return await this.InventoryAggregatedService.addProduct(this.CloudDataMapper.toDomainProduct(dto));
+    return Promise.resolve(await this.InventoryAggregatedService.addProduct(this.CloudDataMapper.toDomainProduct(dto)));
   }
 
   async syncEditedStock(dto: SyncProductDTO): Promise<void> {
-    return await this.InventoryAggregatedService.updateProduct(this.CloudDataMapper.toDomainProduct(dto));
+    return Promise.resolve(await this.InventoryAggregatedService.updateProduct(this.CloudDataMapper.toDomainProduct(dto)));
   }
 
   async syncRemovedStock(dto: SyncProductIdDTO): Promise<void> {
-    return await this.InventoryAggregatedService.removeProduct(this.CloudDataMapper.toDomainProductId(dto));
+    return Promise.resolve(await this.InventoryAggregatedService.removeProduct(this.CloudDataMapper.toDomainProductId(dto)));
   }
 
-  async getAll(): Promise<InventoryAggregated> {
-    return await this.InventoryAggregatedService.getAll();
+  async getAll(): Promise<SyncInventoryDTO> {
+    const inventory = await this.InventoryAggregatedService.getAll();
+    return Promise.resolve(this.CloudDataMapper.toDTOInventoryAggregated(inventory));
   }
 
-  async getAllProducts(): Promise<InventoryAggregated> {
-    return await this.InventoryAggregatedService.getAllProducts();
+  async getAllProducts(): Promise<SyncInventoryDTO> {
+    const inventory = await this.InventoryAggregatedService.getAllProducts();
+    return Promise.resolve(this.CloudDataMapper.toDTOInventoryAggregated(inventory));
   }
 }
