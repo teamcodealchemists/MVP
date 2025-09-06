@@ -17,7 +17,7 @@ services:
     networks:
       - shared-warehouses
     depends_on:
-      - mongo
+      - mongodb
       - nats
       - resgate
 
@@ -52,7 +52,7 @@ services:
     networks:
       - shared-warehouses
     depends_on:
-      - mongo
+      - mongodb
       - nats
       - resgate
 
