@@ -148,13 +148,14 @@ export class InventoryService {
           continue;
         }
         if (product.getQuantity() >= pq.getQuantity()) {
-          console.log("c'è abbastanza prodotto per questo go go");
+          reserved.push(new ProductQuantity(pq.getId(), pq.getQuantity()));
+          console.log("c'è abbastanza di questo prodotto per l'ordine");
         } else {
           allSufficient = false;
           const newReserved = pq.getQuantity();
-          const p = new Product(new ProductId(pq.getId().getId()), product.getName(), product.getUnitPrice(), 0,
+          const p = new Product(pq.getId(), product.getName(), product.getUnitPrice(), 0,
                                 newReserved, product.getMinThres(), product.getMaxThres());
-          const p1 = new ProductQuantity(new ProductId(product.getId().getId()), newReserved);
+          const p1 = new ProductQuantity(product.getId(), newReserved);
           if(product.getMinThres() > 0) this.natsAdapter.belowMinThres(p,this.warehouseId);
           reserved.push(p1);
           await this.inventoryRepository.updateProduct(p);
@@ -194,11 +195,11 @@ export class InventoryService {
       }
       const newQuantity = pq.getQuantity() + product.getQuantity();
       if(product.getMaxThres() > newQuantity){
-        const p = new Product(new ProductId(product.getId().getId()), product.getName(), product.getUnitPrice(), newQuantity,
+        const p = new Product(product.getId(), product.getName(), product.getUnitPrice(), newQuantity,
         product.getQuantityReserved(), product.getMinThres(), product.getMaxThres());
         await this.inventoryRepository.updateProduct(p);
       }else{
-        const p = new Product(new ProductId(product.getId().getId()), product.getName(), product.getUnitPrice(), newQuantity,
+        const p = new Product(product.getId(), product.getName(), product.getUnitPrice(), newQuantity,
         product.getQuantityReserved(), product.getMinThres(), product.getMaxThres());
         this.natsAdapter.aboveMaxThres(p,this.warehouseId);
       }
