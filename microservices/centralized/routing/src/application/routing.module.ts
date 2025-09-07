@@ -2,13 +2,13 @@ import { Module } from '@nestjs/common';
 import { RoutingController } from './../interfaces/routing.controller';
 import { RoutingService } from './routing.service';
 import { MongooseModule } from '@nestjs/mongoose';
-import { RoutingRepositoryModule } from 'src/infrastructure/adapters/mongodb/routing.repository.module';
-import { OutboundService } from 'src/interfaces/outbound.service';
-import { RoutingEventAdapter } from 'src/infrastructure/adapters/routing.event.adapter';
-import { RoutingRepositoryMongo } from 'src/infrastructure/adapters/mongodb/routing.repository.impl';
-import { NatsModule } from 'src/interfaces/nats/nats.module';
-import { RoutingRepository } from 'src/domain/routing.repository';
-import { AccessController } from 'src/interfaces/access.controller';
+import { RoutingRepositoryModule } from './../infrastructure/adapters/mongodb/routing.repository.module';
+import { OutboundService } from './../interfaces/outbound.service';
+import { RoutingEventAdapter } from './../infrastructure/adapters/routing.event.adapter';
+import { RoutingRepositoryMongo } from './../infrastructure/adapters/mongodb/routing.repository.impl';
+import { NatsModule } from './../interfaces/nats/nats.module';
+import { RoutingRepository } from './../domain/routing.repository';
+import { AccessController } from './../interfaces/access.controller';
 
 
 @Module({

@@ -2,9 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { RoutingRepository } from './../../../domain/routing.repository';
-import { WarehouseId } from 'src/domain/warehouseId.entity';
-import { WarehouseState } from 'src/domain/warehouseState.entity';
-import { WarehouseAddress } from 'src/domain/warehouseAddress.entity';
+import { WarehouseId } from './../../../domain/warehouseId.entity';
+import { WarehouseState } from './../../../domain/warehouseState.entity';
+import { WarehouseAddress } from './../../../domain/warehouseAddress.entity';
 import { RoutingDocument } from './schemas/routing.schema';
 
 

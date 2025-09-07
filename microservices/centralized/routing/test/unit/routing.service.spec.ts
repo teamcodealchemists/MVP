@@ -3,7 +3,10 @@ import { WarehouseId } from "../../src/domain/warehouseId.entity";
 import { Test } from "@nestjs/testing";
 
 import { RoutingRepositoryMongo } from '../../src/infrastructure/adapters/mongodb/routing.repository.impl';
-import { mock } from "node:test";
+// import { mock } from "node:test";
+import * as nest from '@nestjs/core';
+import { Transport } from "@nestjs/microservices";
+import { RoutingModule } from "../../src/application/routing.module";
 
 const mockRoutingRepository = {
     getById: jest.fn(),
@@ -21,6 +24,15 @@ const mockRoutingRepository = {
     getAllWarehouseStates: jest.fn(),
 };
 
+jest.mock('../../src/interfaces/geo', () => ({
+  geocodeAddress: jest.fn(async (address: string) => {
+    if (address.includes('Milano')) return [45.4642, 9.19];
+    if (address.includes('Padova')) return [45.4064, 11.8768];
+    if (address.includes('Napoli')) return [40.8522, 14.2681];
+    return [0, 0];
+  }),
+  haversine: jest.requireActual('../../src/interfaces/geo').haversine,
+}));
 
 describe("Test per Routing Service", () => {
 let service: any;
@@ -41,12 +53,6 @@ let service: any;
 
     describe("Test per updateWarehouseAddress", () => {
 
-        // it("Dovrebbe restituire true quando l'aggiornamento di un indirizzo di magazzino ha successo", async () => {
-        //     const id = new WarehouseId(1);
-        //     mockRoutingRepository.getById.mockResolvedValueOnce({} as any);
-        //     await expect(service.updateWarehouseAddress(id)).resolves.toBe(true);
-        //     expect(mockRoutingRepository.getById).toHaveBeenCalledWith(id);
-        // });
         it("Dovrebbe restituire un output valorizzato quando l'aggiornamento di un indirizzo di magazzino ha successo", async () => {
             const id = new WarehouseId(1);
             const state = new (require('../../src/domain/warehouseState.entity').WarehouseState)(id, 'ATTIVO');
@@ -99,13 +105,9 @@ let service: any;
 
     describe("Test per saveWarehouse", () => {
         it("Dovrebbe restituire un output valorizzato quando il salvataggio di un magazzino ha successo", async () => {
-            // const id = new WarehouseId(1);
-            // const state = new (require('../../src/domain/warehouseState.entity').WarehouseState)(id, 'ATTIVO');
-            // const address = new (require('../../src/domain/warehouseAddress.entity').WarehouseAddress)(state, 'Via Roma 1, Milano');
             const state = 'ATTIVO';
             const address = 'Via Roma 1, Milano';
             mockRoutingRepository.getAllWarehouses.mockResolvedValueOnce([]);
-            //mockRoutingRepository.getById.mockResolvedValueOnce({} as any);
             const result = await service.saveWarehouse(state, address);
             expect(!!result).toBe(true);
         });
@@ -113,11 +115,7 @@ let service: any;
         it("Dovrebbe restituire false quando il salvataggio di un magazzino fallisce", async () => {
             const state = 'ATTIVO';
             const address = '';
-            // const id = new WarehouseId(1);
-            // const state = new (require('../../src/domain/warehouseState.entity').WarehouseState)(id, 'ATTIVO');
-            // const address = new (require('../../src/domain/warehouseAddress.entity').WarehouseAddress)(state, 'Via Roma 1, Milano');
             mockRoutingRepository.getAllWarehouses.mockResolvedValueOnce([]);
-            //mockRoutingRepository.getById.mockResolvedValueOnce(null);
             const result = await service.saveWarehouse(state, address);
             expect(result).toBe(false);
         });
@@ -152,4 +150,17 @@ let service: any;
         });
     });
 
+    describe('WarehouseId', () => {
+        it('equals ritorna true se gli id sono uguali', () => {
+            const id1 = new WarehouseId(5);
+            const id2 = new WarehouseId(5);
+            expect(id1.equals(id2)).toBe(true);
+        });
+
+        it('equals ritorna false se gli id sono diversi', () => {
+            const id1 = new WarehouseId(5);
+            const id2 = new WarehouseId(6);
+            expect(id1.equals(id2)).toBe(false);
+        });
+    });
 });
