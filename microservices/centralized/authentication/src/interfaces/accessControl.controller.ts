@@ -35,8 +35,8 @@ export class AccessControlController {
             return JSON.stringify({ result: { get: false, call: "globalSupervisor" } });
         }
         else {
-            if (!data.token.error) {
-                if (data.token && data.token.isGlobal) {
+            if (data.token && !data.token.error) {
+                if (data.token.isGlobal) {
                     return JSON.stringify({ result: { get: false, call: "localSupervisor,globalSupervisor" } });
                 }
                 else {
@@ -44,7 +44,8 @@ export class AccessControlController {
                 }
             }
             else {
-                return JSON.stringify({ error: { code: 'system.accessDenied', message: data.token.error } });
+                const errorMsg = data.token?.error || 'Operation not allowed.';
+                return JSON.stringify({ error: { code: 'system.accessDenied', message: errorMsg } });
             }
         }
     }

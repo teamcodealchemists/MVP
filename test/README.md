@@ -2,11 +2,12 @@
 
 Questa pagina documenta i test automatici delle API tramite Postman e Newman.
 
+
 ## Tabella Comandi Test Newman
 
 | Nome Test                                      | Comando Newman                                      | Collection ID |
 |------------------------------------------------|-----------------------------------------------------|--------------|
-| TdA01 - Registrazione Supervisore Globale      | `newman run TdA-01.postman_collection.json`         |              |
+| TdA01 - Registrazione Supervisore Globale      | `newman run TdA-01.postman_collection.json`         |    46314414-5b9d7b5f-f2fc-4218-8553-b768cfd5fb6e          |
 | TdA02 - Errori Registrazione Supervisore Globale| `newman run TdA-02.postman_collection.json`         |              |
 | TdA03 - Autenticazione Utente                  | `newman run TdA-03.postman_collection.json`         |              |
 | TdA04 - Errori Login Utente                    | `newman run TdA-04.postman_collection.json`         |              |
@@ -112,6 +113,8 @@ Oppure sulle collezioni del workspace (sostituisci il collection-id):
 newman run https://www.postman.com/collections/<collection-id>
 ```
 
+Si può anche usare l'opzione `--verbose` per ottenere più informazioni sul ritorno delle richieste.
+
 ---
 
 ### 5. Verificare i risultati
@@ -132,3 +135,34 @@ docker compose up --build -d
 ## Risorse Utili
 
 - [Documentazione Newman](https://www.npmjs.com/package/newman)
+
+
+## Script Commands per Sviluppo
+
+Template: newman run https://www.postman.com/collections/
+
+- **TdA-01:**  ``newman run https://www.postman.com/collections/46314414-5b9d7b5f-f2fc-4218-8553-b768cfd5fb6e``
+- **TdA-02:**  ``newman run https://www.postman.com/collections/46314414-9f74ea49-1a0a-4352-b295-41e41bef69e9``
+- **TdA-03:**  ``newman run https://www.postman.com/collections/46314414-7f79b291-6fac-490d-8361-5779e0428d17``
+- **TdA-04:**  ``newman run https://www.postman.com/collections/46314414-b3078c6e-ecdc-4542-bc4e-c4fde61f06f7``
+- **TdA-05:**  ``newman run https://www.postman.com/collections/46314414-97d57106-2823-42a4-a2e9-1fd2ea80b8f8``
+- **TdA-06:**  ``newman run https://www.postman.com/collections/46314414-720032e1-b087-437a-a233-719820a0c2e5``
+- **TdA-07:**  ``newman run https://www.postman.com/collections/46314414-e17c10a6-7cd6-4f7f-975b-a1902da699a1``
+- **TdA-08:**  ``newman run https://www.postman.com/collections/``
+- **TdA-09:**  ``newman run https://www.postman.com/collections/``
+- **TdA-10:**  ``newman run https://www.postman.com/collections/``
+- **TdA-11:**  ``newman run https://www.postman.com/collections/``
+- **TdA-12:**  ``newman run https://www.postman.com/collections/``
+- **TdA-13:**  ``newman run https://www.postman.com/collections/``
+- **TdA-14:**  ``newman run https://www.postman.com/collections/``
+- **TdA-15:**  ``newman run https://www.postman.com/collections/``
+- **TdA-16:**  ``newman run https://www.postman.com/collections/``
+- **TdA-17:**  ``newman run https://www.postman.com/collections/``
+- **TdA-18:**  ``newman run https://www.postman.com/collections/``
+- **TdA-19:**  ``newman run https://www.postman.com/collections/``
+- **TdA-20:**  ``newman run https://www.postman.com/collections/``
+- **TdA-21:**  ``newman run https://www.postman.com/collections/``
+- **TdA-22:**  ``newman run https://www.postman.com/collections/``
+- **TdA-23:**  ``newman run https://www.postman.com/collections/``
+- **TdA-24:**  ``newman run https://www.postman.com/collections/``
+- **TdA-25:**  ``newman run https://www.postman.com/collections/``

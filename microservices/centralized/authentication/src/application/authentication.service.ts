@@ -79,7 +79,10 @@ export class AuthService {
             return Promise.resolve(JSON.stringify({
                 error: {
                     code: "system.internalError",
-                    message: "Token has already been logged out"
+                    message: "You are already logged out"
+                },
+                meta: {
+                    status: 401
                 }
             }));
         }
