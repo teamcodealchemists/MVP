@@ -2,9 +2,9 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Docker Compose Up Build Force",
+      "label": "Docker Compose Restart",
       "type": "shell",
-      "command": "docker-compose up --build --force-recreate -d",
+      "command": "docker-compose down | docker-compose up --build -d",
       "options": {
         "cwd": "${workspaceFolder}",
         "statusbar": {
