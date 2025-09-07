@@ -1,0 +1,18 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Docker Compose Restart",
+      "type": "shell",
+      "command": "docker-compose down | docker-compose up --build -d",
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "statusbar": {
+          "hide": false,
+          "color": "#ffc400"
+        }
+      },
+      "problemMatcher": []
+    }
+  ]
+}

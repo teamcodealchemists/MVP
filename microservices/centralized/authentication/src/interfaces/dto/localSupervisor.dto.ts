@@ -25,7 +25,7 @@ export class LocalSupervisorDTO {
 
     @IsNotEmpty()
     @IsArray()
-    @ValidateNested({ each: true })
+    @ValidateNested()
     @Type(() => WarehouseIdDTO)
     warehouseAssigned: WarehouseIdDTO[];
 }

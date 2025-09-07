@@ -7,6 +7,7 @@ import { SyncProductSchema } from '../infrastructure/adapters/mongodb/schemas/sy
 import { CloudDataMapper } from '../infrastructure/mappers/cloud-data.mapper';
 import { CommandHandler } from 'src/interfaces/commandHandler.controller';
 import { CloudInventoryEventAdapter } from 'src/infrastructure/adapters/inventory-aggregated-event.adapter';
+import { AccessController } from 'src/interfaces/access.controller';
 
 @Module({
   imports: [
@@ -22,7 +23,7 @@ import { CloudInventoryEventAdapter } from 'src/infrastructure/adapters/inventor
       useClass: InventoryAggregatedRepositoryImpl,
     },
   ],
-  controllers: [CommandHandler],
+  controllers: [CommandHandler, AccessController],
   exports: [InventoryAggregatedService],
 })
 export class InventoryAggregatedModule {}

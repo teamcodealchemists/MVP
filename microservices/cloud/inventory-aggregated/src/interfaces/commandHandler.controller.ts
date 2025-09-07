@@ -5,6 +5,8 @@ import { SyncProductIdDTO } from './dto/syncProductId.dto';
 import { CloudInventoryEventAdapter } from 'src/infrastructure/adapters/inventory-aggregated-event.adapter';
 import { validateOrReject } from 'class-validator';
 import { SyncWarehouseIdDTO } from './dto/syncWarehouseId.dto';
+import { InventoryAggregated } from 'src/domain/inventory-aggregated.entity';
+import { SyncInventoryDTO } from './dto/syncInventory.dto';
 @Controller()
 export class CommandHandler {
   constructor(private readonly cloudInventoryEventAdapter : CloudInventoryEventAdapter
@@ -169,15 +171,9 @@ export class CommandHandler {
   }
 
   @MessagePattern('aggregatedWarehouses.inventory')
-  async getInventory(): Promise<string> {
-    try {
-      // Ottieni tutti i prodotti dall'inventario
-      const products = (await this.cloudInventoryEventAdapter.getAll()).productList;
-
-      return Promise.resolve(JSON.stringify({ products }));
-    } catch (error) {
-      return this.errorHandler(error);
-    }
+  async getInventory(): Promise<SyncInventoryDTO> {
+      const products = (await this.cloudInventoryEventAdapter.getAll());
+      return Promise.resolve(products);
   }
 
   private async errorHandler(error: any): Promise<string> {

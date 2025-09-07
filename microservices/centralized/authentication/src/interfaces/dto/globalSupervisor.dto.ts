@@ -1,4 +1,4 @@
-import { IsEnum, IsNotEmpty, IsPhoneNumber, IsString } from "class-validator";
+import { IsEnum, IsNotEmpty, IsPhoneNumber, IsString, ValidateNested } from "class-validator";
 import { Type } from 'class-transformer';
 
 import { AuthenticationDTO } from "./authentication.dto";
@@ -19,6 +19,7 @@ export class GlobalSupervisorDTO {
     phone: string;
 
     @IsNotEmpty()
+    @ValidateNested()
     @Type(() => AuthenticationDTO)
     authentication: AuthenticationDTO;
 }
