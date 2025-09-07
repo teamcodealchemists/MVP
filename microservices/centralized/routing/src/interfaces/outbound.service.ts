@@ -2,7 +2,7 @@ import { Inject, Injectable } from "@nestjs/common";
 import { WarehouseIdDTO } from "./dto/warehouseId.dto";
 import { WarehouseAddressDTO } from "./dto/warehouseAddress.dto";
 
-import { NatsService } from 'src/interfaces/nats/nats.service'; 
+import { NatsService } from './../interfaces/nats/nats.service'; 
 
 @Injectable()
 export class OutboundService {

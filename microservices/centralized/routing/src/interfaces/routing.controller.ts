@@ -1,18 +1,18 @@
 import { Controller, Post } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
-import { RoutingService } from 'src/application/routing.service';
+import { RoutingService } from './../../src/application/routing.service';
 
 import { WarehouseIdDTO } from './dto/warehouseId.dto';
 import { WarehouseAddressDTO } from './dto/warehouseAddress.dto';
 import { WarehouseStateDTO } from './dto/warehouseState.dto';
 import { DataMapper } from './data.mapper';
-import { WarehouseAddressSubscriber } from 'src/domain/inbound-ports/warehouseAddressSubscriber';
-import { CriticQuantityEvent } from 'src/domain/inbound-ports/criticQuantity.event';
-import { ReceiveWarehouseState } from 'src/domain/inbound-ports/receiveWarehouseState';
-import { WarehouseSubscriber } from 'src/domain/inbound-ports/warehouseSubscriber';
-import { WarehouseAddress } from 'src/domain/warehouseAddress.entity';
-import { WarehouseState } from 'src/domain/warehouseState.entity';
-import { WarehouseId } from 'src/domain/warehouseId.entity';
+import { WarehouseAddressSubscriber } from './../domain/inbound-ports/warehouseAddressSubscriber';
+import { CriticQuantityEvent } from './../domain/inbound-ports/criticQuantity.event';
+import { ReceiveWarehouseState } from './../domain/inbound-ports/receiveWarehouseState';
+import { WarehouseSubscriber } from './../domain/inbound-ports/warehouseSubscriber';
+import { WarehouseAddress } from './../domain/warehouseAddress.entity';
+import { WarehouseState } from './../domain/warehouseState.entity';
+import { WarehouseId } from './../domain/warehouseId.entity';
 
 @Controller()
 export class RoutingController implements WarehouseAddressSubscriber, CriticQuantityEvent, ReceiveWarehouseState, WarehouseSubscriber {
