@@ -148,10 +148,9 @@ export class InventoryService {
           continue;
         }
         if (product.getQuantity() >= pq.getQuantity()) {
-          console.log("c'è abbastanza prodotto per questo go go");
         } else {
           allSufficient = false;
-          const newReserved = pq.getQuantity();
+          const newReserved = product.getQuantity();
           const p = new Product(new ProductId(pq.getId().getId()), product.getName(), product.getUnitPrice(), 0,
                                 newReserved, product.getMinThres(), product.getMaxThres());
           const p1 = new ProductQuantity(new ProductId(product.getId().getId()), newReserved);
