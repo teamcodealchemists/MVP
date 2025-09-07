@@ -3,23 +3,22 @@ jest.mock('class-validator', () => ({
   IsNumber: () => () => {},
   IsString: () => () => {},
   IsOptional: () => () => {},
-  IsNotEmpty : () => () => {},
+  IsNotEmpty: () => () => {},
   Min: () => () => {},
 }));
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { CommandHandler } from '../../src/interfaces/commandHandler.controller';
 import { CloudInventoryEventAdapter } from 'src/infrastructure/adapters/inventory-aggregated-event.adapter';
-import { validateOrReject } from 'class-validator';
 import { SyncInventoryDTO } from 'src/interfaces/dto/syncInventory.dto';
 import { SyncProductIdDTO } from 'src/interfaces/dto/syncProductId.dto';
 import { SyncWarehouseIdDTO } from 'src/interfaces/dto/syncWarehouseId.dto';
-
 
 describe('CommandHandler', () => {
   let handler: CommandHandler;
   let adapter: jest.Mocked<CloudInventoryEventAdapter>;
 
-    const mockAdapter: Partial<CloudInventoryEventAdapter> = {
+  const mockAdapter: Partial<CloudInventoryEventAdapter> = {
     syncAddedStock: jest.fn(),
     syncRemovedStock: jest.fn(),
     syncEditedStock: jest.fn(),
@@ -27,16 +26,13 @@ describe('CommandHandler', () => {
     getProduct: jest.fn(),
     getAllProducts: jest.fn(),
     getAll: jest.fn(),
-    };
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [CommandHandler],
       providers: [
-        {
-          provide: CloudInventoryEventAdapter,
-          useValue: mockAdapter,
-        },
+        { provide: CloudInventoryEventAdapter, useValue: mockAdapter },
       ],
     }).compile();
 
@@ -128,7 +124,8 @@ describe('CommandHandler', () => {
     const result = await handler.getProductAggregated(context);
 
     expect(adapter.getProductAggregated).toHaveBeenCalled();
-    expect(JSON.parse(result).result.model.id).toBe('1');
+    const parsed = JSON.parse(result); // <-- parse JSON
+    expect(parsed.result.model.id).toBe('1');
   });
 
   it('should return product by warehouse', async () => {
@@ -148,111 +145,110 @@ describe('CommandHandler', () => {
     const result = await handler.getProduct(context);
 
     expect(adapter.getProduct).toHaveBeenCalled();
-    const parsed = JSON.parse(result).result.model;
-    expect(parsed.id).toBe('1');
-    expect(parsed.warehouseId).toBe(1);
+    const parsed = JSON.parse(result); // <-- parse JSON
+    expect(parsed.result.model.id).toBe('1');
+    expect(parsed.result.model.warehouseId).toBe(1);
   });
 
   it('should get all products', async () => {
     const mockProducts: SyncInventoryDTO = {
-    productList: [
+      productList: [
         {
-        id: { id: '1' } as SyncProductIdDTO,
-        name: 'Product 1',
-        unitPrice: 123,
-        quantity: 10,
-        quantityReserved: 0,
-        minThres: 5,
-        maxThres: 100,
-        warehouseId: { warehouseId: 1 } as SyncWarehouseIdDTO,
+          id: { id: '1' } as SyncProductIdDTO,
+          name: 'Product 1',
+          unitPrice: 123,
+          quantity: 10,
+          quantityReserved: 0,
+          minThres: 5,
+          maxThres: 100,
+          warehouseId: { warehouseId: 1 } as SyncWarehouseIdDTO,
         },
         {
-        id: { id: '2' } as SyncProductIdDTO,
-        name: 'Product 2',
-        unitPrice: 456,
-        quantity: 5,
-        quantityReserved: 0,
-        minThres: 2,
-        maxThres: 50,
-        warehouseId: { warehouseId: 1 } as SyncWarehouseIdDTO,
+          id: { id: '2' } as SyncProductIdDTO,
+          name: 'Product 2',
+          unitPrice: 456,
+          quantity: 5,
+          quantityReserved: 0,
+          minThres: 2,
+          maxThres: 50,
+          warehouseId: { warehouseId: 1 } as SyncWarehouseIdDTO,
         },
-    ],
+      ],
     };
     adapter.getAllProducts.mockResolvedValue(mockProducts);
 
     const result = await handler.getAllProducts();
 
     expect(adapter.getAllProducts).toHaveBeenCalled();
-    const parsed = JSON.parse(result);
+    const parsed = JSON.parse(result); // <-- parse JSON
     expect(parsed.result.collection.length).toBe(2);
     expect(parsed.result.collection[0].rid).toBe('aggregatedWarehouses.stock.1');
   });
 
   it('should get all inventory', async () => {
     const mockProducts: SyncInventoryDTO = {
-    productList: [
+      productList: [
         {
-        id: { id: '1' } as SyncProductIdDTO,
-        name: 'Product 1',
-        unitPrice: 123,
-        quantity: 10,
-        quantityReserved: 0,
-        minThres: 5,
-        maxThres: 100,
-        warehouseId: { warehouseId: 1 } as SyncWarehouseIdDTO,
+          id: { id: '1' } as SyncProductIdDTO,
+          name: 'Product 1',
+          unitPrice: 123,
+          quantity: 10,
+          quantityReserved: 0,
+          minThres: 5,
+          maxThres: 100,
+          warehouseId: { warehouseId: 1 } as SyncWarehouseIdDTO,
         },
         {
-        id: { id: '2' } as SyncProductIdDTO,
-        name: 'Product 2',
-        unitPrice: 456,
-        quantity: 5,
-        quantityReserved: 0,
-        minThres: 2,
-        maxThres: 50,
-        warehouseId: { warehouseId: 1 } as SyncWarehouseIdDTO,
+          id: { id: '2' } as SyncProductIdDTO,
+          name: 'Product 2',
+          unitPrice: 456,
+          quantity: 5,
+          quantityReserved: 0,
+          minThres: 2,
+          maxThres: 50,
+          warehouseId: { warehouseId: 1 } as SyncWarehouseIdDTO,
         },
-    ],
+      ],
     };
     adapter.getAll.mockResolvedValue(mockProducts);
 
     const result = await handler.getAll();
 
     expect(adapter.getAll).toHaveBeenCalled();
-    const parsed = JSON.parse(result);
+    const parsed = JSON.parse(result); // <-- parse JSON
     expect(parsed.result.collection[0].rid).toBe('aggregatedWarehouses.warehouse.1.stock.1');
   });
 
   it('should get inventory', async () => {
     const mockProducts: SyncInventoryDTO = {
-    productList: [
+      productList: [
         {
-        id: { id: '1' } as SyncProductIdDTO,
-        name: 'Product 1',
-        unitPrice: 123,
-        quantity: 10,
-        quantityReserved: 0,
-        minThres: 5,
-        maxThres: 100,
-        warehouseId: { warehouseId: 1 } as SyncWarehouseIdDTO,
+          id: { id: '1' } as SyncProductIdDTO,
+          name: 'Product 1',
+          unitPrice: 123,
+          quantity: 10,
+          quantityReserved: 0,
+          minThres: 5,
+          maxThres: 100,
+          warehouseId: { warehouseId: 1 } as SyncWarehouseIdDTO,
         },
         {
-        id: { id: '2' } as SyncProductIdDTO,
-        name: 'Product 2',
-        unitPrice: 456,
-        quantity: 5,
-        quantityReserved: 0,
-        minThres: 2,
-        maxThres: 50,
-        warehouseId: { warehouseId: 1 } as SyncWarehouseIdDTO,
+          id: { id: '2' } as SyncProductIdDTO,
+          name: 'Product 2',
+          unitPrice: 456,
+          quantity: 5,
+          quantityReserved: 0,
+          minThres: 2,
+          maxThres: 50,
+          warehouseId: { warehouseId: 1 } as SyncWarehouseIdDTO,
         },
-    ],
+      ],
     };
     adapter.getAll.mockResolvedValue(mockProducts);
 
     const result = await handler.getInventory();
 
     expect(adapter.getAll).toHaveBeenCalled();
-    const parsed = JSON.parse(result);
-    expect(parsed.products[0].id.id).toBe('1');
+    expect(result.productList[0].id.id).toBe('1');
   });
 });
