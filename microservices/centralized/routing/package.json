@@ -73,9 +73,6 @@
     "collectCoverageFrom": [
       "**/*.(t|j)s"
     ],
-    "coveragePathIgnorePatterns": [
-      "coverage/lcov-report/"
-    ],
     "coverageDirectory": "../../../coverage/centralized/Routing",
     "testEnvironment": "node"
   }
