@@ -7,7 +7,7 @@ const logger = new Logger('AccessControlController');
 export class AccessController {
     constructor(    ) { }
 
-    @MessagePattern('access.warehouse.>')
+    @MessagePattern('access.aggregatedWarehouses.>')
     async loginAccess(@Payload() data: any): Promise<string> {
         return JSON.stringify({ result: { get: true, call: "*" } });
     }
