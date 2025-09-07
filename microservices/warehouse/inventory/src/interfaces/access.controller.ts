@@ -5,11 +5,32 @@ const logger = new Logger('AccessControlController');
 
 @Controller()
 export class AccessController {
-    constructor(    ) { }
+    constructor() { }
 
-    @MessagePattern('access.warehouse.>')
+    @MessagePattern(`access.warehouse.${process.env.WAREHOUSE_ID}.>`)
     async loginAccess(@Payload() data: any): Promise<string> {
-        return JSON.stringify({ result: { get: true, call: "*" } });
+        if (data.token && !data.token.error) {
+            logger.debug(`Access check for operation: ${JSON.stringify(data.token)}`);
+            if (data.token.isGlobal) {
+                return Promise.resolve(JSON.stringify({ result: { get: true, call: "*" } }));
+            }
+            else if (
+                Array.isArray(data.token.warehouseAssigned) &&
+                data.token.warehouseAssigned.some(
+                    (w: { warehouseId: number }) => w.warehouseId === Number(process.env.WAREHOUSE_ID)
+                )
+            ) {
+                // Access granted only if the user is assigned to the current warehouse
+                return Promise.resolve(JSON.stringify({ result: { get: true, call: "*" } }));
+            }
+            else {
+                return Promise.resolve(JSON.stringify({ result: { get: false } }));
+            }
+        }
+        else {
+            const errorMsg = data.token?.error || 'Operation not allowed.';
+            return Promise.resolve(JSON.stringify({ error: { code: 'system.accessDenied', message: errorMsg } }));
+        }
     }
 
 

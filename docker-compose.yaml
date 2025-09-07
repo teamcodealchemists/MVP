@@ -3,14 +3,32 @@ services:
 #==========================================================================#
 #                         Warehouse Microservices                          #
 #==========================================================================#
-  inventory:
+  inventory-1:
     build:
       context: ./microservices/warehouse/inventory
       dockerfile: Dockerfile
     container_name: inventory-1
     environment:
-      - MONGO_URI=mongodb://mongo:27017/inventory
+      - MONGO_URI=mongodb://mongo:27017/inventory-1
       - WAREHOUSE_ID=1
+      - NATS_URL=nats://nats:4222
+    volumes:
+      - ./microservices/warehouse/inventory/src:/usr/src/app/src
+    networks:
+      - shared-warehouses
+    depends_on:
+      - mongodb
+      - nats
+      - resgate
+
+  inventory-2:
+    build:
+      context: ./microservices/warehouse/inventory
+      dockerfile: Dockerfile
+    container_name: inventory-2
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/inventory-2
+      - WAREHOUSE_ID=2
       - NATS_URL=nats://nats:4222
     volumes:
       - ./microservices/warehouse/inventory/src:/usr/src/app/src
