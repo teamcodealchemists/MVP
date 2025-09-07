@@ -54,7 +54,7 @@ export class centralSystemHandler implements OnModuleInit {
 
   async handleWarehouseDistance(warehouseId: warehouseIdDto): Promise<WarehouseState[]> {
     return Promise.resolve(await firstValueFrom(
-        this.natsClient.send("warehouse.distance.request", warehouseId)
+        this.natsClient.send("call.routing.warehouse."+warehouseId+".receiveRequest.set", warehouseId)
     ));
   }
 

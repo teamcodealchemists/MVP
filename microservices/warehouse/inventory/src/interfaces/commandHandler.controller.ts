@@ -1,5 +1,5 @@
 import { Controller, Logger } from '@nestjs/common';
-import { Ctx, MessagePattern, Payload } from '@nestjs/microservices';
+import { Ctx, EventPattern, MessagePattern, Payload } from '@nestjs/microservices';
 import { ProductDto } from './dto/product.dto';
 import { ProductIdDto } from './dto/productId.dto';
 import { InboundEventListener } from 'src/infrastructure/adapters/inbound-event.adapter';
@@ -10,7 +10,7 @@ const logger = new Logger('commandHandler');
 export class CommandHandler {
   constructor(private readonly inboundEventListener: InboundEventListener) { }
 
-  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.stock.new`)
+  @EventPattern(`call.warehouse.${process.env.WAREHOUSE_ID}.stock.new`)
   async handleNewStock(@Payload('params') payload: any): Promise<string> {
 
     const productObj = payload;
@@ -40,7 +40,7 @@ export class CommandHandler {
     }
   }
 
-  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.stock.*.delete`)
+  @EventPattern(`call.warehouse.${process.env.WAREHOUSE_ID}.stock.*.delete`)
   async handleRemoveStock(@Ctx() context: any): Promise<string> {
 
     // Estrae l'ID prodotto dalla subject del messaggio, dove l'asterisco (*) rappresenta l'ID
@@ -61,7 +61,7 @@ export class CommandHandler {
     }
   }
 
-  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.stock.*.set`)
+  @EventPattern(`call.warehouse.${process.env.WAREHOUSE_ID}.stock.*.set`)
   async handleEditStock(@Payload('params') payload: any, @Ctx() context: any): Promise<string> {
 
     const subjectParts = context.getSubject().split('.');
@@ -93,7 +93,7 @@ export class CommandHandler {
     }
   }
 
-  @MessagePattern(`get.warehouse.${process.env.WAREHOUSE_ID}.stock.*`)
+  @EventPattern(`get.warehouse.${process.env.WAREHOUSE_ID}.stock.*`)
   async handleGetProduct(@Ctx() context: any): Promise<string> {
 
     // Estrae l'ID prodotto dalla subject del messaggio, dove l'asterisco (*) rappresenta l'ID
@@ -112,7 +112,7 @@ export class CommandHandler {
     }
   }
 
-  @MessagePattern(`get.warehouse.${process.env.WAREHOUSE_ID}.inventory`)
+  @EventPattern(`get.warehouse.${process.env.WAREHOUSE_ID}.inventory`)
   async handleGetInventoryCollection(): Promise<string> {
     // Ottieni tutti i prodotti dall'inventario
     const products = (await this.inboundEventListener.getInventory()).getInventory();
