@@ -50,7 +50,9 @@ describe('centralSystemHandler', () => {
     orId.id = "I1";
     let orState = new OrderStateDTO();
     orState.orderState = OrderState.PENDING;
-    const order: InternalOrderDTO = {orderId: orId, items: [],orderState: orState, creationDate: new Date(),warehouseDeparture: 1,warehouseDestination: 2};
+    let sellOrId = new OrderIdDTO();
+    sellOrId.id = "";
+    const order: InternalOrderDTO = {orderId: orId, items: [],orderState: orState, creationDate: new Date(),warehouseDeparture: 1,warehouseDestination: 2, sellOrderId : sellOrId};
     await handler.handleOrder(order);
     expect(natsClient.emit).toHaveBeenCalledWith('call.warehouse.'+order.warehouseDeparture+'.order.internal.new', order);
   });
@@ -60,7 +62,7 @@ describe('centralSystemHandler', () => {
     (natsClient.send as jest.Mock).mockReturnValue(of(mockInventory));
     const result = await handler.handleCloudInventoryRequest();
     expect(natsClient.send).toHaveBeenCalledWith('cloud.inventory.request', {});
-    expect(result).toBe(mockInventory);
+    expect(result).toStrictEqual(mockInventory);
   });
 
   it('should send cloud orders request and return Orders', async () => {
@@ -77,7 +79,9 @@ describe('centralSystemHandler', () => {
     const mockStates = [new WarehouseState('ACTIVE', { getId: () => 1 } as any)];
     (natsClient.send as jest.Mock).mockReturnValue(of(mockStates));
     const result = await handler.handleWarehouseDistance(warehouseId);
-    expect(natsClient.send).toHaveBeenCalledWith('warehouse.distance.request', warehouseId);
+    const topic = `call.routing.warehouse.${warehouseId.warehouseId}.receiveRequest.set`;
+    console.log(topic);
+    expect(natsClient.send).toHaveBeenCalledWith(topic, warehouseId);
     expect(result).toBe(mockStates);
   });
 });
