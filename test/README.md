@@ -148,7 +148,7 @@ Template: newman run https://www.postman.com/collections/
 - **TdA-05:**  ``newman run https://www.postman.com/collections/46314414-97d57106-2823-42a4-a2e9-1fd2ea80b8f8``
 - **TdA-06:**  ``newman run https://www.postman.com/collections/46314414-720032e1-b087-437a-a233-719820a0c2e5``
 - **TdA-07:**  ``newman run https://www.postman.com/collections/46314414-e17c10a6-7cd6-4f7f-975b-a1902da699a1``
-- **TdA-08:**  ``newman run https://www.postman.com/collections/``
+- **TdA-08:**  ``newman run https://www.postman.com/collections/46314414-ed141d34-fa3a-41e5-b64b-f7d620eb3ddd``
 - **TdA-09:**  ``newman run https://www.postman.com/collections/``
 - **TdA-10:**  ``newman run https://www.postman.com/collections/``
 - **TdA-11:**  ``newman run https://www.postman.com/collections/``
