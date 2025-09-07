@@ -43,7 +43,7 @@ const mockEventAdapter = new MockCloudStateEventAdapter(mockOutboundService);
 
 
 describe('Integration test tra CloudWarehouseId, CloudWarehouseState e CloudHeartbeat', () => {
-  it('verifica consistenza tra CloudWarehouse e i suoi attributi', () => {
+  it('verifica consistenza tra CloudWarehouse e i suoi attributi', async () => {
     const warehouseId = new CloudWarehouseId(1);
     const warehouseState = new CloudWarehouseState(warehouseId, 'ONLINE');
     const heartbeat = new CloudHeartbeat(warehouseId, 'ALIVE', new Date());
@@ -58,8 +58,8 @@ describe('Integration test tra CloudWarehouseId, CloudWarehouseState e CloudHear
     // Simula il service che cambia lo stato
     mockRepository.updateState.mockResolvedValue(true);
     mockRepository.getState.mockResolvedValue(new CloudWarehouseState(warehouseId, 'OFFLINE'));
-    stateAggregateService.updateState(new CloudWarehouseState(warehouseId, 'OFFLINE'));
-    const updatedState = stateAggregateService.getState(warehouseId);
-    expect(updatedState).toBe('OFFLINE');
+    await stateAggregateService.updateState(new CloudWarehouseState(warehouseId, 'OFFLINE'));
+    const updatedState = await stateAggregateService.getState(warehouseId);
+    expect(updatedState!.getState()).toBe('OFFLINE');
   });
 });

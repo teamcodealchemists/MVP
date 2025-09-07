@@ -12,7 +12,7 @@
 
     const logger = new Logger();
 
-    async function bootstrap() {
+    export async function bootstrap() {
     const app = await NestFactory.createMicroservice<MicroserviceOptions>(StateAggregateModule, { //RICORDA DI CAMBIARE I NOMI DEI MODULI
         logger: logger,
         transport: Transport.NATS,

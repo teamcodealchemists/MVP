@@ -2,5 +2,5 @@ import { CloudWarehouseIdDTO } from './../../../src/interfaces/dto/cloudWarehous
 import { CloudWarehouseState } from '../cloudWarehouseState.entity';
 
 export interface GetStateUseCase {
-    getState(id: CloudWarehouseIdDTO): Promise<CloudWarehouseState | string>;
+    getState(warehouseId: CloudWarehouseIdDTO): Promise<string>;
 }

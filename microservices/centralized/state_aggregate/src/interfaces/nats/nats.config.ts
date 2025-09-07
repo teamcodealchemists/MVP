@@ -1,4 +1,5 @@
 import { Transport } from '@nestjs/microservices';
+import { OutboundRequestSerializer } from './natsMessagesFormatters/outbound-request.serializer';
 
 export const natsConfig = {
   transport: Transport.NATS,
@@ -10,4 +11,5 @@ export const natsConfig = {
     reconnect: true,
     reconnectTimeWait: 1000,
   },
+  serializer: new OutboundRequestSerializer(),
 };

@@ -1,5 +1,6 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { connect, NatsConnection, JSONCodec } from 'nats';
+import { OutboundRequestSerializer } from './natsMessagesFormatters/outbound-request.serializer';
 
 @Injectable()
 export class NatsService implements OnModuleInit, OnModuleDestroy {

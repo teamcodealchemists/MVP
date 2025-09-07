@@ -27,10 +27,10 @@ public onHeartbeatResponse(callback: (id: CloudWarehouseId, isAlive: boolean) =>
 }
 
 // Questo metodo viene chiamato dal controller
-public handleHeartbeatResponse(id: CloudWarehouseId, isAlive: boolean): Promise<string> {
+public async handleHeartbeatResponse(id: CloudWarehouseId, isAlive: boolean): Promise<string> {
   this.heartbeatCallbacks.forEach(cb => cb(id, isAlive));
   this.heartbeatCallbacks = []; // pulisci le callback dopo la risposta
-  return Promise.resolve("Heartbeat processed successfully");
+  return Promise.resolve(JSON.stringify({ result: "Heartbeat processed successfully" }));
 }
 
 @Interval(60000) // ogni 60 secondi
@@ -77,11 +77,19 @@ async checkHeartbeat(warehouseId: CloudWarehouseId): Promise<'ONLINE' | 'OFFLINE
   });
 }
 
-  getState(cloudWarehouseId: CloudWarehouseId): Promise<CloudWarehouseState | null> {
-    return this.cloudStateRepository.getState(cloudWarehouseId);
+  async getState(cloudWarehouseId: CloudWarehouseId): Promise<CloudWarehouseState | null> {
+    return await this.cloudStateRepository.getState(cloudWarehouseId);
   }
 
-  updateState(cloudWarehouseState: CloudWarehouseState): Promise<boolean> {
-    return this.cloudStateRepository.updateState(cloudWarehouseState);
+  async updateState(cloudWarehouseState: CloudWarehouseState): Promise<boolean> {
+    return await this.cloudStateRepository.updateState(cloudWarehouseState);
   }
+
+  public notifyStateUpdated(state: CloudWarehouseState): void {
+    this.CloudStateEventAdapter.stateUpdated(state);
+  }
+
+  public publishState(state: CloudWarehouseState): void {
+  this.CloudStateEventAdapter.publishState(state);
+}
 }

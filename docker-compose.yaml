@@ -63,6 +63,7 @@ services:
       dockerfile: Dockerfile
     environment:
       - MONGO_DB=mongodb://mongo:27017/state_aggregate
+      - WAREHOUSE_ID=1
     volumes:
       - ./microservices/centralized/state_aggregate/src:/usr/src/app/src
     networks:

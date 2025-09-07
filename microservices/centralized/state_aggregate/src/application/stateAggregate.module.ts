@@ -20,11 +20,15 @@ import { CloudStateEventAdapter } from './../infrastructure/adapters/cloudState.
   providers: [
     StateAggregateService,
     OutboundService,
-    CloudStateEventAdapter,
+    {
+      provide: CloudStateEventAdapter,
+      useFactory: (outboundService: OutboundService) => new CloudStateEventAdapter(outboundService),
+      inject: [OutboundService],
+    },
     { provide: 'CLOUDSTATEREPOSITORY', 
       useClass: CloudStateRepositoryMongo
     }
   ],
-  exports: [StateAggregateService],
+  exports: [OutboundService, CloudStateEventAdapter, StateAggregateService],
 })
 export class StateAggregateModule {}

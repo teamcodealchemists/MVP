@@ -23,7 +23,7 @@ export const DataMapper = {
         return new CloudHeartbeat(
             new CloudWarehouseId(cloudHeartbeatDTO.warehouseId),
             cloudHeartbeatDTO.heartbeatmsg,
-            cloudHeartbeatDTO.timestamp
+            typeof cloudHeartbeatDTO.timestamp === 'string' ? new Date(cloudHeartbeatDTO.timestamp) : cloudHeartbeatDTO.timestamp
         );
     },
 
