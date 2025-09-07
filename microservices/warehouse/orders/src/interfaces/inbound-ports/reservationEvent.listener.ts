@@ -3,6 +3,6 @@ import { OrderIdDTO } from '../dto/orderId.dto';
 
 export interface ReservationEventListener {
 
-stockReserved(OrderQuantityDTO): void;
+stockReserved(OrderQuantityDTO): Promise<void>;
 sufficientProductAvailability(orderIdDTO: OrderIdDTO): Promise<void>;
 }

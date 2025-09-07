@@ -11,6 +11,7 @@ export class InternalOrder extends Order {
         creationDate: Date,
         warehouseDeparture: number,
         private warehouseDestination: number,
+        private sellOrderRefence : OrderId
     ) { 
         super(orderId, items, orderState, creationDate, warehouseDeparture); 
     }
@@ -21,5 +22,12 @@ export class InternalOrder extends Order {
 
     setWarehouseDestination(newWarehouseDestination: number): void {
         this.warehouseDestination = newWarehouseDestination;
+    }
+    getSellOrderRefence(): OrderId {
+        return this.sellOrderRefence;
+    }
+
+    setSellOrderRefence(newSellOrderRefence: OrderId): void {
+        this.sellOrderRefence = newSellOrderRefence;
     }
 }

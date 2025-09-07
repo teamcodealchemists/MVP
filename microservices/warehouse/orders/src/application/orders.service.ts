@@ -203,7 +203,8 @@ export class OrdersService {
             order.getOrderState(),
             order.getCreationDate(),
             order.getWarehouseDeparture(),
-            order.getWarehouseDestination()
+            order.getWarehouseDestination(),
+            new OrderId("")
         );
 
 /*         // Se l'ordine esiste già, pubblica solo al warehouse di destinazione
