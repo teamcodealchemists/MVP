@@ -9,6 +9,7 @@ import { warehouseIdDto } from "./http/dto/warehouseId.dto";
 import { OrderId } from "src/domain/orderId.entity";
 import { WarehouseId } from "src/domain/warehouseId.entity";
 import { ProductId } from "src/domain/productId.entity";
+import { DataMapper } from "src/infrastructure/mappers/dataMapper";
 @Injectable()
 export class centralSystemHandler implements OnModuleInit {
   constructor(
@@ -41,9 +42,8 @@ export class centralSystemHandler implements OnModuleInit {
   }
 
   async handleCloudInventoryRequest(): Promise<Inventory> {
-    return Promise.resolve(await firstValueFrom(
-        this.natsClient.send("cloud.inventory.request", {})
-    ));
+    const result = await firstValueFrom(this.natsClient.send("cloud.inventory.request", {}));
+    return Promise.resolve(DataMapper.toDomainInventory(result));
   }
 
   async handleCloudOrdersRequest(): Promise<Orders> {
