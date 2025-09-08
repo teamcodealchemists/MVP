@@ -33,6 +33,20 @@ services:
     depends_on:
       - nats    
 
+
+  state:
+    build:
+      context: ./microservices/warehouse/state
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=development
+      - WAREHOUSE_ID=1
+    volumes:
+      - ./microservices/warehouse/state/src:/usr/src/app/src
+    networks:
+      - shared-warehouses
+    depends_on:
+      - nats   
 #==========================================================================#
 #                         Cloud Microservices                              #
 #==========================================================================#
