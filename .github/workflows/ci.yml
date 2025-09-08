@@ -107,7 +107,7 @@ jobs:
 
       - name: Run Inventory Aggregate tests
         working-directory: microservices/cloud/inventory-aggregated
-        run: npm run test:cov || echo "No tests for authentication"
+        run: npm run test:cov || echo "No tests for inventory-aggregated"
 
       - name: Upload Inventory Aggregate coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -123,7 +123,7 @@ jobs:
 
       - name: Run Routing tests
         working-directory: microservices/cloud/inventory-aggregated
-        run: npm run test:cov || echo "No tests for authentication"
+        run: npm run test:cov || echo "No tests for routing"
 
       - name: Upload Routing coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -133,22 +133,39 @@ jobs:
           files: MVP/coverage/centralized/Routing/coverage-summary.json
           name: Routing
 
-        # State
+      # State
       - name: Install State Local
         working-directory: microservices/warehouse/state
-        run: npm install || echo "No tests for routing"
+        run: npm install || echo "No tests for Local state"
 
       - name: Run State Local tests
         working-directory: microservices/warehouse/state
-        run: npm run test:cov || echo "No tests for authentication"
+        run: npm run test:cov || echo "No tests for Local state"
 
-      - name: Upload Routing coverage to Codecov
+      - name: Upload State Local coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: State
           files: MVP/coverage/warehouse/state/coverage-summary.json
           name: State
+
+      # State Cloud
+      - name: Install State Cloud
+        working-directory: microservices/centralized/state_aggregate
+        run: npm install || echo "No tests for Cloud State"
+
+      - name: Run State Cloud tests
+        working-directory: microservices/centralized/state_aggregate
+        run: npm run test:cov || echo "No tests for authentication"
+
+      - name: Upload State Cloud coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: CloudState
+          files: MVP/coverage/centralized/state-aggregate/coverage-summary.json
+          name: Cloud State
       # Commit updated README
       - name: Commit updated README
         run: |
