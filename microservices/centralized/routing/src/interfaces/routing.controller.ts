@@ -1,6 +1,6 @@
 import { Controller, Post } from '@nestjs/common';
-import { MessagePattern, Payload } from '@nestjs/microservices';
-import { RoutingService } from './../../src/application/routing.service';
+import { Ctx, MessagePattern, Payload } from '@nestjs/microservices';
+import { RoutingService } from 'src/application/routing.service';
 
 import { WarehouseIdDTO } from './dto/warehouseId.dto';
 import { WarehouseAddressDTO } from './dto/warehouseAddress.dto';
@@ -18,11 +18,12 @@ import { WarehouseId } from './../domain/warehouseId.entity';
 export class RoutingController implements WarehouseAddressSubscriber, CriticQuantityEvent, ReceiveWarehouseState, WarehouseSubscriber {
     constructor(private readonly routingService: RoutingService) {}
 
-    @MessagePattern(`call.routing.warehouse.${process.env.WAREHOUSE_ID}.address.set`)
-    async updateAddress(@Payload('params') address: WarehouseAddressDTO): Promise<string|false> {
+    @MessagePattern(`call.routing.warehouse.*.address.set`)
+    async updateAddress(@Payload('params') address: WarehouseAddressDTO, @Ctx() context: any): Promise<string|false> {
         try{
+            const warehouseId = context.getSubject().split('.')[3];
             const domainAddress = DataMapper.warehouseAddressToDomain(address);
-            return await this.routingService.updateWarehouseAddress(domainAddress.getId(), domainAddress.getAddress());
+            return await this.routingService.updateWarehouseAddress(new WarehouseId(Number(warehouseId)), domainAddress.getAddress());
         } catch (error) {
             return Promise.resolve(JSON.stringify({
                         error: {

@@ -77,7 +77,7 @@ export class RoutingService {
         address: address,
     });
     await this.saveWarehouseAddress(warehouseId, address, state);
-    return JSON.stringify({ result: 'Warehouse created successfully' });
+    return JSON.stringify({ result: 'Warehouse created successfully with id ' + warehouseId.getId() });
   }
 
   async updateWarehouseState(warehouseId: WarehouseId, state: string): Promise<string|false> {

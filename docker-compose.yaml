@@ -101,7 +101,6 @@ services:
       dockerfile: Dockerfile
     environment:
       - MONGO_DB=mongodb://mongo:27017/routing
-      - WAREHOUSE_ID=1
     volumes:
       - ./microservices/centralized/routing/src:/usr/src/app/src
     networks:

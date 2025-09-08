@@ -149,10 +149,10 @@ Template: newman run https://www.postman.com/collections/
 - **TdA-06:**  ``newman run https://www.postman.com/collections/46314414-720032e1-b087-437a-a233-719820a0c2e5``
 - **TdA-07:**  ``newman run https://www.postman.com/collections/46314414-e17c10a6-7cd6-4f7f-975b-a1902da699a1``
 - **TdA-08:**  ``newman run https://www.postman.com/collections/46314414-ed141d34-fa3a-41e5-b64b-f7d620eb3ddd``
-- **TdA-09:**  ``newman run https://www.postman.com/collections/``
-- **TdA-10:**  ``newman run https://www.postman.com/collections/``
-- **TdA-11:**  ``newman run https://www.postman.com/collections/``
-- **TdA-12:**  ``newman run https://www.postman.com/collections/``
+- **TdA-09:**  ``newman run https://www.postman.com/collections/46314414-71140295-16ac-4838-809c-312e65efcddf``
+- **TdA-10:**  ``newman run https://www.postman.com/collections/46314414-556f9785-a851-4938-ad87-59407da3e261``
+- **TdA-11:**  ``newman run https://www.postman.com/collections/46314414-59a7db71-5576-482f-bc69-3ce1777f03c5``
+- **TdA-12:**  ``newman run https://www.postman.com/collections/46314414-0f81c552-8d30-40f1-a113-dc6a30384218 --delay-request 1000``
 - **TdA-13:**  ``newman run https://www.postman.com/collections/``
 - **TdA-14:**  ``newman run https://www.postman.com/collections/``
 - **TdA-15:**  ``newman run https://www.postman.com/collections/``
