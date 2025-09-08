@@ -204,7 +204,7 @@ export class OrdersService {
             order.getCreationDate(),
             order.getWarehouseDeparture(),
             order.getWarehouseDestination(),
-            new OrderId("")
+            order.getSellOrderReference()
         );
 
 /*         // Se l'ordine esiste già, pubblica solo al warehouse di destinazione

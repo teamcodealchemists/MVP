@@ -38,10 +38,10 @@ export class OrdersRepositoryMongo implements OrdersRepository {
                 // Ritorna l'oggetto ordine convertito da Document a Domain
                 return new InternalOrder(
                         new OrderId(internalDoc.orderId.id),
-                        internalDoc.items.map(item => 
+                        internalDoc.items.map(item =>
                             new OrderItemDetail(
                                     new OrderItem(
-                                        new ItemId(item.item.id),
+                                        new ItemId(item.item.itemId.id),
                                         item.item.quantity), 
                                 item.quantityReserved,
                                 item.unitPrice
@@ -50,7 +50,8 @@ export class OrdersRepositoryMongo implements OrdersRepository {
                         internalDoc.orderState as OrderState, 
                         new Date(internalDoc.creationDate),
                         internalDoc.warehouseDeparture,
-                        internalDoc.warehouseDestination
+                        internalDoc.warehouseDestination,
+                        new OrderId(internalDoc.sellOrderReference.id)
                 );
             }
 
@@ -65,7 +66,7 @@ export class OrdersRepositoryMongo implements OrdersRepository {
                     sellDoc.items.map(item => 
                         new OrderItemDetail(
                                 new OrderItem(
-                                    new ItemId(item.item.id),
+                                    new ItemId(item.item.itemId.id),
                                     item.item.quantity), 
                             item.quantityReserved,
                             item.unitPrice
@@ -108,7 +109,9 @@ export class OrdersRepositoryMongo implements OrdersRepository {
         try {
             const internalDocs = await this.internalOrderModel.find().lean().exec() as any[];
             const sellDocs = await this.sellOrderModel.find().lean().exec() as any[];
-
+            
+            console.log('Internal docs:', JSON.stringify(internalDocs, null, 2));
+            console.log('Sell docs:', JSON.stringify(sellDocs, null, 2));
         // Conversione da documento a dominio
             const internalOrders = internalDocs.map(doc => {
                 try {
@@ -117,7 +120,7 @@ export class OrdersRepositoryMongo implements OrdersRepository {
                         (doc.items || []).map(item => 
                             new OrderItemDetail(
                                 new OrderItem(
-                                    new ItemId(item.item.id),
+                                    new ItemId(item.item.itemId.id),
                                     item.item.quantity
                                 ), 
                                 item.quantityReserved,
@@ -127,13 +130,13 @@ export class OrdersRepositoryMongo implements OrdersRepository {
                         doc.orderState as OrderState,
                         new Date(doc.creationDate),
                         doc.warehouseDeparture,
-                        doc.warehouseDestination
+                        doc.warehouseDestination,
+                        new OrderId(doc.sellOrderReference.id)
                     );
                 } catch (error) {
-                    throw new Error('Errore conversione internalDoc:', error);
+                    throw new Error('Errore conversione internalDoc:' + error.message);
                 }
             });
-
         // Conversione da documento a dominio
             const sellOrders = sellDocs.map(doc => {
                 try {
@@ -142,7 +145,7 @@ export class OrdersRepositoryMongo implements OrdersRepository {
                         (doc.items || []).map(item => 
                             new OrderItemDetail(
                                 new OrderItem(
-                                    new ItemId(item.item.id),
+                                    new ItemId(item.item.itemId.id),
                                     item.item.quantity
                                 ), 
                                 item.quantityReserved,
@@ -155,7 +158,7 @@ export class OrdersRepositoryMongo implements OrdersRepository {
                         doc.destinationAddress
                     );
                 } catch (error) {
-                    throw new Error('Errore conversione sellDoc:', error);
+                    throw new Error('Errore conversione sellDoc:'+ error.message);
                 }
             });
 
@@ -184,9 +187,9 @@ export class OrdersRepositoryMongo implements OrdersRepository {
                 },
                 items: newOrder.getItemsDetail().map(item => ({
                     item: {
-                        id: item.getItem().getItemId()
+                        itemId: { id: item.getItem().getItemId()},
+                        quantity: item.getItem().getQuantity()
                     },
-                    quantity: item.getItem().getQuantity(),
                     quantityReserved: item.getQuantityReserved(),
                     unitPrice: item.getUnitPrice()
                 })),
@@ -216,7 +219,8 @@ export class OrdersRepositoryMongo implements OrdersRepository {
                 order.getOrderState(),
                 order.getCreationDate(),
                 order.getWarehouseDeparture(),
-                order.getWarehouseDestination()
+                order.getWarehouseDestination(),
+                order.getSellOrderReference()
             );
 
             // Salva l'ordine
@@ -226,16 +230,17 @@ export class OrdersRepositoryMongo implements OrdersRepository {
                 },
                 items: newOrder.getItemsDetail().map(item => ({
                     item: {
-                        id: item.getItem().getItemId()
+                        itemId: { id: item.getItem().getItemId().getId()},
+                        quantity: item.getItem().getQuantity()
                     },
-                    quantity: item.getItem().getQuantity(),
                     quantityReserved: item.getQuantityReserved(),
                     unitPrice: item.getUnitPrice()
                 })),
                 orderState: newOrder.getOrderState(),
                 creationDate: newOrder.getCreationDate(),
                 warehouseDeparture: newOrder.getWarehouseDeparture(),
-                warehouseDestination: newOrder.getWarehouseDestination()
+                warehouseDestination: newOrder.getWarehouseDestination(),
+                sellOrderReference: newOrder.getSellOrderReference()
             };
 
             const createdOrder = new this.internalOrderModel(orderData);
@@ -280,7 +285,7 @@ export class OrdersRepositoryMongo implements OrdersRepository {
                     internalDoc.items.map(item => 
                         new OrderItemDetail(
                                 new OrderItem(
-                                    new ItemId(item.item.itemId),
+                                    new ItemId(item.item.itemId.id),
                                     item.item.quantity), 
                             item.quantityReserved,
                             item.unitPrice
@@ -289,7 +294,8 @@ export class OrdersRepositoryMongo implements OrdersRepository {
                     internalDoc.orderState as OrderState, 
                     new Date(internalDoc.creationDate),
                     internalDoc.warehouseDeparture,
-                    internalDoc.warehouseDestination
+                    internalDoc.warehouseDestination,
+                    new OrderId(internalDoc.sellOrderReference.id)
                 );
             }                    
             // Cerca un SellOrder con quell'Id. Se c'è, aggiorna Mongo e returna l'ordine in forma domain.
@@ -305,7 +311,7 @@ export class OrdersRepositoryMongo implements OrdersRepository {
                     sellDoc.items.map(item => 
                         new OrderItemDetail(
                                 new OrderItem(
-                                    new ItemId(item.item.itemId),
+                                    new ItemId(item.item.itemId.id),
                                     item.item.quantity), 
                             item.quantityReserved,
                             item.unitPrice
@@ -373,7 +379,8 @@ export class OrdersRepositoryMongo implements OrdersRepository {
                         orderState: doc.orderState,
                         creationDate: doc.creationDate,
                         warehouseDeparture: doc.warehouseDeparture,
-                        warehouseDestination: doc.warehouseDestination
+                        warehouseDestination: doc.warehouseDestination,
+                        sellOrderReference : doc.sellOrderReference
                     };
                     return this.mapper.internalOrderToDomain(internalOrderDTO);
                 };
@@ -397,7 +404,7 @@ export class OrdersRepositoryMongo implements OrdersRepository {
                 updateOne: {
                     filter: { 
                         "orderId.id": id.getId(),
-                        "items.item.itemId.id": item.getItem().getItemId()
+                        "items.item.itemId.id": item.getItem().getItemId().getId()
                     },
                     update: {
                         $set: { 
@@ -450,7 +457,7 @@ export class OrdersRepositoryMongo implements OrdersRepository {
                 sellDoc.items.map(item => 
                     new OrderItemDetail(
                         new OrderItem(
-                            new ItemId(item.item.itemId),
+                            new ItemId(item.item.itemId.id),
                             item.item.quantity
                         ), 
                         item.quantityReserved,
@@ -467,7 +474,7 @@ export class OrdersRepositoryMongo implements OrdersRepository {
             let allFullyReserved = true;
             
             items.forEach((itemDetail: OrderItemDetail) => {
-                const itemId = itemDetail.getItem().getItemId();
+                const itemId = itemDetail.getItem().getItemId().getId();
                 const reservedQty = itemDetail.getQuantityReserved();
                 const orderedQty = itemDetail.getItem().getQuantity();
                 
@@ -509,7 +516,7 @@ export class OrdersRepositoryMongo implements OrdersRepository {
                 internalDoc.items.map(item => 
                     new OrderItemDetail(
                         new OrderItem(
-                            new ItemId(item.item.itemId),
+                            new ItemId(item.item.itemId.id),
                             item.item.quantity
                         ), 
                         item.quantityReserved,
@@ -519,14 +526,15 @@ export class OrdersRepositoryMongo implements OrdersRepository {
                 internalDoc.orderState as OrderState,
                 new Date(internalDoc.creationDate),
                 internalDoc.warehouseDeparture,
-                internalDoc.warehouseDestination
+                internalDoc.warehouseDestination,
+                internalDoc.sellOrderReference
             );
 
             const items = foundOrder.getItemsDetail();
             let allFullyReserved = true;
             
             items.forEach((itemDetail: OrderItemDetail) => {
-                const itemId = itemDetail.getItem().getItemId();
+                const itemId = itemDetail.getItem().getItemId().getId();
                 const reservedQty = itemDetail.getQuantityReserved();
                 const orderedQty = itemDetail.getItem().getQuantity();
                 

@@ -27,7 +27,8 @@ db.internalOrders.insertMany(
     orderState: "PENDING",
     creationDate: new Date("2025-08-01T09:30:00Z"),
     warehouseDeparture: 1,
-    warehouseDestination: 3
+    warehouseDestination: 3,
+    sellOrderReference: { id: "S0123456" }
   },
   {
     orderId: { id: "I55e624c5-a87e-4a26-b956-5ed78586987a" },
@@ -44,7 +45,8 @@ db.internalOrders.insertMany(
     orderState: "PROCESSING",
     creationDate: new Date("2025-08-05T11:00:00Z"),
     warehouseDeparture: 2,
-    warehouseDestination: 5
+    warehouseDestination: 5,
+    sellOrderReference: { id: "S0123456" }
   }
 ]);
 

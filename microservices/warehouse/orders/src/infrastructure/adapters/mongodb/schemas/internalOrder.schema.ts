@@ -24,6 +24,9 @@ export class InternalOrder {
   
   @Prop({ required: true })
   warehouseDestination: number;
+
+  @Prop()
+  sellOrderReference: OrderId;
 }
 
 export type InternalOrderDocument = InternalOrder & Document;

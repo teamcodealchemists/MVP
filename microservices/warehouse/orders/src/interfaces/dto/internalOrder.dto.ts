@@ -34,7 +34,8 @@ export class InternalOrderDTO {
         @IsInt()
         warehouseDestination: number;
 
+        @IsOptional()
         @ValidateNested()
         @Type(() => OrderIdDTO)
-        sellOrderRefence: OrderIdDTO;
+        sellOrderReference: OrderIdDTO;
 }

@@ -61,7 +61,7 @@ export class OrdersController {
       creationDate: payload.creationDate,
       warehouseDeparture: payload.warehouseDeparture,
       warehouseDestination: payload.warehouseDestination,
-      sellOrderRefence : payload.sell ?? "",
+      sellOrderReference : payload.sellOrderReference ?? "",
     };
     await this.inboundPortsAdapter.addInternalOrder(internalOrderDTO);
   }

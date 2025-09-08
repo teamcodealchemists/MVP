@@ -34,7 +34,8 @@ async internalOrderToDomain(orderDTO: InternalOrderDTO): Promise<InternalOrder> 
     await this.orderStateToDomain(orderDTO.orderState),
     orderDTO.creationDate,
     orderDTO.warehouseDeparture,
-    orderDTO.warehouseDestination
+    orderDTO.warehouseDestination,
+    await this.sellOrderReferenceToDomain(orderDTO.sellOrderReference)
   );
 }
 
@@ -57,6 +58,10 @@ async orderItemToDomain(dto: OrderItemDTO): Promise<OrderItem> {
 }
 
 async orderIdToDomain(dto: OrderIdDTO): Promise<OrderId> {
+  return new OrderId(dto.id);
+}
+
+async sellOrderReferenceToDomain(dto: OrderIdDTO): Promise<OrderId> {
   return new OrderId(dto.id);
 }
 
@@ -94,7 +99,8 @@ async internalOrderToDTO(entity: InternalOrder): Promise<InternalOrderDTO> {
         orderState: await this.orderStateToDTO(entity.getOrderState()),
         creationDate: entity.getCreationDate(),
         warehouseDeparture: entity.getWarehouseDeparture(),
-        warehouseDestination: entity.getWarehouseDestination()
+        warehouseDestination: entity.getWarehouseDestination(),
+        sellOrderReference: await this.sellOrderReferenceToDTO(entity.getSellOrderReference())
     };
 
     return internalOrderDTO;
@@ -117,12 +123,16 @@ async sellOrderToDTO(entity: SellOrder): Promise<SellOrderDTO> {
 
 async orderItemToDTO(entity: OrderItem): Promise<OrderItemDTO> {
     return {
-        itemId: { id: entity.getItemId() },
+        itemId: { id: entity.getItemId().getId() },
         quantity: entity.getQuantity()
     };
 }
 
 async orderIdToDTO(entity: OrderId): Promise<OrderIdDTO> {
+    return { id: entity.getId() };
+}
+
+async sellOrderReferenceToDTO(entity: OrderId): Promise<OrderIdDTO> {
     return { id: entity.getId() };
 }
 
