@@ -84,7 +84,7 @@ jobs:
           flags: centralSystem
           files: MVP/coverage/centralized/centralSystem/coverage-summary.json
           name: centralSystem
-
+      # Auth
       - name: Install Auth dependencies
         working-directory: microservices/centralized/authentication
         run: npm install || echo "No tests for authentication"
@@ -100,7 +100,7 @@ jobs:
           flags: auth
           files: MVP/coverage/centralized/authentication/coverage-summary.json
           name: auth
-
+      # Inventory Aggregate
       - name: Install Inventory Aggregate dependencies
         working-directory: microservices/cloud/inventory-aggregated
         run: npm install || echo "No tests for inventory-aggregated"
@@ -116,7 +116,7 @@ jobs:
           flags: aggregateInv
           files: MVP/coverage/cloud/inventoryAggregated/coverage-summary.json
           name: Inventory Aggregate
-      
+      # Routing
       - name: Install Routing
         working-directory: microservices/centralized/routing
         run: npm install || echo "No tests for routing"
@@ -133,6 +133,22 @@ jobs:
           files: MVP/coverage/centralized/Routing/coverage-summary.json
           name: Routing
 
+        # State
+      - name: Install State Local
+        working-directory: microservices/warehouse/state
+        run: npm install || echo "No tests for routing"
+
+      - name: Run State Local tests
+        working-directory: microservices/warehouse/state
+        run: npm run test:cov || echo "No tests for authentication"
+
+      - name: Upload Routing coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: State
+          files: MVP/coverage/warehouse/state/coverage-summary.json
+          name: State
       # Commit updated README
       - name: Commit updated README
         run: |
