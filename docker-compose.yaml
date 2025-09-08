@@ -53,6 +53,23 @@ services:
     depends_on:
       - nats    
 
+
+  state:
+    build:
+      context: ./microservices/warehouse/state
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=development
+      - WAREHOUSE_ID=1
+      - MONGO_URI=mongodb://mongodb:27017/state 
+      - NATS_URL=nats://nats:4222
+    volumes:
+      - ./microservices/warehouse/state/src:/usr/src/app/src
+    networks:
+      - shared-warehouses
+    depends_on:
+      - nats
+      - mongodb
 #==========================================================================#
 #                         Cloud Microservices                              #
 #==========================================================================#

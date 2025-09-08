@@ -5,7 +5,7 @@ export class OutboundResponseSerializer implements Serializer {
   private readonly logger = new Logger(OutboundResponseSerializer.name);
   serialize(value: any): OutgoingResponse {
     this.logger.verbose(
-      `-->> Serializing outbound response: \n${JSON.stringify(value)}`,
+      `-->> Serializing outbound response:\n${JSON.stringify(value)}`,
     );
 
     /**
