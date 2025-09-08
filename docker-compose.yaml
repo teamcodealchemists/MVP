@@ -126,6 +126,21 @@ services:
       - nats
       - mongodb
       - resgate
+  state_aggregate:
+    build:
+      context: ./microservices/centralized/state_aggregate
+      dockerfile: Dockerfile
+    environment:
+      - MONGO_DB=mongodb://mongo:27017/state_aggregate
+      - WAREHOUSE_ID=1
+    volumes:
+      - ./microservices/centralized/state_aggregate/src:/usr/src/app/src
+    networks:
+      - shared-warehouses
+    depends_on:
+      - nats
+      - mongodb
+      - resgate
 
   centralsystem:
     container_name: CentralSystem
