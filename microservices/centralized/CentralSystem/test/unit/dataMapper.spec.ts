@@ -68,6 +68,7 @@ describe('DataMapper specific methods', () => {
       creationDate: new Date(),
       warehouseDeparture: 1,
       warehouseDestination: 1,
+      sellOrderId : "" as any
     };
     await expect(DataMapper.internalOrderToDomain(dto)).rejects.toThrow(
       /magazzino di partenza.*non può essere uguale/,
