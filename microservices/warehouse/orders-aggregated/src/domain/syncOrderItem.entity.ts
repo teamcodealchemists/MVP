@@ -6,8 +6,8 @@ export class SyncOrderItem {
         private quantity: number,
     ) { }
 
-    getItemId(): number {
-        return this.itemId.getId();
+    getItemId(): SyncItemId {
+        return this.itemId;
     }
     getQuantity(): number {
         return this.quantity;

@@ -42,7 +42,8 @@ export class CloudOrdersController {
       orderState: payload.orderState,
       creationDate: payload.creationDate,
       warehouseDeparture: payload.warehouseDeparture,
-      warehouseDestination: payload.warehouseDestination
+      warehouseDestination: payload.warehouseDestination,
+      sellOrderReference: payload.sellOrderReference
     };
     await this.inboundPortsAdapter.syncAddInternalOrder(internalOrderDTO);
   }

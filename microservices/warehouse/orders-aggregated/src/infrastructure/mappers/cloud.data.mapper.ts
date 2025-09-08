@@ -33,7 +33,8 @@ export class CloudDataMapper {
         await this.syncOrderStateToDomain(orderDTO.orderState),
         orderDTO.creationDate,
         orderDTO.warehouseDeparture,
-        orderDTO.warehouseDestination
+        orderDTO.warehouseDestination,
+        await this.sellOrderReferenceToDomain(orderDTO.sellOrderReference)
     );
     }
 
@@ -62,6 +63,9 @@ export class CloudDataMapper {
     return new SyncOrderId(dto.id);
     }
 
+    async sellOrderReferenceToDomain(dto: SyncOrderIdDTO): Promise<SyncOrderId> {
+    return new SyncOrderId(dto.id);
+    }
 
     async syncOrderStateToDomain(dto: SyncOrderStateDTO): Promise<SyncOrderState> {
     const state = dto.orderState;
@@ -99,7 +103,8 @@ export class CloudDataMapper {
             orderState: await this.syncOrderStateToDTO(entity.getOrderState()),
             creationDate: entity.getCreationDate(),
             warehouseDeparture: entity.getWarehouseDeparture(),
-            warehouseDestination: entity.getWarehouseDestination()
+            warehouseDestination: entity.getWarehouseDestination(),
+            sellOrderReference: await this.sellOrderReferenceToDTO(entity.getSellOrderReference())
         };
 
         return internalOrderDTO;
@@ -125,7 +130,7 @@ export class CloudDataMapper {
 
     async syncOrderItemToDTO(entity: SyncOrderItem): Promise<SyncOrderItemDTO> {
         return {
-            itemId: { id: entity.getItemId() },
+            itemId: { id: entity.getItemId().getId() },
             quantity: entity.getQuantity()
         };
     }
@@ -135,6 +140,10 @@ export class CloudDataMapper {
         return { id: entity.getId() };
     }
 
+
+    async sellOrderReferenceToDTO(entity: SyncOrderId): Promise<SyncOrderIdDTO> {
+        return { id: entity.getId() };
+    }
 
     async syncOrderStateToDTO(state: SyncOrderState): Promise<SyncOrderStateDTO> {
         return { orderState: state };
@@ -160,15 +169,15 @@ export class CloudDataMapper {
 
     async syncOrdersToDTO(orders: SyncOrders): Promise<SyncOrdersDTO> {
         try {
-            console.log('[DataMapper] Conversione SyncOrders a DTO...');
+            console.log('[CloudDataMapper] Conversione SyncOrders a DTO...');
             
             const sellOrders = await Promise.all(
                 orders.getSellOrders().map(async (order, index) => {
                     try {
-                        console.log(`[DataMapper] Conversione SellOrder ${index + 1}: ${order.getOrderId()}`);
+                        console.log(`[CloudDataMapper] Conversione SellOrder ${index + 1}: ${order.getOrderId()}`);
                         return await this.syncSellOrderToDTO(order);
                     } catch (error) {
-                        console.error(`[DataMapper] Errore conversione SellOrder ${order.getOrderId()}:`, error);
+                        console.error(`[CloudDataMapper] Errore conversione SellOrder ${order.getOrderId()}:`, error);
                         throw error;
                     }
                 })
@@ -177,20 +186,20 @@ export class CloudDataMapper {
             const internalOrders = await Promise.all(
                 orders.getInternalOrders().map(async (order, index) => {
                     try {
-                        console.log(`[DataMapper] Conversione InternalOrder ${index + 1}: ${order.getOrderId()}`);
+                        console.log(`[CloudDataMapper] Conversione InternalOrder ${index + 1}: ${order.getOrderId()}`);
                         return await this.syncInternalOrderToDTO(order);
                     } catch (error) {
-                        console.error(`[DataMapper] Errore conversione InternalOrder ${order.getOrderId()}:`, error);
+                        console.error(`[CloudDataMapper] Errore conversione InternalOrder ${order.getOrderId()}:`, error);
                         throw error;
                     }
                 })
             );
 
-            console.log('[DataMapper] Conversione completata con successo');
+            console.log('[CloudDataMapper] Conversione completata con successo');
             return { sellOrders, internalOrders };
             
         } catch (error) {
-            console.error('[DataMapper] Errore in syncOrdersToDTO:', error);
+            console.error('[CloudDataMapper] Errore in syncOrdersToDTO:', error);
             throw error;
         }
     }

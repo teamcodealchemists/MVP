@@ -40,7 +40,7 @@ export class CloudOrdersRepositoryMongo implements CloudOrdersRepository {
                         internalDoc.items.map(item => 
                             new SyncOrderItemDetail(
                                     new SyncOrderItem(
-                                        new SyncItemId(item.item.id),
+                                        new SyncItemId(item.item.itemId.id),
                                         item.item.quantity), 
                                 item.quantityReserved,
                                 item.unitPrice
@@ -49,7 +49,8 @@ export class CloudOrdersRepositoryMongo implements CloudOrdersRepository {
                         internalDoc.orderState as SyncOrderState, 
                         new Date(internalDoc.creationDate),
                         internalDoc.warehouseDeparture,
-                        internalDoc.warehouseDestination
+                        internalDoc.warehouseDestination,
+                        new SyncOrderId(internalDoc.sellOrderReference.id)
                 );
             }
 
@@ -64,7 +65,7 @@ export class CloudOrdersRepositoryMongo implements CloudOrdersRepository {
                     sellDoc.items.map(item => 
                         new SyncOrderItemDetail(
                                 new SyncOrderItem(
-                                    new SyncItemId(item.item.id),
+                                    new SyncItemId(item.item.itemId.id),
                                     item.item.quantity), 
                             item.quantityReserved,
                             item.unitPrice
@@ -129,7 +130,7 @@ export class CloudOrdersRepositoryMongo implements CloudOrdersRepository {
                             (doc.items || []).map(item => 
                                 new SyncOrderItemDetail(
                                     new SyncOrderItem(
-                                        new SyncItemId(item.item.itemId),
+                                        new SyncItemId(item.item.itemId.id),
                                         item.item.quantity
                                     ), 
                                     item.quantityReserved,
@@ -139,7 +140,8 @@ export class CloudOrdersRepositoryMongo implements CloudOrdersRepository {
                             doc.orderState as SyncOrderState,
                             new Date(doc.creationDate),
                             doc.warehouseDeparture,
-                            doc.warehouseDestination
+                            doc.warehouseDestination,
+                            new SyncOrderId(doc.sellOrderReference.id)
                         );
                     } catch (error) {
                         console.error('[Repository] Errore conversione internalDoc:', error);
@@ -163,7 +165,7 @@ export class CloudOrdersRepositoryMongo implements CloudOrdersRepository {
                             (doc.items || []).map(item => 
                                 new SyncOrderItemDetail(
                                     new SyncOrderItem(
-                                        new SyncItemId(item.item.itemId),
+                                        new SyncItemId(item.item.itemId.id),
                                         item.item.quantity
                                     ), 
                                     item.quantityReserved,
@@ -212,9 +214,9 @@ export class CloudOrdersRepositoryMongo implements CloudOrdersRepository {
                 },
                 items: newOrder.getItemsDetail().map(item => ({
                     item: {
-                        id: item.getItem().getItemId()
+                        itemId: { id: item.getItem().getItemId().getId()},
+                        quantity: item.getItem().getQuantity()
                     },
-                    quantity: item.getItem().getQuantity(),
                     quantityReserved: item.getQuantityReserved(),
                     unitPrice: item.getUnitPrice()
                 })),
@@ -244,7 +246,8 @@ export class CloudOrdersRepositoryMongo implements CloudOrdersRepository {
                 order.getOrderState(),
                 order.getCreationDate(),
                 order.getWarehouseDeparture(),
-                order.getWarehouseDestination()
+                order.getWarehouseDestination(),
+                order.getSellOrderReference()
             );
 
             // Salva l'ordine
@@ -254,16 +257,17 @@ export class CloudOrdersRepositoryMongo implements CloudOrdersRepository {
                 },
                 items: newOrder.getItemsDetail().map(item => ({
                     item: {
-                        id: item.getItem().getItemId()
+                        itemId: { id: item.getItem().getItemId().getId()},
+                        quantity: item.getItem().getQuantity()
                     },
-                    quantity: item.getItem().getQuantity(),
                     quantityReserved: item.getQuantityReserved(),
                     unitPrice: item.getUnitPrice()
                 })),
                 orderState: newOrder.getOrderState(),
                 creationDate: newOrder.getCreationDate(),
                 warehouseDeparture: newOrder.getWarehouseDeparture(),
-                warehouseDestination: newOrder.getWarehouseDestination()
+                warehouseDestination: newOrder.getWarehouseDestination(),
+                sellOrderReference: newOrder.getSellOrderReference()
             };
 
             const createdOrder = new this.syncInternalOrderModel(orderData);
@@ -307,7 +311,7 @@ export class CloudOrdersRepositoryMongo implements CloudOrdersRepository {
                     internalDoc.items.map(item => 
                         new SyncOrderItemDetail(
                                 new SyncOrderItem(
-                                    new SyncItemId(item.item.itemId),
+                                    new SyncItemId(item.item.itemId.id),
                                     item.item.quantity), 
                             item.quantityReserved,
                             item.unitPrice
@@ -316,7 +320,8 @@ export class CloudOrdersRepositoryMongo implements CloudOrdersRepository {
                     internalDoc.orderState as SyncOrderState, 
                     new Date(internalDoc.creationDate),
                     internalDoc.warehouseDeparture,
-                    internalDoc.warehouseDestination
+                    internalDoc.warehouseDestination,
+                    new SyncOrderId(internalDoc.sellOrderReference.id)
                 );
             }                    
             // Cerca un SellOrder con quell'Id. Se c'è, aggiorna Mongo e returna l'ordine in forma domain.
@@ -332,7 +337,7 @@ export class CloudOrdersRepositoryMongo implements CloudOrdersRepository {
                     sellDoc.items.map(item => 
                         new SyncOrderItemDetail(
                                 new SyncOrderItem(
-                                    new SyncItemId(item.item.itemId),
+                                    new SyncItemId(item.item.itemId.id),
                                     item.item.quantity), 
                             item.quantityReserved,
                             item.unitPrice
@@ -374,7 +379,8 @@ export class CloudOrdersRepositoryMongo implements CloudOrdersRepository {
                         orderState: doc.orderState,
                         creationDate: doc.creationDate,
                         warehouseDeparture: doc.warehouseDeparture,
-                        warehouseDestination: doc.warehouseDestination
+                        warehouseDestination: doc.warehouseDestination,
+                        sellOrderReference: doc.SellOrderReference
                     };
                     return this.mapper.syncInternalOrderToDomain(internalOrderDTO);
                 };
@@ -398,7 +404,7 @@ export class CloudOrdersRepositoryMongo implements CloudOrdersRepository {
                 updateOne: {
                     filter: { 
                         "orderId.id": id.getId(),
-                        "items.item.itemId.id": item.getItemId()
+                        "items.item.itemId.id": item.getItemId().getId()
                     },
                     update: {
                         $set: { 

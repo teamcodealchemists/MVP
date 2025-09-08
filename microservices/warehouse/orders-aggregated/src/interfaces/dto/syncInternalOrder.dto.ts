@@ -1,4 +1,5 @@
-import { IsNotEmpty, IsString, Min, ValidateNested, IsInt, IsDate, IsArray } from 'class-validator';
+import { IsNotEmpty, IsOptional, ValidateNested, IsInt, IsDate, IsArray } from 'class-validator';
+import { Type } from 'class-transformer';
 
 import { SyncOrderIdDTO } from "./syncOrderId.dto";
 import { SyncOrderItemDetailDTO } from "./syncOrderItemDetail.dto";
@@ -29,4 +30,9 @@ export class SyncInternalOrderDTO {
         @IsNotEmpty()
         @IsInt()
         warehouseDestination: number;
+
+        @IsOptional()
+        @ValidateNested()
+        @Type(() => SyncOrderIdDTO)
+        sellOrderReference: SyncOrderIdDTO;
 }

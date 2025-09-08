@@ -24,6 +24,10 @@ export class SyncInternalOrder {
   
   @Prop({ required: true })
   warehouseDestination: number;
+
+  @Prop()
+  sellOrderReference: SyncOrderId;
+  
 }
 
 export type SyncInternalOrderDocument = SyncInternalOrder & Document;

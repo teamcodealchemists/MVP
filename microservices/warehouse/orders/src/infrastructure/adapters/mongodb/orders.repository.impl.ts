@@ -187,7 +187,7 @@ export class OrdersRepositoryMongo implements OrdersRepository {
                 },
                 items: newOrder.getItemsDetail().map(item => ({
                     item: {
-                        itemId: { id: item.getItem().getItemId()},
+                        itemId: { id: item.getItem().getItemId().getId()},
                         quantity: item.getItem().getQuantity()
                     },
                     quantityReserved: item.getQuantityReserved(),

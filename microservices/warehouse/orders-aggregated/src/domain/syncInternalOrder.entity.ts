@@ -11,6 +11,7 @@ export class SyncInternalOrder extends SyncOrder {
         creationDate: Date,
         warehouseDeparture: number,
         private warehouseDestination: number,
+        private sellOrderReference: SyncOrderId
     ) { 
         super(orderId, items, orderState, creationDate, warehouseDeparture); 
     }
@@ -22,4 +23,14 @@ export class SyncInternalOrder extends SyncOrder {
     setWarehouseDestination(newWarehouseDestination: number): void {
         this.warehouseDestination = newWarehouseDestination;
     }
+
+    
+    getSellOrderReference(): SyncOrderId {
+        return this.sellOrderReference;
+    }
+
+    setSellOrderReference(newSellOrderReference: SyncOrderId): void {
+        this.sellOrderReference = newSellOrderReference;
+    }
+
 }
