@@ -1,6 +1,6 @@
-import { Heartbeat } from '../src/domain/heartbeat.entity';
-import { WarehouseId } from '../src/domain/warehouse-id.entity';
-import { WarehouseState } from '../src/domain/warehouse-state.entity';
+import { Heartbeat } from '../../src/domain/heartbeat.entity';
+import { WarehouseId } from '../../src/domain/warehouse-id.entity';
+import { WarehouseState } from '../../src/domain/warehouse-state.entity';
 
 describe('Entities', () => {
   it('should create a Heartbeat entity', () => {

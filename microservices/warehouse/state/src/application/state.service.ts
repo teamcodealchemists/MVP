@@ -16,7 +16,7 @@ export class StateService {
     private readonly outboundPortAdapter : OutboundPortsAdapter,
   ) {}
   //FUNZIONI NON UTILIZZATE ATTUALMENTE, SI POTREBBE CONTINUARE IN CASO UTILIZZO DI INTERFACCIA PER AGGIORNARE REAL TIME DELLO STATO LOCALE
-  public async getState(warehouseId: WarehouseId): Promise<WarehouseState | null> {
+  /*public async getState(warehouseId: WarehouseId): Promise<WarehouseState | null> {
     this.logger.log(`Fetching state for warehouse ${warehouseId.getId()}`);
     return await this.stateRepository.getState(warehouseId);
   }
@@ -24,7 +24,7 @@ export class StateService {
   public async updateState(state: WarehouseState, warehouseId: WarehouseId): Promise<boolean> {
     this.logger.log(`Updating state for warehouse ${warehouseId.getId()} to ${state.getState()}`);
     return await this.stateRepository.updateState(state, warehouseId);
-  }
+  }*/
 
   //FUNZIONI USATE
   public async sendHeartBeat(warehouseId : WarehouseId, warehouseState : WarehouseState): Promise<void> {

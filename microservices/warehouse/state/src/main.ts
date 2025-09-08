@@ -6,7 +6,7 @@ import { InboundRequestDeserializer } from './interfaces/nats/natsSerial/inbound
 import { OutboundResponseSerializer } from './interfaces/nats/natsSerial/outbound-request.serializer';
 const logger = new Logger('StateMicroservice');
 
-async function bootstrap() {
+export async function bootstrap() {
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(StateModule, {
     logger: logger,
     transport: Transport.NATS,

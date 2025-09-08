@@ -1,4 +1,4 @@
-import { StateSchema, StateSchemaFactory } from '../src/infrastructure/adapters/mongodb/schemas/state.schema';
+import { StateSchema, StateSchemaFactory } from '../../src/infrastructure/adapters/mongodb/schemas/state.schema';
 import { expect } from '@jest/globals';
 import { model } from 'mongoose';
 
