@@ -52,16 +52,18 @@ services:
       - shared-warehouses
     depends_on:
       - nats    
+      - mongodb
+      - resgate
 
 
-  state:
+  state-1:
     build:
       context: ./microservices/warehouse/state
       dockerfile: Dockerfile
+    container_name: state-1
     environment:
-      - NODE_ENV=development
       - WAREHOUSE_ID=1
-      - MONGO_URI=mongodb://mongodb:27017/state 
+      - MONGO_URI=mongodb://mongo:27017/state 
       - NATS_URL=nats://nats:4222
     volumes:
       - ./microservices/warehouse/state/src:/usr/src/app/src
@@ -70,6 +72,7 @@ services:
     depends_on:
       - nats
       - mongodb
+      - resgate
 #==========================================================================#
 #                         Cloud Microservices                              #
 #==========================================================================#
@@ -155,6 +158,8 @@ services:
         - shared-warehouses
     depends_on:
         - nats
+        - mongodb
+        - resgate
 
 #==========================================================================#
 #                         Infrastructure Microservices                     #
