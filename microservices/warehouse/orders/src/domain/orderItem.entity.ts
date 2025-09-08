@@ -6,8 +6,8 @@ export class OrderItem {
         private quantity: number,
     ) { }
 
-    getItemId(): number {
-        return this.itemId.getId();
+    getItemId(): ItemId {
+        return this.itemId;
     }
     getQuantity(): number {
         return this.quantity;

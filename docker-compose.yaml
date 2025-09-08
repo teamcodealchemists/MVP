@@ -46,6 +46,8 @@ services:
     environment:
       - NODE_ENV=development
       - WAREHOUSE_ID=1
+      - NATS_URL=nats://nats:4222
+      - MONGODB_URI=mongodb://mongo:27017/orders
     volumes:
       - ./microservices/warehouse/orders/src:/usr/src/app/src
     networks:
@@ -53,7 +55,7 @@ services:
     depends_on:
       - nats    
       - mongodb
-      - resgate
+      - resgate 
 
 
   state-1:
@@ -93,6 +95,22 @@ services:
       - mongodb
       - nats
       - resgate
+
+  orders-aggregated:
+    build:
+      context: ./microservices/warehouse/orders-aggregated
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=development
+      - MONGODB_URI=mongodb://mongodb:27017/orders-aggregated
+      - NATS_URL=nats://nats:4222
+    volumes:
+      - ./microservices/warehouse/orders-aggregated/src:/usr/src/app/src
+    networks:
+      - shared-warehouses
+    depends_on:
+      - nats
+      - mongodb
 
 #==========================================================================#
 #                 Centralized System Microservices                         #

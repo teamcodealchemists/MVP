@@ -1,8 +1,7 @@
-import { IsNotEmpty, Min, IsInt } from 'class-validator';
+import { IsNotEmpty, IsString, Matches } from 'class-validator';
 
 export class OrderIdDTO {
     @IsNotEmpty()
-    @IsInt()
-    @Min(0)
+    @Matches(/^[IS][a-fA-F0-9-]+$/)
     id: string;
 }

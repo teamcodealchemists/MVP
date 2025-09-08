@@ -10,7 +10,7 @@ const logger = new Logger('commandHandler');
 export class CommandHandler {
   constructor(private readonly inboundEventListener: InboundEventListener) { }
 
-  @EventPattern(`call.warehouse.${process.env.WAREHOUSE_ID}.stock.new`)
+  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.stock.new`)
   async handleNewStock(@Payload('params') payload: any): Promise<string> {
 
     const productObj = payload;
@@ -40,7 +40,7 @@ export class CommandHandler {
     }
   }
 
-  @EventPattern(`call.warehouse.${process.env.WAREHOUSE_ID}.stock.*.delete`)
+  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.stock.*.delete`)
   async handleRemoveStock(@Ctx() context: any): Promise<string> {
 
     // Estrae l'ID prodotto dalla subject del messaggio, dove l'asterisco (*) rappresenta l'ID
@@ -61,7 +61,7 @@ export class CommandHandler {
     }
   }
 
-  @EventPattern(`call.warehouse.${process.env.WAREHOUSE_ID}.stock.*.set`)
+  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.stock.*.set`)
   async handleEditStock(@Payload('params') payload: any, @Ctx() context: any): Promise<string> {
 
     const subjectParts = context.getSubject().split('.');
@@ -93,7 +93,7 @@ export class CommandHandler {
     }
   }
 
-  @EventPattern(`get.warehouse.${process.env.WAREHOUSE_ID}.stock.*`)
+  @MessagePattern(`get.warehouse.${process.env.WAREHOUSE_ID}.stock.*`)
   async handleGetProduct(@Ctx() context: any): Promise<string> {
 
     // Estrae l'ID prodotto dalla subject del messaggio, dove l'asterisco (*) rappresenta l'ID
@@ -112,7 +112,7 @@ export class CommandHandler {
     }
   }
 
-  @EventPattern(`get.warehouse.${process.env.WAREHOUSE_ID}.inventory`)
+  @MessagePattern(`get.warehouse.${process.env.WAREHOUSE_ID}.inventory`)
   async handleGetInventoryCollection(): Promise<string> {
     // Ottieni tutti i prodotti dall'inventario
     const products = (await this.inboundEventListener.getInventory()).getInventory();
@@ -135,8 +135,11 @@ export class CommandHandler {
           .join('; ');
 
         return Promise.resolve(JSON.stringify({ error: { code: 'system.invalidParams', message } }));
+      } else if (typeof error?.message === 'string' && error.message.toLowerCase().includes('not found')) {
+        message = error.message;
+        return Promise.resolve(JSON.stringify({ error: { code: 'system.notFound', message }, meta: { status: 404 } }));
       } else {
-        return Promise.resolve(JSON.stringify({ error: { code: 'system.internalError', message: error?.message || 'Unknown error' }, meta: {status: 404} }));
+        return Promise.resolve(JSON.stringify({ error: { code: 'system.internalError', message: error?.message || 'Unknown error' }, meta: { status: 404 } }));
       }
   }
 }

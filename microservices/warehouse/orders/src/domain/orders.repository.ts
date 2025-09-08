@@ -1,5 +1,5 @@
 import { OrderId } from "./orderId.entity";
-import { OrderItem } from "./orderItem.entity";
+import { OrderItemDetail } from "./orderItemDetail.entity";
 import { OrderState } from "./orderState.enum";
 
 import { Orders } from "./orders.entity";
@@ -8,15 +8,17 @@ import { SellOrder } from "src/domain/sellOrder.entity";
 
 
 export interface OrdersRepository {
-    getById(id: OrderId): Promise<InternalOrder | SellOrder>;
-/*     getState(id: OrderId): Promise<OrderState>;
+    getById(id: OrderId): Promise<InternalOrder | SellOrder >;
+    getState(id: OrderId): Promise<OrderState>;
     getAllOrders(): Promise<Orders>;
     addSellOrder(order: SellOrder): Promise<void>;
     addInternalOrder(order: InternalOrder): Promise<void>;
     removeById(id: OrderId): Promise<boolean>;
     updateOrderState(id: OrderId, state: OrderState): Promise<InternalOrder | SellOrder>;
-    genUniqueId(): Promise<OrderId>;
-    updateReservedStock(id: OrderId, items: OrderItem[]): Promise<InternalOrder | SellOrder>
- */}
+    genUniqueId(orderType): Promise<OrderId>;   
+    updateReservedStock(id: OrderId, items: OrderItemDetail[]): Promise<InternalOrder | SellOrder>
+    checkReservedQuantityForSellOrder(sellOrder: SellOrder): Promise<void>;
+    checkReservedQuantityForInternalOrder(internalOrder: InternalOrder): Promise<void>;
+ }
 
 export const OrdersRepository = Symbol("ORDERSREPOSITORY");
