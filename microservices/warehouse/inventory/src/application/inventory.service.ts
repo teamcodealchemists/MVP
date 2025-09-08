@@ -61,7 +61,7 @@ export class InventoryService {
       this.natsAdapter.aboveMaxThres(editedProduct, this.warehouseId);
     }
     await this.inventoryRepository.updateProduct(editedProduct);
-    this.natsAdapter.stockUpdated(editedProduct, this.warehouseId);
+    await this.natsAdapter.stockUpdated(editedProduct, this.warehouseId);
     return Promise.resolve();
   }
 
