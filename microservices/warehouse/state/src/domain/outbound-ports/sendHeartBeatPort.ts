@@ -1,6 +1,7 @@
+import { Heartbeat } from "../heartbeat.entity";
 import { WarehouseId } from "../warehouse-id.entity";
 import { WarehouseState } from "../warehouse-state.entity";
 
 export interface StatePortPublisher {
-  publishState(warehouseId : WarehouseId ,state: WarehouseState): Promise<void>;
+  publishHeartbeat(heartbeat : Heartbeat): Promise<void>;
 }

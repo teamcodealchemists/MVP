@@ -17,26 +17,23 @@ import { Heartbeat } from "../../../domain/heartbeat.entity";
 export class InboundPortsAdapter implements GetStateEventListener {
   constructor(
     private readonly stateService: StateService,
-    private readonly stateEvenntHandler: StateEventHandler
   ) {}
 
-  async getSyncedState(warehouseIdDTO: WarehouseIdDTO): Promise<WarehouseStateDTO> {
-    const warehouseState = await this.stateService.getState(
-    DataMapper.toDomainWarehouseId(warehouseIdDTO)
-  );
-
+  async getSyncedState(warehouseIdDTO: WarehouseIdDTO): Promise<void> {
+    const warehouseId = DataMapper.toDomainWarehouseId(warehouseIdDTO)
+    this.stateService.sendHeartBeat(warehouseId, new WarehouseState("Attivo"));
+    return Promise.resolve();
+  /*
   if (!warehouseState) {
     
-    return { state: 'unknown' }; 
+    return { warehouseId : {id : 1} ,state: 'unknown' }; 
   }
 
   const warehouseId = DataMapper.toDomainWarehouseId(warehouseIdDTO);
   const heartbeat = new Heartbeat('ALIVE', new Date(), warehouseId);
 
   await this.stateEvenntHandler.publishHeartbeat(heartbeat);
-
-
-  return DataMapper.toDTOWarehouseState(warehouseState);
+  */
 }
   }
 

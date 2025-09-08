@@ -3,6 +3,8 @@ import { ClientProxy } from '@nestjs/microservices';
 import { WarehouseState } from "../domain/warehouse-state.entity";
 import { Heartbeat } from "../domain/heartbeat.entity";
 import { DataMapper } from "../infrastructure/mappers/datamapper";
+import { WarehouseId } from "../domain/warehouse-id.entity";
+import { HeartbeatDTO } from "./dto/heartbeat.dto";
 
 @Injectable()
 export class StateEventHandler implements OnModuleInit {
@@ -12,16 +14,13 @@ export class StateEventHandler implements OnModuleInit {
     await this.natsClient.connect(); 
   }
 
-async publishHeartbeat(heartbeat: Heartbeat): Promise<void> {
-    await this.natsClient.emit(`state.heartbeat.${heartbeat.getId()}`, {
-        warehouseId: heartbeat.getId(),
-        heartbeatMsg: heartbeat.getHeartbeatMsg(),
-        timestamp: heartbeat.getTimestamp()
-    });
+async publishHeartbeat(heartbeat: HeartbeatDTO): Promise<void> {
+  console.log(JSON.stringify(heartbeat));
+  await this.natsClient.emit(`state.heartbeat.${heartbeat.warehouseId}`, heartbeat);
 }
  
 // serve??
-  async publishState(state: WarehouseState, warehouseId: number): Promise<void> {
+  async publishState(warehouseId: WarehouseId , state: WarehouseState): Promise<void> {
     await this.natsClient.emit(`state.get.${warehouseId}`, {
         warehouseId: warehouseId,
         state: state.getState()

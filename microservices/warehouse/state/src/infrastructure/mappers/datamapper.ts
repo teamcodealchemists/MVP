@@ -25,16 +25,21 @@ export const DataMapper = {
     return { id: entity.getId() };
   },
 
-  toDTOWarehouseState(entity: WarehouseState): WarehouseStateDTO {
-    return { state: entity.getState() };
+  toDTOWarehouseState(entity: WarehouseState , wId : WarehouseId): WarehouseStateDTO {
+    const warehouseId = new WarehouseIdDTO();
+    warehouseId.id = wId.getId();
+    return {
+      warehouseId,    
+      state: entity.getState()
+    };
   },
 
 
   toDTOHeartbeat(entity: Heartbeat): HeartbeatDTO {
-    return {
-      heartbeatMsg: entity.getHeartbeatMsg(),
-      timestamp: entity.getTimestamp(),
-      warehouseId: entity.getId(),
-    };
+    let heartbeatDto = new HeartbeatDTO();
+    heartbeatDto.heartbeatMsg =  entity.getHeartbeatMsg();
+    heartbeatDto.timestamp = entity.getTimestamp();
+    heartbeatDto.warehouseId = entity.getId();
+    return heartbeatDto;
   }
 };

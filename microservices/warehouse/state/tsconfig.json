@@ -6,12 +6,21 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
 
     "outDir": "./dist",
     "rootDir": "./src"
+  },
+    "watchOptions": {
+    "watchFile": "priorityPollingInterval",
+    "watchDirectory": "dynamicPriorityPolling",
+    "fallbackPolling": "dynamicPriority",
+    "synchronousWatchDirectory": true,
+    "excludeDirectories": [
+      "**/node_modules",
+      "dist"
+    ]
   },
   "include": ["src/**/*"],
   "exclude": ["test", "dist", "node_modules"]

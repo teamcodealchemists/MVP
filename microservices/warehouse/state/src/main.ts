@@ -11,7 +11,7 @@ async function bootstrap() {
     logger: logger,
     transport: Transport.NATS,
     options: {
-      servers: ['nats://127.0.0.1:4222'],
+      servers: [`${process.env.NATS_URL}`],
          deserializer: new InboundRequestDeserializer(),
       serializer: new OutboundResponseSerializer(),
     },

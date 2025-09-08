@@ -1,4 +1,4 @@
-/*import { Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 
 @Module({
@@ -8,7 +8,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
         name: 'NATS_SERVICE',
         transport: Transport.NATS,
         options: {
-          servers: [process.env.NATS_URL || 'nats://nats'],
+          servers: [process.env.NATS_URL || 'nats://nats:4222'],
           
         }
       }
@@ -19,4 +19,4 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
     ]
 
 })
-export class NatsClientModule {}*/
+export class NatsClientModule {}

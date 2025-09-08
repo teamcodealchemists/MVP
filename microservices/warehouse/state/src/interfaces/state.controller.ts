@@ -14,31 +14,26 @@ export class StateController{
   ) {}
 
   @MessagePattern('call.state.get')
-  async getSyncedState(data: any): Promise<WarehouseStateDTO> {
+  async getSyncedState(data: any): Promise<void> {
     this.logger.log(`Raw inbound data: ${JSON.stringify(data)}`);
-
     let warehouseId = 0;
 
-    // Se arriva come stringa JSON
     if (typeof data === 'string') {
       try {
-        const parsed = JSON.parse(data);
-        warehouseId = parsed?.id ?? 0;
+        data = JSON.parse(data);
       } catch (e) {
         this.logger.error('Error parsing inbound JSON string', e);
       }
-    } 
-    // Se arriva già come oggetto
-    else if (data && typeof data.id === 'number') {
-      warehouseId = data.id;
     }
 
-  
+    if (data?.warehouseId?.id && typeof data.warehouseId.id === 'number') {
+      warehouseId = data.warehouseId.id;
+    }
 
     this.logger.log(`Received getSyncedState request for warehouse ${warehouseId}`);
 
     const warehouseIdDTO = { id: warehouseId };
-
-    return this.inboundPortsAdapter.getSyncedState(warehouseIdDTO);
+    this.inboundPortsAdapter.getSyncedState(warehouseIdDTO)
+    return Promise.resolve();
   }
 }
