@@ -15,11 +15,11 @@ export class StateEventHandler implements OnModuleInit {
   }
 
 async publishHeartbeat(heartbeat: HeartbeatDTO): Promise<void> {
-  console.log(JSON.stringify(heartbeat));
-  await this.natsClient.emit(`state.heartbeat.${heartbeat.warehouseId}`, heartbeat);
+  console.log(JSON.stringify(heartbeat.warehouseId));
+  await this.natsClient.emit(`call.cloudState.warehouse.${heartbeat.warehouseId}.heartbeat.response`, heartbeat);
 }
  
-// serve??
+//In futuro si potrebbe usare per inviare lo stato locale in real time
   async publishState(warehouseId: WarehouseId , state: WarehouseState): Promise<void> {
     await this.natsClient.emit(`state.get.${warehouseId}`, {
         warehouseId: warehouseId,

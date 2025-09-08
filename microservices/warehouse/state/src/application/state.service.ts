@@ -34,7 +34,7 @@ export class StateService {
   }
 
   public async syncHeartbeat(warehouseId : WarehouseId , warehouseState : WarehouseState): Promise<Heartbeat>{
-    const heartbeatMsg = "WarehouseId - " + warehouseId.getId() + " | Stato : " + warehouseState.getState()
+    const heartbeatMsg = "ONLINE"
     const tp = new Date(); 
     return Promise.resolve(new Heartbeat(heartbeatMsg,tp,warehouseId));
   }

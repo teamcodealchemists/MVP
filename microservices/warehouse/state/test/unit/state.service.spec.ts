@@ -41,20 +41,19 @@ describe('StateService', () => {
 
   it('should create a Heartbeat with correct message using syncHeartbeat', async () => {
     const warehouseId = new WarehouseId(1);
-    const warehouseState = new WarehouseState('ACTIVE');
+    const warehouseState = new WarehouseState('ONLINE');
 
     const heartbeat: Heartbeat = await service.syncHeartbeat(warehouseId, warehouseState);
 
     expect(heartbeat).toBeInstanceOf(Heartbeat);
-    expect(heartbeat.getHeartbeatMsg()).toContain('WarehouseId - 1');
-    expect(heartbeat.getHeartbeatMsg()).toContain('ACTIVE');
+    expect(heartbeat.getHeartbeatMsg()).toContain('ONLINE');
     expect(heartbeat.getId()).toBe(warehouseId.getId());
     expect(heartbeat.getTimestamp()).toBeInstanceOf(Date);
   });
 
   it('should call publishHeartbeat with Heartbeat using sendHeartBeat', async () => {
     const warehouseId = new WarehouseId(1);
-    const warehouseState = new WarehouseState('ACTIVE');
+    const warehouseState = new WarehouseState('ONLINE');
 
     await service.sendHeartBeat(warehouseId, warehouseState);
 
@@ -64,8 +63,7 @@ describe('StateService', () => {
     // Controlla il contenuto del Heartbeat pubblicato
     const publishedHeartbeat = (outboundPortAdapter.publishHeartbeat as jest.Mock).mock.calls[0][0];
     expect(publishedHeartbeat).toBeInstanceOf(Heartbeat);
-    expect(publishedHeartbeat.heartbeatMsg).toContain('WarehouseId - 1');
-    expect(publishedHeartbeat.heartbeatMsg).toContain('ACTIVE');
+    expect(publishedHeartbeat.heartbeatMsg).toContain('ONLINE');
     expect(publishedHeartbeat.warehouseId).toBe(warehouseId);
     expect(publishedHeartbeat.timestamp).toBeInstanceOf(Date);
   });
