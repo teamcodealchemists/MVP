@@ -179,7 +179,8 @@ async internalOrderToDTO(entity: InternalOrder): Promise<InternalOrderDTO> {
         orderState: await this.orderStateToDTO(entity.getOrderState()),
         creationDate: entity.getCreationDate(),
         warehouseDeparture: entity.getWarehouseDeparture(),
-        warehouseDestination: entity.getWarehouseDestination()
+        warehouseDestination: entity.getWarehouseDestination(),
+        sellOrderId : "" as any
     };
 },
 
