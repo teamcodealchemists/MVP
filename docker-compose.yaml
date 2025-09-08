@@ -1,4 +1,8 @@
 services:
+
+#==========================================================================#
+#                         Warehouse Microservices                          #
+#==========================================================================#
   inventory:
     build:
       context: ./microservices/warehouse/inventory
@@ -6,12 +10,14 @@ services:
     environment:
       - NODE_ENV=development
       - WAREHOUSE_ID=1
+      - MONGO_URI=mongodb://mongodb:27017/inventory_db 
     volumes:
       - ./microservices/warehouse/inventory/src:/usr/src/app/src
     networks:
       - shared-warehouses
     depends_on:
       - nats
+      - mongodb
 
   orders:
     build:
@@ -45,6 +51,50 @@ services:
     depends_on:
       - nats
       - mongodb
+
+#==========================================================================#
+#                         Cloud Microservices                              #
+#==========================================================================#
+
+
+#==========================================================================#
+#                 Centralized System Microservices                         #
+#==========================================================================#
+
+  authentication:
+    build:
+      context: ./microservices/centralized/authentication
+      dockerfile: Dockerfile
+    environment:
+      - MONGO_DB=mongodb://mongo:27017/authentication
+    volumes:
+      - ./microservices/centralized/authentication/src:/usr/src/app/src
+    networks:
+      - shared-warehouses
+    depends_on:
+      - nats
+      - mongodb
+      - resgate
+
+  routing:
+    build:
+      context: ./microservices/centralized/routing
+      dockerfile: Dockerfile
+    environment:
+      - MONGO_DB=mongodb://mongo:27017/routing
+      - WAREHOUSE_ID=1
+    volumes:
+      - ./microservices/centralized/routing/src:/usr/src/app/src
+    networks:
+      - shared-warehouses
+    depends_on:
+      - nats
+      - mongodb
+      - resgate
+
+#==========================================================================#
+#                         Infrastructure Microservices                     #
+#==========================================================================#
 
   resgate:
     image: resgateio/resgate

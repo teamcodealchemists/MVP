@@ -1,38 +1,79 @@
-import { Inventory } from "src/domain/inventory.entity";
-import { InventoryRepository } from "src/domain/inventory.repository";
-import { Product } from "src/domain/product.entity";
-import { ProductId } from "src/domain/productId.entity";
-import { Injectable } from "@nestjs/common";
+import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Inventory } from 'src/domain/inventory.entity';
+import { InventoryRepository } from 'src/domain/inventory.repository';
+import { Product } from 'src/domain/product.entity';
+import { ProductId } from 'src/domain/productId.entity';
+import { ProductDocument } from './schemas/product.schema';
+import { ProductQuantity } from 'src/domain/productQuantity.entity';
+
 
 @Injectable()
 export class InventoryRepositoryMongo implements InventoryRepository {
-    // Implement the methods defined in the InventoryRepository interface
-    async addProduct(product: Product): Promise<void> {
-        // Implementation for adding a product to MongoDB
-        return Promise.resolve();
-    }
+  constructor(
+    @InjectModel('Product') private readonly productModel: Model<ProductDocument>, 
+  ) {} 
 
-    async removeById(id: ProductId): Promise<boolean> {
-        // Implementation for removing a product by ID from MongoDB
-        return Promise.resolve(true);
-    }
+  async addProduct(product: Product): Promise<void> {
+    const productValues = {
+      id: product.getId().getId(),
+      name: product.getName(),
+      unitPrice: product.getUnitPrice(),
+      quantity: product.getQuantity(),
+      minThres: product.getMinThres(),
+      maxThres: product.getMaxThres(),
+    };
 
-    async updateProduct(product: Product): Promise<void> {
-        // Implementation for updating a product in MongoDB
-        return Promise.resolve();
-    }
+    const newProduct = new this.productModel(productValues);
+    await newProduct.save();
+  }
+ 
+  async removeById(id: ProductId): Promise<boolean> {
+    const result = await this.productModel.deleteOne({ id: id.getId() }).exec();
+    return result.deletedCount > 0;
+  }
 
-    async getById(id: ProductId): Promise<Product> {
-        // Implementation for getting a product by ID from MongoDB
-        return Promise.resolve(new Product(new ProductId("1"),"Banana",0,0,0,0));
-    }
+  async updateProduct(product: Product): Promise<void> {
+    await this.productModel.updateOne(
+      { id: product.getId().getId() },
+      {
+        name: product.getName(),
+        unitPrice: product.getUnitPrice(),
+        quantity: product.getQuantity(),
+        minThres: product.getMinThres(),
+        maxThres: product.getMaxThres(),
+      },
+    ).exec();
+  }
 
-    async getAllProducts(): Promise<Inventory> {
-        return Promise.resolve(new Inventory([new Product(new ProductId("1"),"Banana",0,0,0,0)]));
-    }
+  async getById(id: ProductId): Promise<Product | null> {
+    const productDoc = await this.productModel.findOne({ id: id.getId() }).exec();
+    if (!productDoc) return null;
 
-    async checkProductExistence(id: ProductId): Promise<boolean> {
-        // Implementation for checking if a product exists in MongoDB
-        return Promise.resolve(true);
-    }
+    return new Product(
+      productDoc.id,
+      productDoc.name,
+      productDoc.unitPrice,
+      productDoc.quantity,
+      productDoc.minThres,
+      productDoc.maxThres,
+    );
+  }
+
+  async getAllProducts(): Promise<Inventory> {
+    const productDocs = await this.productModel.find().exec();
+    const products = productDocs.map(
+      (doc) =>
+        new Product(
+          doc.id,
+          doc.name,
+          doc.unitPrice,
+          doc.quantity,
+          doc.minThres,
+          doc.maxThres,
+        ),
+    );
+    return new Inventory(products);
+  }
 }
