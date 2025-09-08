@@ -157,7 +157,7 @@ jobs:
 
       - name: Run State Cloud tests
         working-directory: microservices/centralized/state_aggregate
-        run: npm run test:cov || echo "No tests for authentication"
+        run: npm run test:cov || echo "No tests for Cloud State"
 
       - name: Upload State Cloud coverage to Codecov
         uses: codecov/codecov-action@v4
