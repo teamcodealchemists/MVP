@@ -3,6 +3,6 @@ import { OrderStateDTO } from '../dto/orderState.dto';
 
 export interface GetOrderStateUseCase {
 
-getOrderState(OrderIdDTO): OrderStateDTO;
+getOrderState(OrderIdDTO): Promise<OrderStateDTO>;
 
 }

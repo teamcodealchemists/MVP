@@ -1,0 +1,7 @@
+export enum SyncOrderState {
+  PENDING = 'PENDING',
+  PROCESSING = 'PROCESSING',
+  SHIPPED = 'SHIPPED',
+  CANCELED = 'CANCELED',
+  COMPLETED = 'COMPLETED'
+}

@@ -1,15 +1,19 @@
-import { IsNotEmpty, Min, IsInt, IsArray} from 'class-validator';
+import { IsNotEmpty, ArrayNotEmpty, ValidateNested, IsArray} from 'class-validator';
+import { Type } from 'class-transformer';
 
 import { OrderIdDTO } from './orderId.dto';
 import { OrderItemDTO } from './orderItem.dto';
 
 export class OrderQuantityDTO {
+    @ValidateNested()
+    @Type(() => OrderIdDTO)
     @IsNotEmpty()
-    @IsInt()
-    @Min(0)
     id: OrderIdDTO;
 
-    @IsNotEmpty()
+    
+    @ArrayNotEmpty()
     @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => OrderItemDTO)
     items: OrderItemDTO[];
 }
