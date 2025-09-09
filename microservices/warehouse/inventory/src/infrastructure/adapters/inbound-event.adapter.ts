@@ -6,7 +6,7 @@ import { InventoryService } from 'src/application/inventory.service';
 import { DataMapper } from '../mappers/dataMapper';
 import { ProductId } from 'src/domain/productId.entity';
 import { Product } from 'src/domain/product.entity';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { EditStockUseCase } from 'src/domain/use-cases/editStock.usecase';
 import { Inventory } from 'src/domain/inventory.entity';
 import { ProductIdDto } from 'src/interfaces/dto/productId.dto';
@@ -50,6 +50,7 @@ OrderRequestUseCase {
 
   async orderRequest(dto: ProductQuantityArrayDto): Promise<boolean> {
     const { orderId, productQuantities } = DataMapper.toDomainProductQuantityArray(dto);
+    Logger.log(`Order Request received for orderId: ${orderId.getId()} with items: ${JSON.stringify(productQuantities)}`);  
     await this.service.reserveStock(orderId, productQuantities);
     return true;
   }

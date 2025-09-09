@@ -34,21 +34,23 @@ export class InboundEventController {
   };
 
   @EventPattern(`event.warehouse.${process.env.WAREHOUSE_ID}.order.request`)
-  async handleOrderRequest(@Payload('data') payload: any): Promise<void> {
+  async handleOrderRequest(@Payload() payload: any): Promise<void> {
     logger.fatal('handleOrderRequest payload:', payload);
 
     let dto = new ProductQuantityArrayDto();
-    dto.id = payload.orderId;
+    dto.id = payload.orderIdDTO.id;
     dto.productQuantityArray = payload.items;
 
-    logger.log(`Ricevuto evento orderRequest: ${JSON.stringify(dto)}`);
+    logger.log(`Ricevuto evento orderRequest: ${JSON.stringify(dto.productQuantityArray)}`);
 
     try {
+      validateOrReject(dto);
       this.inboundEventListener.orderRequest(dto);
     } catch (err) {
       logger.error('Errore parsing orderRequest payload', err);
     }
   }
+  
   @EventPattern(`event.warehouse.${process.env.WAREHOUSE_ID}.order.ship`)
   async handleShipOrderRequest(payload: any): Promise<void> {
     const data =
