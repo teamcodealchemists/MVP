@@ -7,7 +7,7 @@ const logger = new Logger('AccessControlController');
 export class AccessController {
     constructor() { }
 
-    @MessagePattern(`access.warehouse.${process.env.WAREHOUSE_ID}.stock`)
+    @MessagePattern(`access.warehouse.${process.env.WAREHOUSE_ID}.stock.*`)
     @MessagePattern(`access.warehouse.${process.env.WAREHOUSE_ID}.inventory`)
     async loginAccess(@Payload() data: any): Promise<string> {
         if (data.token && !data.token.error) {
