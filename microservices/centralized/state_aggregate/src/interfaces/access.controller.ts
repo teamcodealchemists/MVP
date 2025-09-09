@@ -4,7 +4,7 @@ import { MessagePattern } from '@nestjs/microservices';
 
 @Controller()
 export class AccessController{
-    @MessagePattern('access.>')
+    @MessagePattern('access.cloudState.>')
     access(){
         // Implement your access logic here
         return JSON.stringify({ result: {get: true, call: '*'}})
