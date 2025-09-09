@@ -35,6 +35,7 @@ export class InboundEventController {
 
   @EventPattern(`event.warehouse.${process.env.WAREHOUSE_ID}.order.request`)
   async handleOrderRequest(@Payload('data') payload: any): Promise<void> {
+    logger.fatal('handleOrderRequest payload:', payload);
 
     let dto = new ProductQuantityArrayDto();
     dto.id = payload.orderId;

@@ -14,9 +14,19 @@ export class InboundResponseDeserializer
      * Here, we merely wrap our inbound message payload in the standard Nest
      * message structure.
      */
+    let data: any;
+    try {
+      data = JSON.parse(value);
+    } catch (error) {
+      this.logger.error(`Failed to parse inbound response message: ${error}`);
+      data = value;
+    }
+    this.logger.verbose(
+      `<<-- Deserialized inbound response message:\n${JSON.stringify(data)}`,
+    );
     return {
-      pattern: undefined,
-      data: JSON.parse(value),
+      pattern: options?.channel || 'no-subject',
+      data,
       id: uuidv4(),
     };
   }

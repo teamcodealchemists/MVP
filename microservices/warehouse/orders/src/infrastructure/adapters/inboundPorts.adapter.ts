@@ -213,8 +213,8 @@ export class InboundPortsAdapter implements
     throw new Error(`Tipo di ordine non riconosciuto per l'ordine: ${orderId}`);
   }
 
-  async getAllOrders(): Promise<string> {
+  async getAllOrders(): Promise<OrdersDTO> {
     const ordersDomain = await this.ordersRepository.getAllOrders();
-    return JSON.stringify(await this.dataMapper.ordersToDTO(ordersDomain));
+    return await this.dataMapper.ordersToDTO(ordersDomain);
   }
 }

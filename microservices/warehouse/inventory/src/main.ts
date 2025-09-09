@@ -11,7 +11,6 @@ export async function bootstrap() {
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(
     InventoryModule,
     {
-      logger,
       transport: Transport.NATS,
       options: {
         servers: [process.env.NATS_URL || 'nats://nats:4222'],
