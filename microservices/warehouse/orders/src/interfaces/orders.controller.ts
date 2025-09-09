@@ -81,10 +81,10 @@ export class OrdersController {
     await this.inboundPortsAdapter.waitingForStock(orderId);
   }
 
-  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.*.stock.shipped`)
+  @MessagePattern(`warehouse.${process.env.WAREHOUSE_ID}.order.*.stockShipped`)
   async stockShipped(@Ctx() context: any): Promise<void> {
     const tokens = context.getSubject().split('.');
-    const orderId = tokens[tokens.length - 3];
+    const orderId = tokens[3];
     await this.inboundPortsAdapter.stockShipped(orderId);
   }
 

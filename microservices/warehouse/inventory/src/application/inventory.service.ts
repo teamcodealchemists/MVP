@@ -138,6 +138,8 @@ export class InventoryService {
     await this.natsAdapter.stockShipped(order);
     return Promise.resolve();
   }
+
+  
   async reserveStock(order : OrderId, productQ :  ProductQuantity[]): Promise<void>{
       const reserved: ProductQuantity[] = [];
       let allSufficient = true;
@@ -187,6 +189,8 @@ export class InventoryService {
       }
     return Promise.resolve();
   }
+
+
   async receiveStock(order : OrderId, productQ :  ProductQuantity[]): Promise<void>{
     for (const pq of productQ) {
       const product = await this.inventoryRepository.getById(pq.getId());
