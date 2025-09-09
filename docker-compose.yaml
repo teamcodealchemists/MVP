@@ -98,19 +98,19 @@ services:
 
   orders-aggregated:
     build:
-      context: ./microservices/warehouse/orders-aggregated
+      context: ./microservices/cloud/orders-aggregated
       dockerfile: Dockerfile
     environment:
-      - NODE_ENV=development
       - MONGODB_URI=mongodb://mongodb:27017/orders-aggregated
       - NATS_URL=nats://nats:4222
     volumes:
-      - ./microservices/warehouse/orders-aggregated/src:/usr/src/app/src
+      - ./microservices/cloud/orders-aggregated/src:/usr/src/app/src
     networks:
       - shared-warehouses
     depends_on:
       - nats
       - mongodb
+      - resgate
 
 #==========================================================================#
 #                 Centralized System Microservices                         #
