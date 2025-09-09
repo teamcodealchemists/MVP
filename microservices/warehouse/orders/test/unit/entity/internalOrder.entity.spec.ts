@@ -18,7 +18,8 @@ describe('InternalOrder Entity', () => {
       OrderState.PENDING,
       new Date('2025-01-01T00:00:00Z'),
       1,     
-      2       
+      2,
+      new OrderId('S45601250810284105')       
     );
   });
 

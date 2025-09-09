@@ -31,6 +31,7 @@ describe('Orders Entity - set methods', () => {
       new Date(),
       2,
       1,
+      new OrderId('S45601250810284105'),
     );
 
     initialSellOrders = [sellOrder];
@@ -66,6 +67,7 @@ describe('Orders Entity - set methods', () => {
         new Date(),
         4,
         2,
+        new OrderId('S45601250810284105')
       ),
     ];
 

@@ -10,7 +10,7 @@ describe("Test per ItemId", () => {
         // OrderItem: id, quantity
         const orderItem = new OrderItem(itemId, 10);
 
-        expect(orderItem.getItemId()).toBe(id);
+        expect(orderItem.getItemId().getId()).toBe(id);
     });
 
      it("Dovrebbe restituire la quantity di ItemId passato dal costruttore", () => {
