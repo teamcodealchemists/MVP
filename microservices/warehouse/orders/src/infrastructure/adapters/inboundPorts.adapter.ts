@@ -182,13 +182,14 @@ export class InboundPortsAdapter implements
   async cancelOrder(orderId: string): Promise<void> {
     const orderIdDTO: OrderIdDTO = { id: orderId };
     const orderIdDomain = await this.dataMapper.orderIdToDomain(orderIdDTO);
-    await this.ordersService.cancelOrder(orderIdDomain);
+
+    await this.ordersService.updateOrderState(orderIdDomain, OrderState.CANCELED);
   }
 
   async completeOrder(orderId: string): Promise<void> {
     const orderIdDTO: OrderIdDTO = { id: orderId };
     const orderIdDomain = await this.dataMapper.orderIdToDomain(orderIdDTO);
-    await this.ordersService.completeOrder(orderIdDomain);
+    await this.ordersService.updateOrderState(orderIdDomain, OrderState.COMPLETED);
   }
 
   async getOrderState(orderId: string): Promise<OrderStateDTO> {

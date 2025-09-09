@@ -17,6 +17,7 @@ import { ItemId } from "src/domain/itemId.entity";
 import { InternalOrder } from "src/domain/internalOrder.entity";
 import { SellOrder } from "src/domain/sellOrder.entity";
 import { v4 as uuidv4 } from 'uuid';
+import { RpcException } from '@nestjs/microservices';
 
 @Injectable()
 export class OrdersRepositoryMongo implements OrdersRepository {
@@ -258,8 +259,14 @@ export class OrdersRepositoryMongo implements OrdersRepository {
         // Per cancellazione ordine
         const currentState = await this.getState(id);
 
+        // Controlla se può essere cancellato
+
+        if (currentState === OrderState.COMPLETED) {
+            throw new RpcException('Impossibile cancellare un ordine COMPLETED');
+        }
+
         if (currentState === OrderState.CANCELED) {
-            return false; // E' gia in stato "CANCELED", non verrà aggiornato
+            return false; // L'ordine era già cancellato
         }
 
         const updatedOrder = await this.updateOrderState(id, OrderState.CANCELED);
