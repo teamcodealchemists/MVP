@@ -66,8 +66,7 @@ export class OrdersController {
 
     try {
       await this.inboundPortsAdapter.addInternalOrder(internalOrderDTO);
-      Logger.log(`Internal order with ID ${internalOrderDTO.orderId} created successfully`, 'OrdersController');
-      return Promise.resolve(JSON.stringify({ result: `Internal order with ID ${internalOrderDTO.orderId} created` }));
+      return Promise.resolve(JSON.stringify({ result: `Internal order with ID ${internalOrderDTO.orderId.id} created` }));
     }
     catch (error) {
       return Promise.resolve(JSON.stringify({ error: { code: 'system.internalError', message: error?.message || 'Unknown error' } }));
