@@ -153,7 +153,7 @@ export class OutboundEventAdapter implements InternalOrderEventPublisher, OrderS
 
     if (context.destination === 'aggregate') {
       subject = `call.aggregate.order.internal.new`;
-      await this.natsService.emit(subject, internalOrderDTO);
+      await this.natsService.emit(subject, JSON.stringify(internalOrderDTO));
     } /* 
       else if (context.destination === 'warehouse' && context.warehouseId) {
         subject = `call.warehouse.${context.warehouseId}.order.internal.new`;
@@ -175,7 +175,7 @@ export class OutboundEventAdapter implements InternalOrderEventPublisher, OrderS
         subject = `call.warehouse.${context.warehouseId}.order.sell.new`;
         await this.natsService.publish( subject, sellOrderDTO );
       } */
-    return Promise.resolve("Successful creation of sell order with ID " + JSON.stringify(sellOrder.getOrderId()));
+    return Promise.resolve(JSON.stringify(sellOrder.getOrderId()));
   }
 
 }

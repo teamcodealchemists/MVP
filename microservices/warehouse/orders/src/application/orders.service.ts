@@ -201,7 +201,7 @@ export class OrdersService {
                 destination: 'warehouse', 
                 warehouseId: order.getWarehouseDeparture() 
             });
-            return Promise.resolve("Successful creation of sell order with ID " + uniqueOrderId.getId());
+            return Promise.resolve(uniqueOrderId.getId());
     }
 
     async createInternalOrder(order: InternalOrder): Promise<string>{

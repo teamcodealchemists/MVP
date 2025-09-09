@@ -40,7 +40,9 @@ export class OrdersController {
         destinationAddress: payload.destinationAddress
       };
       await this.inboundPortsAdapter.addSellOrder(sellOrderDTO);
-      return Promise.resolve(JSON.stringify({ result: `Sell order with ID ${sellOrderDTO.orderId.id} created` }));
+      let newOrderId = await this.inboundPortsAdapter.addSellOrder(sellOrderDTO);
+      let RID = `warehouse.${process.env.WAREHOUSE_ID}.order.${newOrderId}`;
+      return Promise.resolve(JSON.stringify({ resource: { rid: RID } }));
     } catch (error) {
         return Promise.resolve(JSON.stringify({ error: { code: 'system.internalError', message: error?.message || 'Unknown error' } }));
     }
@@ -48,6 +50,7 @@ export class OrdersController {
 
   @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.internal.new`)
   async addInternalOrder(@Payload() payload: any): Promise<string> {
+    try {
     const internalOrderDTO: InternalOrderDTO = {
       orderId: payload.orderId,
       items: payload.items,
@@ -60,8 +63,10 @@ export class OrdersController {
     let newOrderId = await this.inboundPortsAdapter.addInternalOrder(internalOrderDTO);
     let RID = `warehouse.${process.env.WAREHOUSE_ID}.order.${newOrderId}`;
       return Promise.resolve(JSON.stringify({ resource: { rid: RID } }));
+    } catch (error) {
+      return Promise.resolve(JSON.stringify({ error: { code: 'system.internalError', message: error?.message || 'Unknown error' } }));
+    }
   }
-
   // NUOVA PORTA (Stefano)
   // Riceve il messaggio dall'Inventario del magazzino di partenza dove dice che ha tutta la merce
   @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.sufficient.availability`)
