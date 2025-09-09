@@ -142,13 +142,13 @@ export class OutboundEventAdapter implements InternalOrderEventPublisher, OrderS
 
 
   async publishSellOrder(sellOrder: SellOrder, context: { destination: 'aggregate' | 'warehouse', warehouseId?: number }) :  Promise<string> {
-
+    console.log("[outbound] Manda SellOrder,", JSON.stringify(sellOrder, null, 2));
     const sellOrderDTO = await this.dataMapper.sellOrderToDTO(sellOrder);
     let subject: string;
 
     if (context.destination === 'aggregate') {
       subject = `event.aggregate.order.sell.new`;
-      await this.natsService.emit(subject, JSON.parse(JSON.stringify(sellOrderDTO)));
+      await this.natsService.emit(subject, JSON.stringify(sellOrderDTO));
     } /* 
       else if (context.destination === 'warehouse' && context.warehouseId) {
         subject = `call.warehouse.${context.warehouseId}.order.sell.new`;
