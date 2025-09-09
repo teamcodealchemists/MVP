@@ -140,9 +140,9 @@ export class OrdersService {
     }
 
 
-    async createSellOrder(order: SellOrder): Promise<void>{
+    async createSellOrder(order: SellOrder): Promise<string>{
         let uniqueOrderId: OrderId;
-        
+        console.log("Creating sell order:", order);
         // Se l'ID è vuoto, genera nuovo ID, altrimenti usa quello esistente
         if (!order.getOrderId() || order.getOrderId() === '') {
             const newId = await this.ordersRepositoryMongo.genUniqueId('S');
@@ -150,7 +150,7 @@ export class OrdersService {
         } else {
             uniqueOrderId = new OrderId(order.getOrderId());
         }
-        
+        console.log("Creating sell order:", order);
 /*         // Controlla se l'ordine esiste già
         const orderExists = await this.checkOrderExistence(uniqueOrderId);
  */        
@@ -179,10 +179,10 @@ export class OrdersService {
                 destination: 'warehouse', 
                 warehouseId: order.getWarehouseDeparture() 
             });
-/*         } */
+            return Promise.resolve("Successful creation of sell order with ID " + uniqueOrderId.getId());
     }
 
-    async createInternalOrder(order: InternalOrder): Promise<void>{
+    async createInternalOrder(order: InternalOrder): Promise<string>{
         let uniqueOrderId: OrderId;
         
         // Se l'ID è vuoto, genera nuovo ID, altrimenti usa quello esistente
@@ -225,6 +225,7 @@ export class OrdersService {
                 warehouseId: order.getWarehouseDestination() 
             });
 /*         } */
+        return Promise.resolve("Successful creation of Internal order with ID " + uniqueOrderId.getId());
     }
 
 

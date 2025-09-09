@@ -29,7 +29,7 @@ export class OrdersController {
   }
 
   @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.sell.new`)
-  async addSellOrder(@Payload() payload: any): Promise<void> {
+  async addSellOrder(@Payload('params') payload: any): Promise<string> {
     try {
       const sellOrderDTO: SellOrderDTO = {
         orderId: payload.orderId,
@@ -40,16 +40,10 @@ export class OrdersController {
         destinationAddress: payload.destinationAddress
       };
       await this.inboundPortsAdapter.addSellOrder(sellOrderDTO);
+      return Promise.resolve(JSON.stringify({ result: `Sell order with ID ${sellOrderDTO.orderId.id} created` }));
     } catch (error) {
-    throw new RpcException({
-      message: error.message,
-      code: 'ORDER_CREATION_FAILED',
-      details: {
-        receivedState: payload.orderState,
-        expectedState: 'PENDING'
-      }
-    });
-  }
+        return Promise.resolve(JSON.stringify({ error: { code: 'system.internalError', message: error?.message || 'Unknown error' } }));
+    }
   }
 
   @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.internal.new`)

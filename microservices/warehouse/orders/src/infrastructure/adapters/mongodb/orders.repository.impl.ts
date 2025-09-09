@@ -338,11 +338,12 @@ export class OrdersRepositoryMongo implements OrdersRepository {
         while (true) {            
             const randomId = uuidv4();
             const fullOrderId = `${orderType}${randomId}`;
-
+            console.log("Generato ID:", fullOrderId);
             // L'UUID v4 ha % vicine allo zero di creare duplicati, ma metto comunque il controllo (locale) duplicati 
             try {
                 const orderIdToCheck = new OrderId(fullOrderId);
                 // Controllo se l'id creato è univoco
+                console.log(`Verifica unicità per ID: ${fullOrderId}`);
                 try {
                     const existingOrder = await this.getById(orderIdToCheck);
                     // Se va a questa prossima riga, l'ordine esiste già

@@ -79,14 +79,14 @@ export class InboundPortsAdapter implements
   }
 
 
-  async addSellOrder(sellOrderDTO: SellOrderDTO): Promise<void> {
+  async addSellOrder(sellOrderDTO: SellOrderDTO): Promise<string> {
     const sellOrderDomain = await this.dataMapper.sellOrderToDomain(sellOrderDTO);
-    await this.ordersService.createSellOrder(sellOrderDomain);
+    return Promise.resolve(await this.ordersService.createSellOrder(sellOrderDomain));
   }
 
-  async addInternalOrder(internalOrderDTO: InternalOrderDTO): Promise<void> {
+  async addInternalOrder(internalOrderDTO: InternalOrderDTO): Promise<string> {
     const internalOrderDomain = await this.dataMapper.internalOrderToDomain(internalOrderDTO);
-    await this.ordersService.createInternalOrder(internalOrderDomain);
+    return Promise.resolve(await this.ordersService.createInternalOrder(internalOrderDomain));
   }
 
   /*   async waitingForStock(orderId: string): Promise<void> {
