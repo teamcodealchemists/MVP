@@ -167,8 +167,19 @@ export class OrdersController {
   }
 
   @MessagePattern(`get.warehouse.${process.env.WAREHOUSE_ID}.orders`)
-  async getAllOrders(): Promise<string> {
-    const result =  await this.inboundPortsAdapter.getAllOrders();
-    return Promise.resolve(JSON.stringify({ result: { model: result } }));
+  async getOrdersCollection(): Promise<string> {
+    const orders = await this.inboundPortsAdapter.getAllOrders();
+
+    const internalOrderRids = orders.internalOrders.map(order => ({
+      rid: `warehouse.${process.env.WAREHOUSE_ID}.order.${order.orderId?.id ?? order.orderId}`
+    }));
+
+    const sellOrderRids = orders.sellOrders.map(order => ({
+      rid: `warehouse.${process.env.WAREHOUSE_ID}.order.${order.orderId?.id ?? order.orderId}`
+    }));
+
+    const collection = [...internalOrderRids, ...sellOrderRids];
+
+    return Promise.resolve(JSON.stringify({ result: { collection } }));
   }
 }

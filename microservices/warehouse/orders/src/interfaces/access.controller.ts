@@ -7,9 +7,22 @@ const logger = new Logger('AccessControlController');
 export class AccessController {
     constructor() { }
 
+    @MessagePattern(`access.warehouse.${process.env.WAREHOUSE_ID}.order`)
+    async commandOrder(@Payload() data: any): Promise<string> {
+        return this.checkAccess(data);
+    }
+
     @MessagePattern(`access.warehouse.${process.env.WAREHOUSE_ID}.order.>`)
+    async orderAccess(@Payload() data: any): Promise<string> {
+        return this.checkAccess(data);
+    }
+
     @MessagePattern(`access.warehouse.${process.env.WAREHOUSE_ID}.orders`)
-    async loginAccess(@Payload() data: any): Promise<string> {
+    async ordersAccess(@Payload() data: any): Promise<string> {
+        return this.checkAccess(data);
+    }
+
+    private checkAccess(data: any): Promise<string> {
         if (data.token && !data.token.error) {
             logger.debug(`Access check for operation: ${JSON.stringify(data.token)}`);
             if (data.token.isGlobal) {
