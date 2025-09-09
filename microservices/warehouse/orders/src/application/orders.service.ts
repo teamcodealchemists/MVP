@@ -247,11 +247,7 @@ export class OrdersService {
                 warehouseId: order.getWarehouseDestination() 
             });
 /*         } */
-<<<<<<< HEAD
         return Promise.resolve("Successful creation of Internal order with ID " + uniqueOrderId.getId());
-=======
-        return uniqueOrderId.getId();
->>>>>>> 365ecd72eb32c92a093f50794de26235f74f11ca
     }
 
 
