@@ -53,7 +53,7 @@ export class OrdersController {
   }
 
   @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.internal.new`)
-  async addInternalOrder(@Payload() payload: any): Promise<void> {
+  async addInternalOrder(@Payload('params') payload: any): Promise<string> {
     const internalOrderDTO: InternalOrderDTO = {
       orderId: payload.orderId,
       items: payload.items,
@@ -63,7 +63,15 @@ export class OrdersController {
       warehouseDestination: payload.warehouseDestination,
       sellOrderReference : payload.sellOrderReference ?? "",
     };
-    await this.inboundPortsAdapter.addInternalOrder(internalOrderDTO);
+
+    try {
+      await this.inboundPortsAdapter.addInternalOrder(internalOrderDTO);
+      Logger.log(`Internal order with ID ${internalOrderDTO.orderId} created successfully`, 'OrdersController');
+      return Promise.resolve(JSON.stringify({ result: `Internal order with ID ${internalOrderDTO.orderId} created` }));
+    }
+    catch (error) {
+      return Promise.resolve(JSON.stringify({ error: { code: 'system.internalError', message: error?.message || 'Unknown error' } }));
+    }
   }
 
   // NUOVA PORTA (Stefano)
@@ -141,4 +149,4 @@ export class OrdersController {
   async getAllOrders(): Promise<OrdersDTO> {
     return await this.inboundPortsAdapter.getAllOrders();
   }
-}
+} 
