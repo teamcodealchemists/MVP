@@ -163,7 +163,7 @@ export class OrdersRepositoryMongo implements OrdersRepository {
                 }
             });
 
-            return new Orders(sellOrders, internalOrders);
+            return Promise.resolve(new Orders(sellOrders, internalOrders));
             
         } catch (error) {
             throw new Error ("Errore durante il recupero di tutti gli ordini:", error);

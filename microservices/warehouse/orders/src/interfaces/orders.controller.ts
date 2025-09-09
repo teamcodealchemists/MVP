@@ -142,7 +142,8 @@ export class OrdersController {
   }
 
   @MessagePattern(`get.warehouse.${process.env.WAREHOUSE_ID}.orders`)
-  async getAllOrders(): Promise<OrdersDTO> {
-    return await this.inboundPortsAdapter.getAllOrders();
+  async getAllOrders(): Promise<string> {
+    const result =  await this.inboundPortsAdapter.getAllOrders();
+    return Promise.resolve(JSON.stringify({ result: { model: result } }));
   }
 } 

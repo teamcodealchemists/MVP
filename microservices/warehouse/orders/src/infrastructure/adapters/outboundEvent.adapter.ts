@@ -162,20 +162,20 @@ export class OutboundEventAdapter implements InternalOrderEventPublisher, OrderS
   }
 
 
-  async publishSellOrder(sellOrder: SellOrder, context: { destination: 'aggregate' | 'warehouse', warehouseId?: number }) {
+  async publishSellOrder(sellOrder: SellOrder, context: { destination: 'aggregate' | 'warehouse', warehouseId?: number }) :  Promise<string> {
 
     const sellOrderDTO = await this.dataMapper.sellOrderToDTO(sellOrder);
     let subject: string;
 
     if (context.destination === 'aggregate') {
       subject = `call.aggregate.order.sell.new`;
-      await this.natsService.emit(subject, sellOrderDTO);
+      await this.natsService.emit(subject, JSON.parse(JSON.stringify(sellOrderDTO)));
     } /* 
       else if (context.destination === 'warehouse' && context.warehouseId) {
         subject = `call.warehouse.${context.warehouseId}.order.sell.new`;
         await this.natsService.publish( subject, sellOrderDTO );
       } */
-
+    return Promise.resolve("Successful creation of sell order with ID " + JSON.stringify(sellOrder.getOrderId()));
   }
 
 }
