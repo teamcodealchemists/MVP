@@ -77,30 +77,53 @@ export class CloudOrdersController {
     return await this.inboundPortsAdapter.getOrderState(orderId);
   }
 
-  @MessagePattern(`get.aggregate.order.*`)
-  async getOrder(@Ctx() context: any): Promise<SyncInternalOrderDTO | SyncSellOrderDTO> {
+@MessagePattern(`get.aggregate.order.*`)
+  async getOrder(@Ctx() context: any): Promise<string> {
     const orderId = context.getSubject().split('.').pop();
-    return await this.inboundPortsAdapter.getOrder(orderId);
+    let order = await this.inboundPortsAdapter.getOrder(orderId);
+    let model: any = {
+      orderId: order.orderId?.id ?? order.orderId,
+      orderState: order.orderState.orderState,
+      creationDate: order.creationDate,
+      warehouseDeparture: order.warehouseDeparture,
+    };
+    // InternalOrderDTO specific fields
+    if ('warehouseDestination' in order) {
+      model.warehouseDestination = order.warehouseDestination;
+      model.sellOrderReference = order.sellOrderReference.id ?? "";
+    }
+    // SellOrderDTO specific fields
+    if ('destinationAddress' in order) {
+      model.destinationAddress = order.destinationAddress;
+    }
+    return Promise.resolve(JSON.stringify( {result : { model }}));
   }
 
-  @MessagePattern(`get.aggregate.orders`)
-  async getAllOrders(): Promise<SyncOrdersDTO> {
-      this.logger.verbose('[Controller] CIAONES - Richiesta ricevuta');
+@MessagePattern(`get.aggregate.orders`)
+async getAllOrders(): Promise<string> {
+  this.logger.verbose('[Controller] CIAONES - Richiesta ricevuta');
+  try {
+    this.logger.verbose('[Controller] Chiamando inboundPortsAdapter...');
+    const orders = await this.inboundPortsAdapter.getAllOrders();
+    this.logger.verbose('[Controller] Richiesta elaborata con successo');
 
-      try {
-          this.logger.verbose('[Controller] Chiamando inboundPortsAdapter...');
-          const result = await this.inboundPortsAdapter.getAllOrders();
-          this.logger.verbose('[Controller] Richiesta elaborata con successo');
-          return result;
-      } catch (error) {
-          this.logger.error('[Controller] Errore in getAllOrders:', error);
-          this.logger.error('[Controller] Stack trace:', error.stack);
-          
-          // IMPORTANTE: Restituisci sempre un DTO valido, non lanciare eccezioni
-          return {
-              sellOrders: [],
-              internalOrders: []
-          };
-      }
+    const internalOrderRids = orders.internalOrders.map(order => ({
+      rid: `aggregate.order.${order.orderId?.id ?? order.orderId}`
+    }));
+
+    const sellOrderRids = orders.sellOrders.map(order => ({
+      rid: `aggregate.order.${order.orderId?.id ?? order.orderId}`
+    }));
+
+    const collection = [...internalOrderRids, ...sellOrderRids];
+
+    return Promise.resolve(JSON.stringify({ result: { collection } }));
+  } catch (error) {
+    this.logger.error('[Controller] Errore in getAllOrders:', error);
+    this.logger.error('[Controller] Stack trace:', error.stack);
+
+    return Promise.resolve(JSON.stringify( {error: { code: 'system.internalError', message: 'Internal server error' } }));
   }
+}
+
 }
