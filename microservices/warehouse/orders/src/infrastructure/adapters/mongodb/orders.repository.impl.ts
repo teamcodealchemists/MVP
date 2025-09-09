@@ -17,6 +17,7 @@ import { ItemId } from "src/domain/itemId.entity";
 import { InternalOrder } from "src/domain/internalOrder.entity";
 import { SellOrder } from "src/domain/sellOrder.entity";
 import { v4 as uuidv4 } from 'uuid';
+import { RpcException } from '@nestjs/microservices';
 
 @Injectable()
 export class OrdersRepositoryMongo implements OrdersRepository {
@@ -162,7 +163,7 @@ export class OrdersRepositoryMongo implements OrdersRepository {
                 }
             });
 
-            return new Orders(sellOrders, internalOrders);
+            return Promise.resolve(new Orders(sellOrders, internalOrders));
             
         } catch (error) {
             throw new Error ("Errore durante il recupero di tutti gli ordini:", error);
@@ -258,8 +259,14 @@ export class OrdersRepositoryMongo implements OrdersRepository {
         // Per cancellazione ordine
         const currentState = await this.getState(id);
 
+        // Controlla se può essere cancellato
+
+        if (currentState === OrderState.COMPLETED) {
+            throw new RpcException('Impossibile cancellare un ordine COMPLETED');
+        }
+
         if (currentState === OrderState.CANCELED) {
-            return false; // E' gia in stato "CANCELED", non verrà aggiornato
+            return false; // L'ordine era già cancellato
         }
 
         const updatedOrder = await this.updateOrderState(id, OrderState.CANCELED);
@@ -338,11 +345,12 @@ export class OrdersRepositoryMongo implements OrdersRepository {
         while (true) {            
             const randomId = uuidv4();
             const fullOrderId = `${orderType}${randomId}`;
-
+            console.log("Generato ID:", fullOrderId);
             // L'UUID v4 ha % vicine allo zero di creare duplicati, ma metto comunque il controllo (locale) duplicati 
             try {
                 const orderIdToCheck = new OrderId(fullOrderId);
                 // Controllo se l'id creato è univoco
+                console.log(`Verifica unicità per ID: ${fullOrderId}`);
                 try {
                     const existingOrder = await this.getById(orderIdToCheck);
                     // Se va a questa prossima riga, l'ordine esiste già

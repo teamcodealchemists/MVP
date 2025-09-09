@@ -29,7 +29,7 @@ export class OrdersController {
   }
 
   @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.sell.new`)
-  async addSellOrder(@Payload() payload: any): Promise<void> {
+  async addSellOrder(@Payload('params') payload: any): Promise<string> {
     try {
       const sellOrderDTO: SellOrderDTO = {
         orderId: payload.orderId,
@@ -40,20 +40,14 @@ export class OrdersController {
         destinationAddress: payload.destinationAddress
       };
       await this.inboundPortsAdapter.addSellOrder(sellOrderDTO);
+      return Promise.resolve(JSON.stringify({ result: `Sell order with ID ${sellOrderDTO.orderId.id} created` }));
     } catch (error) {
-    throw new RpcException({
-      message: error.message,
-      code: 'ORDER_CREATION_FAILED',
-      details: {
-        receivedState: payload.orderState,
-        expectedState: 'PENDING'
-      }
-    });
-  }
+        return Promise.resolve(JSON.stringify({ error: { code: 'system.internalError', message: error?.message || 'Unknown error' } }));
+    }
   }
 
   @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.internal.new`)
-  async addInternalOrder(@Payload('params') payload: any): Promise<string> {
+  async addInternalOrder(@Payload() payload: any): Promise<string> {
     const internalOrderDTO: InternalOrderDTO = {
       orderId: payload.orderId,
       items: payload.items,
@@ -63,14 +57,9 @@ export class OrdersController {
       warehouseDestination: payload.warehouseDestination,
       sellOrderReference : payload.sellOrderReference ?? "",
     };
-
-    try {
-      await this.inboundPortsAdapter.addInternalOrder(internalOrderDTO);
-      return Promise.resolve(JSON.stringify({ result: `Internal order with ID ${internalOrderDTO.orderId.id} created` }));
-    }
-    catch (error) {
-      return Promise.resolve(JSON.stringify({ error: { code: 'system.internalError', message: error?.message || 'Unknown error' } }));
-    }
+    let newOrderId = await this.inboundPortsAdapter.addInternalOrder(internalOrderDTO);
+    let RID = `warehouse.${process.env.WAREHOUSE_ID}.order.${newOrderId}`;
+      return Promise.resolve(JSON.stringify({ resource: { rid: RID } }));
   }
 
   // NUOVA PORTA (Stefano)
@@ -111,17 +100,25 @@ export class OrdersController {
 
   @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.*.state.update.*`)
   async updateOrderState(@Ctx() context: any): Promise<void> {
-    const tokens = context.getSubject().split('.');
-    const orderId = tokens[4];
-    const orderState = tokens[7];
-    await this.inboundPortsAdapter.updateOrderState(orderId, orderState);
+    try {
+      const tokens = context.getSubject().split('.');
+      const orderId = tokens[4];
+      const orderState = tokens[7];
+      await this.inboundPortsAdapter.updateOrderState(orderId, orderState);
+    } catch (error) {
+        throw new RpcException(error.message);
+    }
   }
 
   @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.*.cancel`)
   async cancelOrder(@Ctx() context: any): Promise<void> {
-    const tokens = context.getSubject().split('.');
-    const orderId = tokens[tokens.length - 2];
-    await this.inboundPortsAdapter.cancelOrder(orderId);
+    try {
+        const tokens = context.getSubject().split('.');
+        const orderId = tokens[tokens.length - 2];
+        await this.inboundPortsAdapter.cancelOrder(orderId);
+    } catch (error) {
+        throw new RpcException(error.message);
+    }
   }
 
   @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.*.complete`)
@@ -145,7 +142,8 @@ export class OrdersController {
   }
 
   @MessagePattern(`get.warehouse.${process.env.WAREHOUSE_ID}.orders`)
-  async getAllOrders(): Promise<OrdersDTO> {
-    return await this.inboundPortsAdapter.getAllOrders();
+  async getAllOrders(): Promise<string> {
+    const result =  await this.inboundPortsAdapter.getAllOrders();
+    return Promise.resolve(JSON.stringify({ result: { model: result } }));
   }
 } 

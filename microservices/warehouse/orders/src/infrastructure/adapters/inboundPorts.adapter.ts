@@ -79,14 +79,14 @@ export class InboundPortsAdapter implements
   }
 
 
-  async addSellOrder(sellOrderDTO: SellOrderDTO): Promise<void> {
+  async addSellOrder(sellOrderDTO: SellOrderDTO): Promise<string> {
     const sellOrderDomain = await this.dataMapper.sellOrderToDomain(sellOrderDTO);
-    await this.ordersService.createSellOrder(sellOrderDomain);
+    return Promise.resolve(await this.ordersService.createSellOrder(sellOrderDomain));
   }
 
-  async addInternalOrder(internalOrderDTO: InternalOrderDTO): Promise<void> {
+  async addInternalOrder(internalOrderDTO: InternalOrderDTO): Promise<string> {
     const internalOrderDomain = await this.dataMapper.internalOrderToDomain(internalOrderDTO);
-    await this.ordersService.createInternalOrder(internalOrderDomain);
+    return Promise.resolve(await this.ordersService.createInternalOrder(internalOrderDomain));
   }
 
   /*   async waitingForStock(orderId: string): Promise<void> {
@@ -182,13 +182,14 @@ export class InboundPortsAdapter implements
   async cancelOrder(orderId: string): Promise<void> {
     const orderIdDTO: OrderIdDTO = { id: orderId };
     const orderIdDomain = await this.dataMapper.orderIdToDomain(orderIdDTO);
-    await this.ordersService.cancelOrder(orderIdDomain);
+
+    await this.ordersService.updateOrderState(orderIdDomain, OrderState.CANCELED);
   }
 
   async completeOrder(orderId: string): Promise<void> {
     const orderIdDTO: OrderIdDTO = { id: orderId };
     const orderIdDomain = await this.dataMapper.orderIdToDomain(orderIdDTO);
-    await this.ordersService.completeOrder(orderIdDomain);
+    await this.ordersService.updateOrderState(orderIdDomain, OrderState.COMPLETED);
   }
 
   async getOrderState(orderId: string): Promise<OrderStateDTO> {
@@ -212,8 +213,8 @@ export class InboundPortsAdapter implements
     throw new Error(`Tipo di ordine non riconosciuto per l'ordine: ${orderId}`);
   }
 
-  async getAllOrders(): Promise<OrdersDTO> {
+  async getAllOrders(): Promise<string> {
     const ordersDomain = await this.ordersRepository.getAllOrders();
-    return await this.dataMapper.ordersToDTO(ordersDomain);
+    return JSON.stringify(await this.dataMapper.ordersToDTO(ordersDomain));
   }
 }
