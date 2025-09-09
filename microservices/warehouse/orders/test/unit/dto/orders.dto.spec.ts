@@ -44,7 +44,7 @@ describe('OrdersDTO Validation', () => {
       ],
     };
 
-    // Debug: valido ogni parte separatamente
+/*     // Debug: valido ogni parte separatamente
     console.log('=== VALIDATING SELL ORDER ===');
     const sellOrder = plainToInstance(SellOrderDTO, dtoPlain.sellOrders[0]);
     const sellErrors = await validate(sellOrder);
@@ -55,7 +55,8 @@ describe('OrdersDTO Validation', () => {
     const internalErrors = await validate(internalOrder);
     console.log('Internal order errors:', JSON.stringify(internalErrors, null, 2));
 
-    console.log('=== VALIDATING ORDERS DTO ===');
+    console.log('=== VALIDATING ORDERS DTO ==='); */   
+    
     const dto = plainToInstance(OrdersDTO, dtoPlain);
     const errors = await validate(dto);
 
