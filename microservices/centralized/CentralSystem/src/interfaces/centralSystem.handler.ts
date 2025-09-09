@@ -43,19 +43,21 @@ export class centralSystemHandler implements OnModuleInit {
 
   async handleCloudInventoryRequest(): Promise<Inventory> {
     const result = await firstValueFrom(this.natsClient.send("cloud.inventory.request", {}));
-    return Promise.resolve(DataMapper.toDomainInventory(result));
+    const parsed = JSON.parse(result);
+    return Promise.resolve(DataMapper.toDomainInventory(parsed));
   }
 
   async handleCloudOrdersRequest(): Promise<Orders> {
-    return Promise.resolve(await firstValueFrom(
-        this.natsClient.send("get.aggregate.orders", {})
-    ));
+    const result = await firstValueFrom(this.natsClient.send("get.aggregate.orders", {}));
+    const parsed = JSON.parse(result);
+    return Promise.resolve(DataMapper.ordersToDomain(parsed));
   }
 
   async handleWarehouseDistance(warehouseId: warehouseIdDto): Promise<WarehouseState[]> {
-    return Promise.resolve(await firstValueFrom(
-        this.natsClient.send("call.routing.warehouse."+warehouseId.warehouseId+".receiveRequest.set", warehouseId)
-    ));
+    const result = await firstValueFrom(this.natsClient.send("get.routing.warehouse.distance", warehouseId));
+    const parsed = JSON.parse(result);
+    const warehouseStates: WarehouseState[] = parsed.map((item: any) => DataMapper.warehouseStatetoDomain(item));
+    return Promise.resolve(warehouseStates);
   }
 
    async handleRequestInvResult(message : string, productId : ProductId, warehouseId : WarehouseId): Promise<void> {

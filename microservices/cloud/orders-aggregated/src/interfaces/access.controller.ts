@@ -7,18 +7,19 @@ const logger = new Logger('AccessControlController');
 export class AccessController {
     constructor() { }
 
-    @MessagePattern(`access.warehouse.${process.env.WAREHOUSE_ID}.order`)
-    async commandOrder(@Payload() data: any): Promise<string> {
+    @MessagePattern(`access.aggregate.order`)
+    async callAccess(@Payload() data: any): Promise<string> {
+        return this.checkAccess(data);
+    }
+    
+
+    @MessagePattern(`access.aggregate.order.*`)
+    async commandAccess(@Payload() data: any): Promise<string> {
         return this.checkAccess(data);
     }
 
-    @MessagePattern(`access.warehouse.${process.env.WAREHOUSE_ID}.order.>`)
-    async orderAccess(@Payload() data: any): Promise<string> {
-        return this.checkAccess(data);
-    }
-
-    @MessagePattern(`access.warehouse.${process.env.WAREHOUSE_ID}.orders`)
-    async ordersAccess(@Payload() data: any): Promise<string> {
+    @MessagePattern(`access.aggregate.orders`)
+    async invAccess(@Payload() data: any): Promise<string> {
         return this.checkAccess(data);
     }
 
@@ -46,6 +47,4 @@ export class AccessController {
             return Promise.resolve(JSON.stringify({ error: { code: 'system.accessDenied', message: errorMsg } }));
         }
     }
-
-
 }

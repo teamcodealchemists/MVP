@@ -7,13 +7,14 @@ import { NatsModule } from '../interfaces/nats/nats.module';
 import { CloudOrdersController } from 'src/interfaces/cloudOrders.controller';
 import { CloudInboundPortsAdapter } from 'src/infrastructure/adapters/cloudInboundPorts.adapter';
 import { CloudOutboundEventAdapter } from 'src/infrastructure/adapters/cloudOutboundEvent.adapter';
+import { AccessController } from 'src/interfaces/access.controller';
 
 @Module({
   imports: [
     MongooseModule.forRoot(process.env.MONGODB_URI || 'mongodb://mongo:27017/orders-aggregated'),
     NatsModule, 
     CloudOrdersRepositoryModule],
-  controllers: [CloudOrdersController],
+  controllers: [CloudOrdersController, AccessController],
   providers: [CloudInboundPortsAdapter, 
               CloudOrdersService, 
               CloudDataMapper, 

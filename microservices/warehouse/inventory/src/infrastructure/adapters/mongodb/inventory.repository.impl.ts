@@ -39,7 +39,7 @@ export class InventoryRepositoryMongo implements InventoryRepository {
 
   async updateProduct(product: Product): Promise<void> {
     await this.productModel.updateOne(
-      { id: product.getId().getId() },
+      { id: product.getId() },
       {
         name: product.getName(),
         unitPrice: product.getUnitPrice(),

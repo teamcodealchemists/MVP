@@ -142,6 +142,7 @@ export class InventoryService {
       const reserved: ProductQuantity[] = [];
       let allSufficient = true;
       for (const pq of productQ) {
+        Logger.warn(`Checking availability for product ${pq.getId().getId()} with quantity ${pq.getQuantity()}`, 'InventoryService');
         const product = await this.inventoryRepository.getById(pq.getId());
         if (!product) {
           allSufficient = false;
@@ -151,6 +152,7 @@ export class InventoryService {
         } else {
           allSufficient = false;
           const newReserved = product.getQuantity();
+          
           const p = new Product(new ProductId(pq.getId().getId()), product.getName(), product.getUnitPrice(), 0,
                                 newReserved, product.getMinThres(), product.getMaxThres());
           const p1 = new ProductQuantity(new ProductId(product.getId().getId()), newReserved);
