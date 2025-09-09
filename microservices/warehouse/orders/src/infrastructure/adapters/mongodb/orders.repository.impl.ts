@@ -1,4 +1,4 @@
-import { Injectable, Inject, NotFoundException } from "@nestjs/common";
+import { Injectable, Inject, NotFoundException, Logger } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 
 import { DataMapper } from "src/infrastructure/mappers/data.mapper";
@@ -82,7 +82,7 @@ export class OrdersRepositoryMongo implements OrdersRepository {
             // Fallback        
             throw new Error(`Ordine con ID ${id.getId()} non trovato`);
         } catch (error) {
-            console.error("Errore durante la ricerca dell'ordine per ID:", error);
+            Logger.error("Errore durante la ricerca dell'ordine per ID:"+ error, 'OrdersRepositoryMongo');
             throw error;
         }
     }

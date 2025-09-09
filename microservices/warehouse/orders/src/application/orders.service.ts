@@ -1,4 +1,4 @@
-import { Injectable, Inject, NotFoundException } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException, Logger } from '@nestjs/common';
 import { Orders } from "src/domain/orders.entity";
 import { OrderItem } from "src/domain/orderItem.entity";
 import { OrderItemDetail } from "src/domain/orderItemDetail.entity";
@@ -214,6 +214,8 @@ export class OrdersService {
         } else {
             uniqueOrderId = new OrderId(order.getOrderId());
         }
+
+        Logger.debug(`Creating internal order with ID: ${uniqueOrderId.getId()}`, 'OrdersService');
         
 /*         // Controlla se l'ordine esiste già
         const orderExists = await this.checkOrderExistence(uniqueOrderId);

@@ -39,15 +39,33 @@ services:
       - nats
       - resgate
 
-  orders:
+  orders-1:
     build:
       context: ./microservices/warehouse/orders
       dockerfile: Dockerfile
+    container_name: orders-1
     environment:
-      - NODE_ENV=development
       - WAREHOUSE_ID=1
       - NATS_URL=nats://nats:4222
-      - MONGODB_URI=mongodb://mongo:27017/orders
+      - MONGODB_URI=mongodb://mongo:27017/orders-1
+    volumes:
+      - ./microservices/warehouse/orders/src:/usr/src/app/src
+    networks:
+      - shared-warehouses
+    depends_on:
+      - nats    
+      - mongodb
+      - resgate 
+
+  orders-2:
+    build:
+      context: ./microservices/warehouse/orders
+      dockerfile: Dockerfile
+    container_name: orders-2
+    environment:
+      - WAREHOUSE_ID=2
+      - NATS_URL=nats://nats:4222
+      - MONGODB_URI=mongodb://mongo:27017/orders-2
     volumes:
       - ./microservices/warehouse/orders/src:/usr/src/app/src
     networks:
@@ -65,7 +83,25 @@ services:
     container_name: state-1
     environment:
       - WAREHOUSE_ID=1
-      - MONGO_URI=mongodb://mongo:27017/state 
+      - MONGO_URI=mongodb://mongo:27017/state-1 
+      - NATS_URL=nats://nats:4222
+    volumes:
+      - ./microservices/warehouse/state/src:/usr/src/app/src
+    networks:
+      - shared-warehouses
+    depends_on:
+      - nats
+      - mongodb
+      - resgate
+
+  state-2:
+    build:
+      context: ./microservices/warehouse/state
+      dockerfile: Dockerfile
+    container_name: state-2
+    environment:
+      - WAREHOUSE_ID=2
+      - MONGO_URI=mongodb://mongo:27017/state-2
       - NATS_URL=nats://nats:4222
     volumes:
       - ./microservices/warehouse/state/src:/usr/src/app/src
@@ -98,19 +134,19 @@ services:
 
   orders-aggregated:
     build:
-      context: ./microservices/warehouse/orders-aggregated
+      context: ./microservices/cloud/orders-aggregated
       dockerfile: Dockerfile
     environment:
-      - NODE_ENV=development
       - MONGODB_URI=mongodb://mongodb:27017/orders-aggregated
       - NATS_URL=nats://nats:4222
     volumes:
-      - ./microservices/warehouse/orders-aggregated/src:/usr/src/app/src
+      - ./microservices/cloud/orders-aggregated/src:/usr/src/app/src
     networks:
       - shared-warehouses
     depends_on:
       - nats
       - mongodb
+      - resgate
 
 #==========================================================================#
 #                 Centralized System Microservices                         #

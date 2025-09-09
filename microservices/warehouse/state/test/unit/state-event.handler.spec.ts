@@ -32,18 +32,18 @@ describe('StateEventHandler', () => {
   });
 
   it('should publish heartbeat', async () => {
-    const dto: HeartbeatDTO = { heartbeatMsg: 'ALIVE', timestamp: new Date(), warehouseId: 1 };
+    const dto: HeartbeatDTO = { heartbeatMsg: 'ONLINE', timestamp: new Date(), warehouseId: 1 };
     await handler.publishHeartbeat(dto);
 
     expect(natsClient.emit).toHaveBeenCalledWith(
-      `state.heartbeat.${dto.warehouseId}`,
+      `call.cloudState.warehouse.${dto.warehouseId}.heartbeat.response`,
       dto
     );
   });
 
   it('should publish warehouse state', async () => {
     const warehouseId = new WarehouseId(2);
-    const state = new WarehouseState('ACTIVE');
+    const state = new WarehouseState('ONLINE');
 
     await handler.publishState(warehouseId, state);
 
@@ -58,7 +58,7 @@ describe('StateEventHandler', () => {
 
   it('should publish updated state', async () => {
     const warehouseId = 3;
-    const state = new WarehouseState('INACTIVE');
+    const state = new WarehouseState('OFFLINE');
 
     await handler.stateUpdated(state, warehouseId);
 

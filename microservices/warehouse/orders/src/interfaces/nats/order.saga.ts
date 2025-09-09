@@ -22,7 +22,12 @@ export class OrderSaga {
     }
 
     async startInternalOrderSaga(orderId: OrderId): Promise<void>{
-
+        const order = await this.ordersRepositoryMongo.getById(orderId);
+        // Estrai gli OrderItem dagli OrderItemDetail
+        const items = order.getItemsDetail().map(itemDetail => 
+            itemDetail.getItem()
+        );
+        await this.outboundEventAdapter.publishReserveStock(orderId, items);
     }
 
 
