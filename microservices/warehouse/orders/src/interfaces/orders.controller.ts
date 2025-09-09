@@ -49,7 +49,7 @@ export class OrdersController {
   }
 
   @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.internal.new`)
-  async addInternalOrder(@Payload() payload: any): Promise<string> {
+  async addInternalOrder(@Payload('params') payload: any): Promise<string> {
     try {
     const internalOrderDTO: InternalOrderDTO = {
       orderId: payload.orderId,
@@ -143,7 +143,8 @@ export class OrdersController {
   @MessagePattern(`get.warehouse.${process.env.WAREHOUSE_ID}.order.*`)
   async getOrder(@Ctx() context: any): Promise<string> {
     const orderId = context.getSubject().split('.').pop();
-    return Promise.resolve(JSON.stringify({result: { model: await this.inboundPortsAdapter.getOrder(orderId) }}));
+    const model = await this.inboundPortsAdapter.getOrder(orderId);
+    return Promise.resolve(JSON.stringify({ result: { model } }));
   }
 
   @MessagePattern(`get.warehouse.${process.env.WAREHOUSE_ID}.orders`)
@@ -151,4 +152,4 @@ export class OrdersController {
     const result =  await this.inboundPortsAdapter.getAllOrders();
     return Promise.resolve(JSON.stringify({ result: { model: result } }));
   }
-} 
+}
