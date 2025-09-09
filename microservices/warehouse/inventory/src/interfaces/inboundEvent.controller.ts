@@ -5,6 +5,10 @@ import { InboundEventListener } from 'src/infrastructure/adapters/inbound-event.
 import { ProductQuantityDto } from './dto/productQuantity.dto';
 import { ProductQuantityArrayDto } from './dto/productQuantityArray.dto';
 import { validateOrReject } from 'class-validator';
+import { OrderIdDTO } from './dto/orderId.dto';
+import { Product } from 'src/domain/product.entity';
+import { ProductId } from 'src/domain/productId.entity';
+import { ProductIdDto } from './dto/productId.dto';
 
 const logger = new Logger('InboundEventController');
 @Controller()
@@ -38,13 +42,21 @@ export class InboundEventController {
     logger.fatal('handleOrderRequest payload:', payload);
 
     let dto = new ProductQuantityArrayDto();
-    dto.id = payload.orderIdDTO.id;
-    dto.productQuantityArray = payload.items;
+    let orderDto = new OrderIdDTO();
+    orderDto.id = payload.orderIdDTO.id;
+    dto.id = orderDto;
+    dto.productQuantityArray = payload.itemsDTO.map((item: any) => {
+      const productIdDto = new ProductIdDto();
+      productIdDto.id = item.itemId.id;
+      return {
+      productId: productIdDto,
+      quantity: item.quantity,
+      };
+    });
 
-    logger.log(`Ricevuto evento orderRequest: ${JSON.stringify(dto.productQuantityArray)}`);
 
     try {
-      validateOrReject(dto);
+      //validateOrReject(dto);
       this.inboundEventListener.orderRequest(dto);
     } catch (err) {
       logger.error('Errore parsing orderRequest payload', err);
