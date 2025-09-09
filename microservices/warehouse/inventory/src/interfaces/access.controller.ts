@@ -8,6 +8,12 @@ export class AccessController {
     constructor() { }
 
     @MessagePattern(`access.warehouse.${process.env.WAREHOUSE_ID}.stock.*`)
+    async callAccess(@Payload() data: any): Promise<string> {
+        return this.checkAccess(data);
+    }
+    
+
+    @MessagePattern(`access.warehouse.${process.env.WAREHOUSE_ID}.stock.*`)
     async commandAccess(@Payload() data: any): Promise<string> {
         return this.checkAccess(data);
     }
