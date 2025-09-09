@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, Logger } from '@nestjs/common';
 import { OrdersService } from 'src/application/orders.service';
 import { DataMapper } from '../../infrastructure/mappers/data.mapper';
 import { OrdersRepository } from 'src/domain/orders.repository';
@@ -123,6 +123,7 @@ export class InboundPortsAdapter implements
       } else if (order instanceof InternalOrder) {
           // Per ordini interni, aggiorna stato e notifica destinazione
           await this.ordersService.updateOrderState(orderIdDomain, OrderState.SHIPPED);
+            Logger.debug(`🚚📦✅ Ordine interno spedito: ${orderIdDomain.getId()} 🎉`);
 /*           await this.outboundEventAdapter.notifyDestinationWarehouse(
               orderIdDomain, 
               order.getWarehouseDestination()
