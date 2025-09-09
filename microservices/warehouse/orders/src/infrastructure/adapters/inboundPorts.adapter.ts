@@ -84,9 +84,10 @@ export class InboundPortsAdapter implements
     await this.ordersService.createSellOrder(sellOrderDomain);
   }
 
-  async addInternalOrder(internalOrderDTO: InternalOrderDTO): Promise<void> {
+  async addInternalOrder(internalOrderDTO: InternalOrderDTO): Promise<string> {
     const internalOrderDomain = await this.dataMapper.internalOrderToDomain(internalOrderDTO);
-    await this.ordersService.createInternalOrder(internalOrderDomain);
+    let newOrderId = await this.ordersService.createInternalOrder(internalOrderDomain);
+    return newOrderId;
   }
 
   /*   async waitingForStock(orderId: string): Promise<void> {
@@ -182,13 +183,14 @@ export class InboundPortsAdapter implements
   async cancelOrder(orderId: string): Promise<void> {
     const orderIdDTO: OrderIdDTO = { id: orderId };
     const orderIdDomain = await this.dataMapper.orderIdToDomain(orderIdDTO);
-    await this.ordersService.cancelOrder(orderIdDomain);
+
+    await this.ordersService.updateOrderState(orderIdDomain, OrderState.CANCELED);
   }
 
   async completeOrder(orderId: string): Promise<void> {
     const orderIdDTO: OrderIdDTO = { id: orderId };
     const orderIdDomain = await this.dataMapper.orderIdToDomain(orderIdDTO);
-    await this.ordersService.completeOrder(orderIdDomain);
+    await this.ordersService.updateOrderState(orderIdDomain, OrderState.COMPLETED);
   }
 
   async getOrderState(orderId: string): Promise<OrderStateDTO> {

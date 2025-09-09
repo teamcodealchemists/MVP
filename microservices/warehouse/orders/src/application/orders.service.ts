@@ -10,6 +10,7 @@ import { SellOrder } from "src/domain/sellOrder.entity";
 import { OrdersRepositoryMongo } from '../infrastructure/adapters/mongodb/orders.repository.impl';
 import { OutboundEventAdapter } from '../infrastructure/adapters/outboundEvent.adapter';
 import { OrderSaga } from 'src/interfaces/nats/order.saga';
+import { RpcException } from '@nestjs/microservices';
 
 @Injectable()   
 export class OrdersService {
@@ -112,15 +113,36 @@ export class OrdersService {
         }
     }     */
     
-    async updateOrderState(id: OrderId, state: OrderState): Promise<void> {
-        // Aggiorna lo stato nella repository
-        await this.ordersRepositoryMongo.updateOrderState(id, state);
-        
-        /*// Recupera l'ordine aggiornato
-        const updatedOrder = await this.ordersRepositoryMongo.getById(id); */ 
+    async updateOrderState(id: OrderId, newState: OrderState): Promise<void> {
+        // Recupera lo stato corrente
+        const currentState = await this.ordersRepositoryMongo.getState(id);
 
-        // Se l'ordine è passato a PROCESSING
-        if (state === OrderState.PROCESSING) {
+        // Controlla la validità della transizione di stato
+        // Se è in uno degli Stati finali: non può cambiare
+        if (currentState === OrderState.COMPLETED || currentState === OrderState.CANCELED) {
+        throw new RpcException('Impossibile violare il corretto flusso di gestione stato dell\'ordine: stato finale raggiunto');
+        }
+        
+        // Regole di transizione
+        const allowedTransitions: Record<OrderState, OrderState[]> = {
+            [OrderState.PENDING]: [OrderState.PROCESSING, OrderState.CANCELED],
+            [OrderState.PROCESSING]: [OrderState.SHIPPED, OrderState.CANCELED],
+            [OrderState.SHIPPED]: [OrderState.COMPLETED, OrderState.CANCELED],
+            [OrderState.COMPLETED]: [], // Nessuna transizione permessa
+            [OrderState.CANCELED]: []   // Nessuna transizione permessa
+        };
+        
+        if (!allowedTransitions[currentState].includes(newState)) {
+            throw new RpcException('Impossibile violare il corretto flusso di gestione stato dell\'ordine');
+        }
+
+
+        // Aggiorna lo stato nella repository
+        await this.ordersRepositoryMongo.updateOrderState(id, newState);
+        
+
+        // Se l'ordine è passato a PROCESSING, notifica WarehouseDeparture
+        if (newState === OrderState.PROCESSING) {
             const order = await this.ordersRepositoryMongo.getById(id);
             if (order instanceof InternalOrder) {   
                 // Notifica il magazzino di partenza usando receiveShipment
@@ -132,7 +154,7 @@ export class OrdersService {
                 );
             }
         }
-        await this.outboundEventAdapter.orderStateUpdated(id, state);
+        await this.outboundEventAdapter.orderStateUpdated(id, newState);
     }    
 
     async checkOrderState(id: OrderId): Promise<void> {
@@ -182,7 +204,7 @@ export class OrdersService {
 /*         } */
     }
 
-    async createInternalOrder(order: InternalOrder): Promise<void>{
+    async createInternalOrder(order: InternalOrder): Promise<string>{
         let uniqueOrderId: OrderId;
         
         // Se l'ID è vuoto, genera nuovo ID, altrimenti usa quello esistente
@@ -223,6 +245,7 @@ export class OrdersService {
                 warehouseId: order.getWarehouseDestination() 
             });
 /*         } */
+        return uniqueOrderId.getId();
     }
 
 
@@ -356,7 +379,7 @@ export class OrdersService {
     }
 
     async completeOrder(id: OrderId): Promise<void> {
-        await this.ordersRepositoryMongo.updateOrderState(id, OrderState.COMPLETED);
+        await this.updateOrderState(id, OrderState.COMPLETED);
         console.log(`L'ordine interno di rifornimento ${id} è stato completato!`, JSON.stringify(id, null, 2));
 
         await this.outboundEventAdapter.orderCompleted(id);
