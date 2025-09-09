@@ -40,8 +40,9 @@ export class OutboundEventAdapter implements InternalOrderEventPublisher, OrderS
   // (Deduco) Corrisponde in PUB a STOCKRESERVED
   async publishReserveStock(orderId: OrderId, items: OrderItem[]) {
     // Invia alla porta handleOrderRequest in Inventory del magazzino stesso
-    await this.natsService.emit(
+    this.natsService.emit(
       `event.warehouse.${process.env.WAREHOUSE_ID}.order.request`, { orderId, items });
+    this.logger.log(`Published reserve stock event for order ${orderId.getId()} with items: ${JSON.stringify(items)}`);
   }
 
 
