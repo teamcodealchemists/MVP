@@ -16,12 +16,12 @@ export class CloudOrdersController {
     private readonly inboundPortsAdapter: CloudInboundPortsAdapter,
   ) {}
 
-  @MessagePattern(`call.aggregate.orders.stock.reserved`)
+  @MessagePattern(`event.aggregate.orders.stock.reserved`)
   async stockReserved(@Payload() orderQuantityDTO: SyncOrderQuantityDTO): Promise<void> {
     await this.inboundPortsAdapter.stockReserved(orderQuantityDTO);
   }
 
-  @MessagePattern(`call.aggregate.order.sell.new`)
+  @MessagePattern(`event.aggregate.order.sell.new`)
   async syncAddSellOrder(@Payload() payload: any): Promise<void> {
     const sellOrderDTO = {
       orderId: payload.orderId,
@@ -34,7 +34,7 @@ export class CloudOrdersController {
     await this.inboundPortsAdapter.syncAddSellOrder(sellOrderDTO);
   }
 
-  @MessagePattern(`call.aggregate.order.internal.new`)
+  @MessagePattern(`event.aggregate.order.internal.new`)
   async syncAddInternalOrder(@Payload() payload: any): Promise<void> {
     const internalOrderDTO = {
       orderId: payload.orderId,
@@ -48,7 +48,7 @@ export class CloudOrdersController {
     await this.inboundPortsAdapter.syncAddInternalOrder(internalOrderDTO);
   }
 
-  @MessagePattern(`call.aggregate.order.*.state.update.*`)
+  @MessagePattern(`event.aggregate.order.*.state.update.*`)
   async updateOrderState(@Ctx() context: any): Promise<void> {
     const tokens = context.getSubject().split('.');
     const orderId = tokens[3];
@@ -56,14 +56,14 @@ export class CloudOrdersController {
     await this.inboundPortsAdapter.updateOrderState(orderId, orderState);
   }
 
-  @MessagePattern(`call.aggregate.order.*.cancel`)
+  @MessagePattern(`event.aggregate.order.*.cancel`)
   async cancelOrder(@Ctx() context: any): Promise<void> {
     const tokens = context.getSubject().split('.');
     const orderId = tokens[tokens.length - 2];
     await this.inboundPortsAdapter.cancelOrder(orderId);
   }
 
-  @MessagePattern(`call.aggregate.order.*.complete`)
+  @MessagePattern(`event.aggregate.order.*.complete`)
   async completeOrder(@Ctx() context: any): Promise<void> {
     const tokens = context.getSubject().split('.');
     const orderId = tokens[tokens.length - 2];

@@ -143,8 +143,27 @@ export class OrdersController {
   @MessagePattern(`get.warehouse.${process.env.WAREHOUSE_ID}.order.*`)
   async getOrder(@Ctx() context: any): Promise<string> {
     const orderId = context.getSubject().split('.').pop();
-    const model = await this.inboundPortsAdapter.getOrder(orderId);
-    return Promise.resolve(JSON.stringify({ result: { model } }));
+    const order = await this.inboundPortsAdapter.getOrder(orderId);
+
+    let model: any = {
+      orderId: order.orderId?.id ?? order.orderId,
+      orderState: order.orderState.orderState,
+      creationDate: order.creationDate,
+      warehouseDeparture: order.warehouseDeparture,
+    };
+
+    // InternalOrderDTO specific fields
+    if ('warehouseDestination' in order) {
+      model.warehouseDestination = order.warehouseDestination;
+      model.sellOrderReference = order.sellOrderReference.id ?? "";
+    }
+
+    // SellOrderDTO specific fields
+    if ('destinationAddress' in order) {
+      model.destinationAddress = order.destinationAddress;
+    }
+
+    return Promise.resolve(JSON.stringify({ result: { model } }, null, 2));
   }
 
   @MessagePattern(`get.warehouse.${process.env.WAREHOUSE_ID}.orders`)
