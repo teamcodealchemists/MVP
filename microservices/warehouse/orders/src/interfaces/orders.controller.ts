@@ -70,7 +70,11 @@ export class OrdersController {
   // NUOVA PORTA (Stefano)
   // Riceve il messaggio dall'Inventario del magazzino di partenza dove dice che ha tutta la merce
   @EventPattern(`warehouse.${process.env.WAREHOUSE_ID}.order.sufficientAvailability`)
-  async sufficientProductAvailability(@Payload('params') orderIdDTO: OrderIdDTO): Promise<void> {
+  async sufficientProductAvailability(@Payload() payload : any): Promise<void> {
+      this.logger.debug('1️⃣ Sufficient product availability received for order:', payload.orderId.id);
+
+      let orderIdDTO = new OrderIdDTO();
+      orderIdDTO.id = payload.orderId.id;
       await this.inboundPortsAdapter.sufficientProductAvailability(orderIdDTO);
   }
 
@@ -85,6 +89,7 @@ export class OrdersController {
   async stockShipped(@Ctx() context: any): Promise<void> {
     const tokens = context.getSubject().split('.');
     const orderId = tokens[3];
+    this.logger.debug(`5️⃣ Stock shipped for order: ${orderId}`);
     await this.inboundPortsAdapter.stockShipped(orderId);
   }
 

@@ -69,7 +69,7 @@ async orderStateToDomain(dto: OrderStateDTO): Promise<OrderState> {
   const state = dto.orderState;
   
   if (!Object.values(OrderState).includes(state as OrderState)) {
-    throw new Error(`Stato ordine non valido: ${state}. Stati validi: ${Object.values(OrderState).join(', ')}`);
+    throw new Error(`Mapper: Stato ordine non valido: ${state}. Stati validi: ${Object.values(OrderState).join(', ')}`);
   }
   return state as OrderState;
 }

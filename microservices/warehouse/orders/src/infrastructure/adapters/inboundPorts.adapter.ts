@@ -123,7 +123,8 @@ export class InboundPortsAdapter implements
       } else if (order instanceof InternalOrder) {
           // Per ordini interni, aggiorna stato e notifica destinazione
           await this.ordersService.updateOrderState(orderIdDomain, OrderState.SHIPPED);
-            Logger.debug(`🚚📦✅ Ordine interno spedito: ${orderIdDomain.getId()} 🎉`);
+          Logger.debug(`🚚📦✅ Ordine interno spedito: ${orderIdDomain.getId()} 🎉`);
+          
 /*           await this.outboundEventAdapter.notifyDestinationWarehouse(
               orderIdDomain, 
               order.getWarehouseDestination()

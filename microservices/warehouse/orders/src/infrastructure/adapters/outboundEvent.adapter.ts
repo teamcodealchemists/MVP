@@ -54,6 +54,8 @@ export class OutboundEventAdapter implements InternalOrderEventPublisher, OrderS
     const orderIdDTO = await this.dataMapper.orderIdToDTO(orderId);
     const itemsDTO = await Promise.all(items.map(item => this.dataMapper.orderItemToDTO(item)));
 
+    this.logger.debug(`🚚📦2️⃣ Preparing to ship order: ${orderIdDTO.id} with items: ${JSON.stringify(itemsDTO)}`);
+
     // Comunica a Inventario di spedire la merce
     await this.natsService.emit(
       `event.warehouse.${process.env.WAREHOUSE_ID}.inventory.ship.items`,JSON.stringify({ orderIdDTO, itemsDTO }));
@@ -89,7 +91,7 @@ export class OutboundEventAdapter implements InternalOrderEventPublisher, OrderS
       // Sincronizza con l'aggregato
       let aggregateSubject = `event.aggregate.order.${orderIdStr}.state.update.${orderState}`;
       await this.natsService.emit(aggregateSubject, "");
-
+      return Promise.resolve();
     } catch (error) {
       console.error('Errore in orderStateUpdated:', error);
       throw error;

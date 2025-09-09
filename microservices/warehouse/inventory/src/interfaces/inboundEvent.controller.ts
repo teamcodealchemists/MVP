@@ -66,6 +66,8 @@ export class InboundEventController {
   @EventPattern(`event.warehouse.${process.env.WAREHOUSE_ID}.inventory.ship.items`)
   async handleShipOrderRequest(@Payload() payload: any): Promise<void> {
 
+    logger.debug('3️⃣ - handleShipOrderRequest payload:', payload);
+
     let dto = new ProductQuantityArrayDto();
     let orderDto = new OrderIdDTO();
     orderDto.id = payload.orderIdDTO.id;
@@ -80,7 +82,6 @@ export class InboundEventController {
     });
 
     try {
-      await validateOrReject(dto);
       this.inboundEventListener.shipOrderRequest(dto);
     } catch (err) {
       logger.error('Errore parsing orderRequest payload', err);
