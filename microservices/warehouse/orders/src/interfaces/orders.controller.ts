@@ -141,9 +141,9 @@ export class OrdersController {
   }
 
   @MessagePattern(`get.warehouse.${process.env.WAREHOUSE_ID}.order.*`)
-  async getOrder(@Ctx() context: any): Promise<InternalOrderDTO | SellOrderDTO> {
+  async getOrder(@Ctx() context: any): Promise<string> {
     const orderId = context.getSubject().split('.').pop();
-    return await this.inboundPortsAdapter.getOrder(orderId);
+    return Promise.resolve(JSON.stringify({result: { model: await this.inboundPortsAdapter.getOrder(orderId) }}));
   }
 
   @MessagePattern(`get.warehouse.${process.env.WAREHOUSE_ID}.orders`)
