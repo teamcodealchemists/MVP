@@ -1,5 +1,5 @@
 import { Controller, Logger  } from '@nestjs/common';
-import { MessagePattern, Payload, Ctx } from '@nestjs/microservices';
+import { MessagePattern, Payload, Ctx, EventPattern } from '@nestjs/microservices';
 import { RpcException } from '@nestjs/microservices';
 
 import { OrderQuantityDTO } from "src/interfaces/dto/orderQuantity.dto";
@@ -69,8 +69,8 @@ export class OrdersController {
   }
   // NUOVA PORTA (Stefano)
   // Riceve il messaggio dall'Inventario del magazzino di partenza dove dice che ha tutta la merce
-  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.sufficient.availability`)
-  async sufficientProductAvailability(@Payload() orderIdDTO: OrderIdDTO): Promise<void> {
+  @EventPattern(`warehouse.${process.env.WAREHOUSE_ID}.order.sufficientAvailability`)
+  async sufficientProductAvailability(@Payload('params') orderIdDTO: OrderIdDTO): Promise<void> {
       await this.inboundPortsAdapter.sufficientProductAvailability(orderIdDTO);
   }
 
