@@ -8,13 +8,14 @@ import { OrderSaga } from '../interfaces/nats/order.saga';
 import { OrdersController } from 'src/interfaces/orders.controller';
 import { InboundPortsAdapter } from 'src/infrastructure/adapters/inboundPorts.adapter';
 import { OutboundEventAdapter } from 'src/infrastructure/adapters/outboundEvent.adapter';
+import { AccessController } from 'src/interfaces/access.controller';
 
 @Module({
   imports: [
     MongooseModule.forRoot(process.env.MONGODB_URI || 'mongodb://mongo:27017/orders'),
     NatsClientModule, 
     OrdersRepositoryModule],
-  controllers: [OrdersController],
+  controllers: [OrdersController, AccessController],
   providers: [InboundPortsAdapter, OrderSaga, OrdersService, DataMapper, OutboundEventAdapter],
 })
 export class OrdersModule {}

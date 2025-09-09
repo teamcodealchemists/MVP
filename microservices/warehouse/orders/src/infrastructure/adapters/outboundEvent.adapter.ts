@@ -32,6 +32,7 @@ export class OutboundEventAdapter implements InternalOrderEventPublisher, OrderS
   async onModuleInit() {
     try {
       await this.natsService.connect();
+      this.logger.log('Connected to NATS service'); // <-- aggiungi questo log
     } catch (error) {
       this.logger.error('Error connecting to NATS service', error);
     }
@@ -40,8 +41,7 @@ export class OutboundEventAdapter implements InternalOrderEventPublisher, OrderS
   // (Deduco) Corrisponde in PUB a STOCKRESERVED
   async publishReserveStock(orderId: OrderId, items: OrderItem[]) {
     // Invia alla porta handleOrderRequest in Inventory del magazzino stesso
-    this.natsService.emit(
-      `event.warehouse.${process.env.WAREHOUSE_ID}.order.request`, { orderId, items });
+    this.natsService.emit(`event.warehouse.${process.env.WAREHOUSE_ID}.order.request`, JSON.stringify({ orderId, items }));
     this.logger.log(`Published reserve stock event for order ${orderId.getId()} with items: ${JSON.stringify(items)}`);
   }
 
