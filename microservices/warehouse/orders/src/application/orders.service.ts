@@ -173,15 +173,8 @@ export class OrdersService {
             uniqueOrderId = new OrderId(order.getOrderId());
         }
         console.log("Creating sell order:", order);
-<<<<<<< HEAD
 
         // Crea il nuovo ordine di vendita
-=======
-        /*         // Controlla se l'ordine esiste già
-                const orderExists = await this.checkOrderExistence(uniqueOrderId);
-         */
-        // Crea il nuovo ordine
->>>>>>> 42d8f64da51112ba165c0c30074d0fdfc02ea997
         const orderWithUniqueId = new SellOrder(
             uniqueOrderId,
             order.getItemsDetail(),
@@ -190,31 +183,12 @@ export class OrdersService {
             order.getWarehouseDeparture(),
             order.getDestinationAddress()
         );
-<<<<<<< HEAD
 
         // Aggiungi il nuovo ordine alla repo e pubblica l'evento di aggiunta del nuovo ordine anche nell'aggregate
         await this.ordersRepositoryMongo.addSellOrder(orderWithUniqueId);
         await this.orderSaga.startSellOrderSaga(uniqueOrderId);
         await this.outboundEventAdapter.publishSellOrder(orderWithUniqueId, { destination: 'aggregate' });
 
-=======
-        /* 
-                // Se l'ordine esiste già, pubblica solo al warehouse di destinazione (inutile rimandarlo all'aggregato)
-                if (orderExists) {
-                    await this.outboundEventAdapter.publishSellOrder(orderWithUniqueId, { 
-                        destination: 'warehouse', 
-                        warehouseId: order.getWarehouseDeparture() 
-                    });
-                } else { */
-        // Se è nuovo, aggiungi a repo e pubblica sia al warehouse di destinazione che all'aggregate Orders
-        await this.ordersRepositoryMongo.addSellOrder(orderWithUniqueId);
-        await this.orderSaga.startSellOrderSaga(uniqueOrderId);
-        await this.outboundEventAdapter.publishSellOrder(orderWithUniqueId, { destination: 'aggregate' });
-        await this.outboundEventAdapter.publishSellOrder(orderWithUniqueId, {
-            destination: 'warehouse',
-            warehouseId: order.getWarehouseDeparture()
-        });
->>>>>>> 42d8f64da51112ba165c0c30074d0fdfc02ea997
         return Promise.resolve(uniqueOrderId.getId());
     }
 
@@ -230,16 +204,8 @@ export class OrdersService {
         }
 
         Logger.debug(`Creating internal order with ID: ${uniqueOrderId.getId()}`, 'OrdersService');
-<<<<<<< HEAD
             
         // Crea il nuovo ordine interno
-=======
-
-        /*         // Controlla se l'ordine esiste già
-                const orderExists = await this.checkOrderExistence(uniqueOrderId);
-         */
-        // Crea il nuovo ordine
->>>>>>> 42d8f64da51112ba165c0c30074d0fdfc02ea997
         const orderWithUniqueId = new InternalOrder(
             uniqueOrderId,
             order.getItemsDetail(),
@@ -250,7 +216,6 @@ export class OrdersService {
             order.getSellOrderReference()
         );
 
-<<<<<<< HEAD
         // Aggiungi il nuovo ordine alla repo
         await this.ordersRepositoryMongo.addInternalOrder(orderWithUniqueId);
         
@@ -278,28 +243,6 @@ export class OrdersService {
             Logger.debug(`Order created but not published (current warehouse: ${currentWarehouseId})`, 'OrdersService');
         }
         
-=======
-        /*         // Se l'ordine esiste già, pubblica solo al warehouse di destinazione
-                if (orderExists) {
-                    await this.outboundEventAdapter.publishInternalOrder(orderWithUniqueId, { 
-                        destination: 'warehouse', 
-                        warehouseId: order.getWarehouseDestination() 
-                    });
-                } else { */
-        // Se è nuovo, aggiungi e pubblica a tutti
-        await this.ordersRepositoryMongo.addInternalOrder(orderWithUniqueId);
-        await this.orderSaga.startInternalOrderSaga(uniqueOrderId);
-        await this.outboundEventAdapter.publishInternalOrder(orderWithUniqueId, { destination: 'aggregate' });
-        await this.outboundEventAdapter.publishInternalOrder(orderWithUniqueId, {
-            destination: 'warehouse',
-            warehouseId: order.getWarehouseDestination()
-        });
-        /*         } */
-
-        //Setta l'ordine come PROCESSING
-        await this.updateOrderState(uniqueOrderId, OrderState.PROCESSING);
-
->>>>>>> 42d8f64da51112ba165c0c30074d0fdfc02ea997
         return Promise.resolve(uniqueOrderId.getId());
     }
 
