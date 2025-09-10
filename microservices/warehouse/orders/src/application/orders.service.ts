@@ -396,9 +396,28 @@ export class OrdersService {
         await this.updateOrderState(id, OrderState.COMPLETED);
 
         const order = await this.ordersRepositoryMongo.getById(id);
-        if (order instanceof InternalOrder && process.env.WAREHOUSE_ID == order.getWarehouseDestination().toString()) {
-            //Notifica il magazzino di partenza che l'ordine è completato ed è arrivato a destinazione
+        if (order instanceof SellOrder) {
+            Logger.log(`✅ L'ordine vendita ${id} è stato completato! YIPPIE!`, JSON.stringify(id, null, 2));
+        }
+        else if (order instanceof InternalOrder && process.env.WAREHOUSE_ID == order.getWarehouseDestination().toString()) {
+            //Notifica il magazzino di partenza che l'ordine di traferimento è completato ed è arrivato a destinazione
             this.outboundEventAdapter.orderCompleted(id, order.getWarehouseDeparture());
+
+            //Verifica se esiste un riferimento a un ordine di vendita e lo fa proseguire
+            let sellorderid: OrderId = order.getSellOrderReference();
+            let sellorder = await this.ordersRepositoryMongo.getById(sellorderid);
+            if(sellorder instanceof SellOrder) {
+                const reservedItems = sellorder.getItemsDetail();
+                const toreserve : OrderItem[] = [];
+                
+                for (const ri of reservedItems) {
+                    let tmp :OrderItem = new OrderItem(ri.getItem().getItemId(), ri.getItem().getQuantity() - ri.getQuantityReserved());
+                    toreserve.push(tmp);
+                }
+                
+                this.outboundEventAdapter.publishReserveStock(sellorderid, toreserve);
+            }
+            
         }
         else {
             Logger.log(`✅ L'ordine interno di rifornimento ${id} è stato completato! YIPPIE!`, JSON.stringify(id, null, 2));

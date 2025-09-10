@@ -97,6 +97,7 @@ export class InboundPortsAdapter implements
       
       if (order instanceof SellOrder) {
         // Per ordini di vendita, completa direttamente
+        Logger.debug(`🚚📦✅ Ordine di vendita spedito: ${orderIdDomain.getId()} 🎉`);
         await this.ordersService.completeOrder(orderIdDomain);
       } else if (order instanceof InternalOrder) {
         // Per ordini interni, aggiorna stato e notifica destinazione
