@@ -59,6 +59,16 @@ export class OrdersService {
         // Aggiorna nel repository
         await this.ordersRepositoryMongo.updateReservedStock(id, itemsWithUpdatedReservation);
 
+        // TODO: Per sincronizzare il cambiamento di quantityReserved anche nell'aggregato
+/*         // Recupera l'ordine aggiornato + Aggiorna l'aggregato con le nuove quantità riservate
+        const updatedOrder = await this.ordersRepositoryMongo.getById(id);
+        
+        if (updatedOrder instanceof SellOrder) {
+            await this.outboundEventAdapter.publishReserveStock(id, { destination: 'aggregate' });
+        } else if (order instanceof InternalOrder) {
+            await this.outboundEventAdapter.publishReserveStock(id, { destination: 'aggregate' });
+        }      */   
+
         // Procedi con il flusso normale
         if (order instanceof SellOrder) {
             await this.checkReservedQuantityForSellOrder(order);
@@ -95,23 +105,6 @@ export class OrdersService {
             await this.checkReservedQuantityForInternalOrder(order);
         }
     }
-
-    /*     async updateOrderState(id: OrderId, state: OrderState): Promise<void> {
-            // Aggiorna lo stato nella repository
-            await this.ordersRepositoryMongo.updateOrderState(id, state);
-            
-            // Recupera l'ordine aggiornato
-            const updatedOrder = await this.ordersRepositoryMongo.getById(id);
-            
-            // Invia sync all'aggregato Orders
-            const reqReceiver = { destination: 'aggregate' as const};
-    
-            if (updatedOrder instanceof SellOrder) {
-                await this.outboundEventAdapter.orderState(updatedOrder, reqReceiver);
-            } else if (updatedOrder instanceof InternalOrder) {
-                await this.outboundEventAdapter.publishInternalOrder(updatedOrder, reqReceiver);
-            }
-        }     */
 
     async updateOrderState(id: OrderId, newState: OrderState): Promise<void> {
         // Recupera lo stato corrente
