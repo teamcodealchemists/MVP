@@ -141,63 +141,17 @@ export class OrdersService {
             throw new Error('Impossibile violare il corretto flusso di gestione stato dell\'ordine');
         }
 
-
         // Aggiorna lo stato nella repository
         await this.ordersRepositoryMongo.updateOrderState(id, newState);
 
-        // Cerca l'ordine per poter prelevare il warehouseDestination
+        // Cerca l'ordine per poter prelevare il warehouseDeparture
         let order = await this.ordersRepositoryMongo.getById(id);
 
-        // Se l'ordine è in invio mando gli eventi altrimenti
-
-
+        // Se lo stato dell'ordine è cambiato e ci troviamo nel magazzino Mittente allora aggiorna l'aggregato
         if (process.env.WAREHOUSE_ID == order.getWarehouseDeparture().toString()) {
-            if (order instanceof InternalOrder) {
-                
-            }
-            else if (order instanceof SellOrder) {
-
-            }
-        }
-        else {
-
-        }
-
-
-        // DA ELIMINARE
-        if (process.env.WAREHOUSE_ID == order.getWarehouseDeparture().toString()) {
-
-            // Se l'ordine è Internal, aggiorna lo state sia nell'aggregato che nell'Ordini del WarehouseDestination
-            if (order instanceof InternalOrder){
-                if (newState != OrderState.COMPLETED) {
-                    await this.outboundEventAdapter.orderStateUpdated(id, newState, { 
-                        destination: 'warehouse', 
-                        warehouseId: order.getWarehouseDestination() 
-                    });
-                }
-
-                return await this.outboundEventAdapter.orderStateUpdated(id, newState, { 
-                    destination: 'aggregate' 
-                });
-            } 
-            // Se l'ordine è Sell, aggiorna lo state sia nell'aggregato che nell'Ordini del WarehouseDestination
-            else if (order instanceof SellOrder){
-                return await this.outboundEventAdapter.orderStateUpdated(id, newState, { 
-                    destination: 'aggregate' 
-                });
-
-            } 
-        } else {
-            if (order instanceof InternalOrder){
-                if (newState === OrderState.SHIPPED) {
-                    // Se l'ordine è in stato SHIPPED, significa che è arrivato a destinazione e quindi va completato
-                    await this.updateOrderState(id, OrderState.COMPLETED);
-
-                }
-                else if (newState === OrderState.COMPLETED) {
-                    this.outboundEventAdapter.orderCompleted(new OrderId(id.getId()), order.getItemsDetail().map(itemDetail => itemDetail.getItem()));
-                }
-            }
+            return await this.outboundEventAdapter.orderStateUpdated(id, newState, {
+                destination: 'aggregate'
+            });
         }
     }
 
@@ -248,7 +202,7 @@ export class OrdersService {
         }
 
         Logger.debug(`Creating internal order with ID: ${uniqueOrderId.getId()}`, 'OrdersService');
-            
+
         // Crea il nuovo ordine interno
         const orderWithUniqueId = new InternalOrder(
             uniqueOrderId,
@@ -262,19 +216,19 @@ export class OrdersService {
 
         // Aggiungi il nuovo ordine alla repo
         await this.ordersRepositoryMongo.addInternalOrder(orderWithUniqueId);
-        
+
         // Controlla se il warehouse di partenza è quello corrente
         const currentWarehouseId = process.env.WAREHOUSE_ID; //Chi siamo noi
-        
+
         if (order.getWarehouseDeparture().toString() === currentWarehouseId) {
             // Se il warehouse di partenza è quello corrente:
             //  => avvia l'InternalOrderSaga, pubblica all'aggregate Orders e pubblica al warehouse di destinazione
 
-            await this.outboundEventAdapter.publishInternalOrder(orderWithUniqueId, { 
-                destination: 'aggregate' 
+            await this.outboundEventAdapter.publishInternalOrder(orderWithUniqueId, {
+                destination: 'aggregate'
             });
 
-            
+
             await this.orderSaga.startInternalOrderSaga(uniqueOrderId);
             await this.updateOrderState(uniqueOrderId, OrderState.PROCESSING);
 
@@ -285,14 +239,13 @@ export class OrdersService {
             this.outboundEventAdapter.waitingForStock(uniqueOrderId, order.getWarehouseDeparture().toString());
             Logger.debug(`Order created but not published (current warehouse: ${currentWarehouseId})`, 'OrdersService');
         }
-        
+
         return Promise.resolve(uniqueOrderId.getId());
     }
 
 
     async cancelOrder(id: OrderId): Promise<void> {
-        await this.ordersRepositoryMongo.removeById(id);
-        await this.outboundEventAdapter.orderCancelled(id);
+        await this.updateOrderState(id, OrderState.CANCELED);
     }
 
 
@@ -357,7 +310,7 @@ export class OrdersService {
             const items = sellOrder.getItemsDetail().map(itemDetail =>
                 itemDetail.getItem()
             );
-             await this.outboundEventAdapter.publishStockRepl(idDomain, items);
+            await this.outboundEventAdapter.publishStockRepl(idDomain, items);
             /* TODO: Cosa chiamare per avviare riassortimento?*/
         }
     }
@@ -380,8 +333,8 @@ export class OrdersService {
             //await this.outboundEventAdapter.publishShipment(idDomain, items);
             await this.outboundEventAdapter.publishInternalOrder(internalOrder, { destination: 'warehouse', warehouseId: internalOrder.getWarehouseDestination() });
         } catch (error) {
-            // Se c'è errore, avvia riassortimento
-            /* TODO: Cosa chiamare per avviare riassortimento?*/
+            await this.cancelOrder(idDomain);
+            Logger.warn(`Ordine interno ${idStr} annullato a causa di merce non disponibile.`);
         }
     }
 
@@ -401,35 +354,45 @@ export class OrdersService {
         console.log(`Ordine ${id.getId()} spedito!`);
     }
 
-    async receiveOrder(id: OrderId): Promise<void> {
+    async receiveOrder(orderIdDomain: OrderId) {
+        const order = await this.ordersRepositoryMongo.getById(orderIdDomain);
+
+        if (order instanceof InternalOrder) {
+            await this.outboundEventAdapter.receiveShipment(
+                orderIdDomain,
+                order.getItemsDetail().map(itemDetail => itemDetail.getItem()),
+                order.getWarehouseDestination()
+            );
+        }
+    }
+
+    /*async receiveOrder(id: OrderId): Promise<void> {
         // Per ordini in arrivo (destinazione)
         const order = await this.ordersRepositoryMongo.getById(id);
 
         if (order instanceof InternalOrder) {
+
             // Aggiorna stato a COMPLETED
-            /*await this.updateOrderState(id, OrderState.COMPLETED);
+            await this.updateOrderState(id, OrderState.COMPLETED);
 
-            // Estrai gli OrderItem dagli OrderItemDetail
-            const items = order.getItemsDetail().map(itemDetail =>
-                itemDetail.getItem()
-            );
-
-            // Aggiungi la merce all'inventario locale usando receiveShipment
-            await this.outboundEventAdapter.receiveShipment(
-                id,
-                items,
-                order.getWarehouseDestination() // o il warehouse corrente?
-            );
-            */
-           this.outboundEventAdapter.completeSagaOrdertoDestination(id, order.getWarehouseDestination().toString());
+            //Notifica il magazzino di partenza che l'ordine è completato ed è arrivato a destinazione
+            this.outboundEventAdapter.completeSagaOrdertoDestination(id, order.getWarehouseDestination().toString());
 
             return Promise.resolve();
         }
-    }
+    }*/
 
     async completeOrder(id: OrderId): Promise<void> {
         await this.updateOrderState(id, OrderState.COMPLETED);
-        console.log(`L'ordine interno di rifornimento ${id} è stato completato!`, JSON.stringify(id, null, 2));
+
+        const order = await this.ordersRepositoryMongo.getById(id);
+        if (order instanceof InternalOrder && process.env.WAREHOUSE_ID == order.getWarehouseDestination().toString()) {
+            //Notifica il magazzino di partenza che l'ordine è completato ed è arrivato a destinazione
+            this.outboundEventAdapter.orderCompleted(id, order.getWarehouseDeparture());
+        }
+        else {
+            Logger.log(`✅ L'ordine interno di rifornimento ${id} è stato completato! YIPPIE!`, JSON.stringify(id, null, 2));
+        }
     }
 
 }

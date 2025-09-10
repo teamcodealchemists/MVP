@@ -5,6 +5,6 @@ export interface OrderStatusEventPublisher {
 
     orderCancelled(OrderId, number): Promise<void>;
 
-    orderCompleted(orderID: OrderId, orderItem: OrderItem[]): Promise<void>;
+    orderCompleted(orderID: OrderId, warehouse: number): Promise<void>;
 
 }
