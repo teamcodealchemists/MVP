@@ -170,7 +170,9 @@ async orderItemDetailToDomain(dto: OrderItemDetailDTO): Promise<OrderItemDetail>
 
 // DOMAIN ===> DTO
 
-async internalOrderToDTO(entity: InternalOrder): Promise<InternalOrderDTO> {
+async internalOrderToDTO(entity: InternalOrder , sellOrder : OrderId): Promise<InternalOrderDTO> {
+    const sODto = new OrderIdDTO();
+    sODto.id = sellOrder.getId();
     return {
         orderId: await this.orderIdToDTO(entity['orderId']),
         items: await Promise.all(
@@ -180,7 +182,7 @@ async internalOrderToDTO(entity: InternalOrder): Promise<InternalOrderDTO> {
         creationDate: entity.getCreationDate(),
         warehouseDeparture: entity.getWarehouseDeparture(),
         warehouseDestination: entity.getWarehouseDestination(),
-        sellOrderId : "" as any
+        sellOrderId : sODto,
     };
 },
 

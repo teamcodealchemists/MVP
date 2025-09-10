@@ -318,7 +318,7 @@ async CheckInsufficientQuantity(
         OrderState.PENDING,
         new Date(),
         whId,
-        warehouseId.getId()
+        warehouseId.getId(),
       );
 
       internalOrdersToCreate.push(internalOrder);
