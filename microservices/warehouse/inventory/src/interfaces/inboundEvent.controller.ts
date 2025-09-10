@@ -53,7 +53,7 @@ export class InboundEventController {
         quantity: item.quantity,
       };
     });
-    
+
     try {
       //validateOrReject(dto);
       this.inboundEventListener.orderRequest(dto);
@@ -86,7 +86,7 @@ export class InboundEventController {
       logger.error('Errore parsing orderRequest payload', err);
     }
   }
-  @EventPattern(`event.warehouse.${process.env.WAREHOUSE_ID}.order.receiveShipment`)
+  @EventPattern(`event.warehouse.${process.env.WAREHOUSE_ID}.inventory.receiveShipment`)
   async handleReceiveShipment(@Payload() payload: any): Promise<void> {
     let productQuantityArrayDto = new ProductQuantityArrayDto();
     let orderDto = new OrderIdDTO();

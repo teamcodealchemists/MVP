@@ -96,17 +96,13 @@ export class InboundPortsAdapter implements
       const order = await this.ordersRepository.getById(orderIdDomain);
       
       if (order instanceof SellOrder) {
-          // Per ordini di vendita, completa direttamente
-          await this.ordersService.completeOrder(orderIdDomain);
+        // Per ordini di vendita, completa direttamente
+        await this.ordersService.completeOrder(orderIdDomain);
       } else if (order instanceof InternalOrder) {
-          // Per ordini interni, aggiorna stato e notifica destinazione
-          await this.ordersService.updateOrderState(orderIdDomain, OrderState.SHIPPED);
-          Logger.debug(`🚚📦✅ Ordine interno spedito: ${orderIdDomain.getId()} 🎉`);
-          
-/*           await this.outboundEventAdapter.notifyDestinationWarehouse(
-              orderIdDomain, 
-              order.getWarehouseDestination()
-          ); */
+        // Per ordini interni, aggiorna stato e notifica destinazione
+        Logger.debug(`🚚📦✅ Ordine interno spedito: ${orderIdDomain.getId()} 🎉`);
+        await this.ordersService.receiveOrder(orderIdDomain);
+
       }
   }
 
@@ -127,7 +123,7 @@ export class InboundPortsAdapter implements
 
   async stockReceived(orderIdDTO: OrderIdDTO): Promise<void> {
     const orderId = await this.dataMapper.orderIdToDomain(orderIdDTO);
-    await this.ordersService.receiveOrder(orderId);
+    await this.ordersService.completeOrder(orderId);
   }
 
   async replenishmentReceived(orderIdDTO: OrderIdDTO): Promise<void> {
@@ -161,7 +157,7 @@ export class InboundPortsAdapter implements
   async completeOrder(orderId: string): Promise<void> {
     const orderIdDTO: OrderIdDTO = { id: orderId };
     const orderIdDomain = await this.dataMapper.orderIdToDomain(orderIdDTO);
-    await this.ordersService.updateOrderState(orderIdDomain, OrderState.COMPLETED);
+    await this.ordersService.completeOrder(orderIdDomain);
   }
 
   async getOrderState(orderId: string): Promise<OrderStateDTO> {

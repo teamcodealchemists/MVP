@@ -215,15 +215,19 @@ export class InventoryService {
         continue;
       }
       const newQuantity = pq.getQuantity() + product.getQuantity();
-      if(product.getMaxThres() > newQuantity){
-        const p = new Product(new ProductId(product.getId().getId()), product.getName(), product.getUnitPrice(), newQuantity,
-        product.getQuantityReserved(), product.getMinThres(), product.getMaxThres());
-        await this.inventoryRepository.updateProduct(p);
-      }else{
-        const p = new Product(new ProductId(product.getId().getId()), product.getName(), product.getUnitPrice(), newQuantity,
-        product.getQuantityReserved(), product.getMinThres(), product.getMaxThres());
-        await this.inventoryRepository.updateProduct(p);
-        this.natsAdapter.aboveMaxThres(p,this.warehouseId);
+      const updatedProduct = new Product(
+        product.getId(),
+        product.getName(),
+        product.getUnitPrice(),
+        newQuantity,
+        product.getQuantityReserved(),
+        product.getMinThres(),
+        product.getMaxThres()
+      );
+      await this.inventoryRepository.updateProduct(updatedProduct);
+      
+      if (newQuantity > product.getMaxThres()) {
+        this.natsAdapter.aboveMaxThres(updatedProduct, this.warehouseId);
       }
     }
     this.natsAdapter.stockReceived(order);
