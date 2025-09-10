@@ -83,8 +83,9 @@ export class InboundPortsAdapter implements
        const orderIdDTO: OrderIdDTO = { id: orderId };
        const orderIdDomain = await this.dataMapper.orderIdToDomain(orderIdDTO);
        
-       // Magazzino di destinazione conferma di aver inserito l'ordine --> aggiorna stato in PROCESSING
-       await this.ordersService.updateOrderState(orderIdDomain, OrderState.PROCESSING);
+       // Inviamo l'ordine
+       await this.ordersService.shipOrder(orderIdDomain);
+
   }
 
   async stockShipped(orderId: string): Promise<void> {

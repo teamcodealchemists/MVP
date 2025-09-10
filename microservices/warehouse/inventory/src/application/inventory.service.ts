@@ -165,7 +165,7 @@ export class InventoryService {
         }
       }
       if (allSufficient) {
-        console.log('Sufficient stock available for all products. Reserving stock.');
+        Logger.log('Sufficient stock available for all products. Reserving stock.');
         const reserved: ProductQuantity[] = [];
         for (const pq of productQ) {
           const product = await this.inventoryRepository.getById(pq.getId());
