@@ -72,7 +72,7 @@ export class OutboundEventHandler implements OnModuleInit {
 
   async handlerStockReceived(orderId : OrderIdDTO): Promise<void> {
 
-    this.natsClient.emit("inventory.stockReceived", JSON.stringify({ orderId }));  //su questo file spec se si modificano qualsiasi stringa bisogna controllare
+    this.natsClient.emit(`warehouse.${process.env.WAREHOUSE_ID}.order.${orderId.id}.stockReceived`, "");  
     return Promise.resolve();
   }
 }

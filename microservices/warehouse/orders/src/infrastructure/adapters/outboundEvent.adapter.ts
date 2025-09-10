@@ -147,6 +147,18 @@ export class OutboundEventAdapter implements InternalOrderEventPublisher, OrderS
     }
   }
 
+  async completeSagaOrdertoDestination(orderId: OrderId, destinationWarehouseId: string) {
+    try {
+      const orderIdDTO = await this.dataMapper.orderIdToDTO(orderId);
+      this.natsService.emit(`event.warehouse.${destinationWarehouseId}.order.${orderId.getId()}.completeInternalOrderSaga`, "");
+      return Promise.resolve();
+    } catch (error) {
+      Logger.error('Errore in completeSagaOrdertoDestination:', error);
+      throw error;
+    }
+  }
+
+
 
   async publishInternalOrder(internalOrder: InternalOrder, context: { destination: 'aggregate' | 'warehouse', warehouseId?: number }) {
 

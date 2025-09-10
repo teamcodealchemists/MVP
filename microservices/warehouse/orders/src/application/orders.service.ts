@@ -148,10 +148,12 @@ export class OrdersService {
 
             // Se l'ordine è Internal, aggiorna lo state sia nell'aggregato che nell'Ordini del WarehouseDestination
             if (order instanceof InternalOrder){
-                await this.outboundEventAdapter.orderStateUpdated(id, newState, { 
-                    destination: 'warehouse', 
-                    warehouseId: order.getWarehouseDestination() 
-                });
+                if (newState != OrderState.COMPLETED) {
+                    await this.outboundEventAdapter.orderStateUpdated(id, newState, { 
+                        destination: 'warehouse', 
+                        warehouseId: order.getWarehouseDestination() 
+                    });
+                }
 
                 return await this.outboundEventAdapter.orderStateUpdated(id, newState, { 
                     destination: 'aggregate' 
@@ -379,7 +381,7 @@ export class OrdersService {
 
         if (order instanceof InternalOrder) {
             // Aggiorna stato a COMPLETED
-            await this.updateOrderState(id, OrderState.COMPLETED);
+            /*await this.updateOrderState(id, OrderState.COMPLETED);
 
             // Estrai gli OrderItem dagli OrderItemDetail
             const items = order.getItemsDetail().map(itemDetail =>
@@ -392,6 +394,8 @@ export class OrdersService {
                 items,
                 order.getWarehouseDestination() // o il warehouse corrente?
             );
+            */
+           this.outboundEventAdapter.completeSagaOrdertoDestination(id, order.getWarehouseDestination().toString());
 
             return Promise.resolve();
         }

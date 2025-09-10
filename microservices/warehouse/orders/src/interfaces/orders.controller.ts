@@ -93,11 +93,18 @@ export class OrdersController {
     await this.inboundPortsAdapter.stockShipped(orderId);
   }
 
-  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.*.stock.received`)
+  @EventPattern(`warehouse.${process.env.WAREHOUSE_ID}.order.*.stockReceived`)
   async stockReceived(@Ctx() context: any): Promise<void> {
     const tokens = context.getSubject().split('.');
     const orderId = tokens[tokens.length - 3];
     await this.inboundPortsAdapter.stockReceived(orderId);
+  }
+
+  @EventPattern(`event.warehouse.${process.env.WAREHOUSE_ID}.order.*.completeInternalOrderSaga`)
+  async completeSagaOrdertoDestination(@Ctx() context: any): Promise<void> {
+    const tokens = context.getSubject().split('.');
+    const orderId = tokens[4];
+    await this.inboundPortsAdapter.completeOrder(orderId);
   }
 
   // Messaggio ricevuto dal servizio di riassortimento
@@ -131,6 +138,8 @@ export class OrdersController {
     }
   }
 
+
+  // DA VEDERE SE TOGLIERE
   @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.*.complete`)
   async completeOrder(@Ctx() context: any): Promise<void> {
     const tokens = context.getSubject().split('.');
