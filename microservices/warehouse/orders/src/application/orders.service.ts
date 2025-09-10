@@ -340,11 +340,14 @@ export class OrdersService {
 
 
     async shipOrder(id: OrderId): Promise<void> {
+        const order = await this.ordersRepositoryMongo.getById(id);
+
         // Aggiorna stato a SHIPPED
         await this.ordersRepositoryMongo.updateOrderState(id, OrderState.SHIPPED);
-
+        if (order instanceof InternalOrder) {
+            await this.outboundEventAdapter.orderStateUpdated(id, OrderState.SHIPPED, { destination: 'warehouse', warehouseId: order.getWarehouseDestination() });
+        }
         // Comunica a Inventario di spedire la merce
-        const order = await this.ordersRepositoryMongo.getById(id);
         const items = order.getItemsDetail().map(itemDetail =>
             itemDetail.getItem()
         );

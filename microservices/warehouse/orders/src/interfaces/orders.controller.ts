@@ -68,7 +68,8 @@ export class OrdersController {
   }
 
   @EventPattern(`event.warehouse.${process.env.WAREHOUSE_ID}.order.internal.new`)
-  async addInternalOrderEvent(@Payload('params') payload: any): Promise<string> {
+  async addInternalOrderEvent(@Payload() payload: any): Promise<string> {
+    Logger.log('📦 Nuovo evento di ordine interno ricevuto:', JSON.stringify(payload, null, 2));
     try {
     const internalOrderDTO: InternalOrderDTO = {
       orderId: payload.orderId,
@@ -97,11 +98,11 @@ export class OrdersController {
       await this.inboundPortsAdapter.sufficientProductAvailability(orderIdDTO);
   }
 
-  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.*.waitingStock`)
+  @EventPattern(`event.warehouse.${process.env.WAREHOUSE_ID}.order.*.waitingStock`)
   async waitingForStock(@Ctx() context: any): Promise<void> {
     this.logger.debug('[1] Waiting for stock for order:', context.getSubject());
     const tokens = context.getSubject().split('.');
-    const orderId = tokens[tokens.length - 3];
+    const orderId = tokens[4];
     await this.inboundPortsAdapter.waitingForStock(orderId);
   }
 
@@ -117,7 +118,11 @@ export class OrdersController {
   async stockReceived(@Ctx() context: any): Promise<void> {
     const tokens = context.getSubject().split('.');
     const orderId = tokens[3];
-    await this.inboundPortsAdapter.stockReceived(orderId);
+
+    const orderIdDto = new OrderIdDTO();
+    orderIdDto.id = orderId;
+    Logger.log('6️⃣ Stock received event for order:'+ orderId, "Order Controller");
+    await this.inboundPortsAdapter.stockReceived(orderIdDto);
   }
 
   // Messaggio ricevuto dal servizio di riassortimento
@@ -131,14 +136,27 @@ export class OrdersController {
   }
 
   @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.*.state.update.*`)
-  async updateOrderState(@Ctx() context: any): Promise<void> {
+  async updateOrderState(@Ctx() context: any): Promise<string> {
+    try {
+      const tokens = context.getSubject().split('.');
+      const orderId = tokens[4];
+      const orderState = tokens[7];
+      await this.inboundPortsAdapter.updateOrderState(orderId, orderState);
+      return Promise.resolve(JSON.stringify({ result: { message: `Order ${orderId} state updated to ${orderState}` } }));
+    } catch (error) {
+        return Promise.resolve(JSON.stringify({ error: { code: 'system.internalError', message: error?.message || 'Unknown error' } }));
+    }
+  }
+
+  @EventPattern(`event.warehouse.${process.env.WAREHOUSE_ID}.order.*.state.update.*`)
+  async updateOrderStateEvent(@Ctx() context: any): Promise<void> {
     try {
       const tokens = context.getSubject().split('.');
       const orderId = tokens[4];
       const orderState = tokens[7];
       await this.inboundPortsAdapter.updateOrderState(orderId, orderState);
     } catch (error) {
-        throw new RpcException(error.message);
+        throw new Error(error.message);
     }
   }
 

@@ -187,7 +187,7 @@ export class InventoryService {
         }
         await this.natsAdapter.sufficientProductAvailability(order);
       } else {
-        console.log('Insufficient stock for one or more products. Reserving available quantities.');
+        Logger.warn('Insufficient stock for one or more products. Reserving available quantities.');
         await this.natsAdapter.reservedQuantities(order, reserved);
       }
     return Promise.resolve();
@@ -225,7 +225,7 @@ export class InventoryService {
         product.getMaxThres()
       );
       await this.inventoryRepository.updateProduct(updatedProduct);
-      
+
       if (newQuantity > product.getMaxThres()) {
         this.natsAdapter.aboveMaxThres(updatedProduct, this.warehouseId);
       }
