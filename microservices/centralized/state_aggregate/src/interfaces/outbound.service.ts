@@ -14,11 +14,12 @@ export class OutboundService {
   ) {}
 
   publishHeartbeat(heartbeat: CloudHeartbeatDTO): void {
-    this.natsService.publish('call.cloud.checkHeartbeat', heartbeat);
+    this.natsService.publish(`call.cloud.checkHeartbeat.${heartbeat.warehouseId}`, heartbeat);
   }
 
   publishState(state: CloudWarehouseStateDTO): void {
-    this.natsService.publish('call.cloud.publishState', state);
+    console.log('State.id: ',state.warehouseId);
+    this.natsService.publish(`call.routing.warehouse.${state.warehouseId}.warehouseState.set`, JSON.stringify(state));
   }
 
   stateUpdated(state: CloudWarehouseStateDTO): void {

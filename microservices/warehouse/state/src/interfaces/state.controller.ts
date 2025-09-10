@@ -13,7 +13,7 @@ export class StateController{
     private readonly inboundPortsAdapter: InboundPortsAdapter,
   ) {}
 
-  @MessagePattern('call.cloud.checkHeartbeat')
+  @MessagePattern(`call.cloud.checkHeartbeat.${process.env.WAREHOUSE_ID}`)
   async getSyncedState(data: any): Promise<void> {
     this.logger.log(`Raw inbound data: ${JSON.stringify(data)}`);
     let warehouseId = 0;

@@ -72,10 +72,11 @@ export class RoutingController implements WarehouseAddressSubscriber, CriticQuan
         }
     }
 
-    @MessagePattern(`call.routing.warehouse.${process.env.WAREHOUSE_ID}.warehouseState.add`)
-    async updateWarehouseState(@Payload('params') warehouseState: WarehouseStateDTO): Promise<string|false> {
+    @MessagePattern(`call.routing.warehouse.*.warehouseState.set`)
+    async updateWarehouseState(@Payload() payload: any): Promise<string|false> {
+        console.log('Received warehouseState DTO:', payload);
         try {
-            const domainState = DataMapper.warehouseStateToDomain(warehouseState);
+            const domainState = DataMapper.warehouseStateToDomain(payload);
             return await this.routingService.updateWarehouseState(domainState.getId(), domainState.getState());
         } catch (error) {
             return Promise.resolve(JSON.stringify({

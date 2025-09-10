@@ -15,7 +15,6 @@ export class StateEventHandler implements OnModuleInit {
   }
 
 async publishHeartbeat(heartbeat: HeartbeatDTO): Promise<void> {
-  console.log(JSON.stringify(heartbeat.warehouseId));
   await this.natsClient.emit(`call.cloudState.warehouse.${heartbeat.warehouseId}.heartbeat.response`, heartbeat);
 }
  
