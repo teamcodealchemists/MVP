@@ -246,6 +246,20 @@ export class OrdersService {
 
     async cancelOrder(id: OrderId): Promise<void> {
         await this.updateOrderState(id, OrderState.CANCELED);
+        
+        // Preleva l'array di OrderItemDetails dall'ordine e mappalo dentro un array di OrderItem dove qtyReserved = qty
+        const order = await this.ordersRepositoryMongo.getById(id);
+        let itemsToBeUnreserved = order.getItemsDetail();
+
+        itemsToBeUnreserved.map(detail => {
+        // Crea un nuovo OrderItem con quantity = quantityReserved
+         new OrderItem(
+            detail.getItem().getItemId(), // Mantieni lo stesso ItemId
+            detail.getQuantityReserved() // Usa quantityReserved come nuova quantity
+        );
+      });   
+      
+      await this.outboundEventAdapter.unReserveStock(id, itemsToBeUnreserved);
     }
 
 

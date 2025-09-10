@@ -55,6 +55,16 @@ export class OutboundEventAdapter implements InternalOrderEventPublisher, OrderS
     this.logger.log(`Published reserve stock event for order ${orderId.getId()} with items: ${JSON.stringify(itemsDTO)}`);
   }
 
+  async unreserveStock(orderId: OrderId, items: OrderItem[]): Promise<void> {
+    const orderIdDTO = await this.dataMapper.orderIdToDTO(orderId);
+    const itemsDTO = await Promise.all(items.map(item => this.dataMapper.orderItemToDTO(item)));
+
+    // Invia alla porta unreserveStock in Inventory del magazzino stesso
+    this.natsService.emit(`event.warehouse.${process.env.WAREHOUSE_ID}.unreserveStock`, JSON.stringify({ orderIdDTO, itemsDTO }));
+    this.logger.log(`Published UNRESERVE STOCK event for order ${orderId.getId()} with items: ${JSON.stringify(itemsDTO)}`);
+  }
+
+
 
   async publishShipment(orderId: OrderId, items: OrderItem[]): Promise<void> {
     const orderIdDTO = await this.dataMapper.orderIdToDTO(orderId);
