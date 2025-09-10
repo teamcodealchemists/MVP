@@ -1,4 +1,3 @@
-import { productQuantityArrayDto } from 'src/interfaces/http/dto/productQuantityArray.dto';
 import { Controller, Logger } from '@nestjs/common';
 import { EventPattern, MessagePattern, Payload } from '@nestjs/microservices';
 import { plainToInstance } from 'class-transformer';

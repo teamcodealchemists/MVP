@@ -349,9 +349,15 @@ export class OrdersService {
             );
 
             // Tutta la merce è riservata, procedi con la spedizione
+            console.log(`Sto per fare la spedizione dell'ordine SellOrder con id: ${idStr}`);
             await this.outboundEventAdapter.publishShipment(idDomain, items);
         } catch (error) {
             // Se c'è errore, avvia riassortimento
+            console.log(`Sto per fare riassorimento dell'ordine SellOrder con id: ${idStr}`);
+            const items = sellOrder.getItemsDetail().map(itemDetail =>
+                itemDetail.getItem()
+            );
+             await this.outboundEventAdapter.publishStockRepl(idDomain, items);
             /* TODO: Cosa chiamare per avviare riassortimento?*/
         }
     }

@@ -132,10 +132,8 @@ export class InboundPortsAdapter implements
 
   async replenishmentReceived(orderIdDTO: OrderIdDTO): Promise<void> {
       const orderId = await this.dataMapper.orderIdToDomain(orderIdDTO);
-      
-      // Dopo riassortimento, verifica di nuovo le quantità riservate
       const order = await this.ordersRepository.getById(orderId);
-      
+
       if (order instanceof SellOrder) {
           await this.ordersService.checkReservedQuantityForSellOrder(order);
       } else if (order instanceof InternalOrder) {

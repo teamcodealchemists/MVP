@@ -50,11 +50,16 @@ export class RoutingController implements WarehouseAddressSubscriber, CriticQuan
     }
 
     @MessagePattern(`call.routing.warehouse.${process.env.WAREHOUSE_ID}.receiveRequest.set`)
-    async receiveRequest(@Payload('params') warehouseId: WarehouseIdDTO): Promise<string> {
+    async receiveRequest(@Payload('params') payload: any): Promise<string> {
         try {
+            const warehouseId = payload.warehouseId;
             const domainId = DataMapper.warehouseIdToDomain(warehouseId);
+            console.log('Payload received in receiveRequest:', payload);
             const warehouses = await this.routingService.calculateDistance(domainId);
-            return Promise.resolve(JSON.stringify({ result: "Request received successfully", warehouses: warehouses }));
+            console.log('Received warehouseId:', warehouseId);
+            console.log('DomainId:', domainId);
+            console.log('Calculated warehouses:', warehouses);
+            return Promise.resolve(JSON.stringify({ result: warehouses }));
         } catch (error) {
             return Promise.resolve(JSON.stringify({
                 error: {
