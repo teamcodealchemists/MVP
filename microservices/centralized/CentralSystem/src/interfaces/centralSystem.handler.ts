@@ -10,6 +10,7 @@ import { OrderId } from "src/domain/orderId.entity";
 import { WarehouseId } from "src/domain/warehouseId.entity";
 import { ProductId } from "src/domain/productId.entity";
 import { DataMapper } from "src/infrastructure/mappers/dataMapper";
+import { parse } from "path";
 @Injectable()
 export class centralSystemHandler implements OnModuleInit {
   constructor(
@@ -43,26 +44,33 @@ export class centralSystemHandler implements OnModuleInit {
   }
 
 async handleCloudInventoryRequest(): Promise<Inventory> {
-  const result = await firstValueFrom(this.natsClient.send("cloud.inventory.request", {}));
+  const result = await firstValueFrom(this.natsClient.send("aggregatedWarehouses.inventory", JSON.stringify({})));
+  console.log("handleCloudInventoryRequest result:", JSON.stringify(result));
   const parsed = typeof result === "string" ? JSON.parse(result) : result;
   return DataMapper.toDomainInventory(parsed);
 }
 
 async handleCloudOrdersRequest(): Promise<Orders> {
-  const result = await firstValueFrom(this.natsClient.send("get.aggregate.orders", {}));
+  const result = await firstValueFrom(this.natsClient.send("get.aggregate.orders", JSON.stringify({})));
+  console.log("handleCloudOrdersRequest result:", result);
   const parsed = typeof result === "string" ? JSON.parse(result) : result;
   return DataMapper.ordersToDomain(parsed);
 }
 
 async handleWarehouseDistance(warehouseId: warehouseIdDto): Promise<WarehouseId[]> {
-  console.log("Requesting warehouse distance for:", warehouseId);
-  const result = await this.natsClient.send("call.routing.warehouse."+warehouseId.warehouseId+".receiveRequest.set", JSON.stringify(warehouseId));
-  console.log("Warehouse distance result:", result);
+  console.log("call.routing.warehouse."+warehouseId.warehouseId+".receiveRequest.set");
+  const result = await firstValueFrom(this.natsClient.send("call.routing.warehouse."+warehouseId.warehouseId+".receiveRequest.set",
+                                             JSON.stringify(warehouseId)));
+  console.log("Warehouse distance result:", JSON.stringify(result));
   const parsed = typeof result === "string" ? JSON.parse(result) : result;
-  return parsed.map((item: any) => DataMapper.warehouseStatetoDomain(item));
+  const warehousesArray = parsed?.result?.warehouses || [];
+
+  return warehousesArray.map((item: any) => {
+    const wIdDto = new warehouseIdDto();
+    wIdDto.warehouseId = item.id;
+    return DataMapper.warehouseIdToDomain(wIdDto); 
+  });
 }
-
-
    async handleRequestInvResult(message : string, productId : ProductId, warehouseId : WarehouseId): Promise<void> {
     /*
     console.log("----------------------------------------------------------------------------------------------");
