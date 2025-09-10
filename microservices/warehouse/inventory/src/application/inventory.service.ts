@@ -193,6 +193,31 @@ export class InventoryService {
     return Promise.resolve();
   }
 
+  async unreserveStock(order : OrderId, productQ :  ProductQuantity[]): Promise<void>{
+    for (const pq of productQ) {
+      const product = await this.inventoryRepository.getById(pq.getId());
+      if (!product) continue;
+      const newQuantity = product.getQuantity() + pq.getQuantity();
+      const newReserved = (product.getQuantityReserved() - pq.getQuantity() < 0 ? 0: product.getQuantityReserved() - pq.getQuantity());
+      const updatedProduct = new Product(
+        new ProductId(product.getId().getId()),
+        product.getName(),
+        product.getUnitPrice(),
+        newQuantity,
+        newReserved,
+        product.getMinThres(),
+        product.getMaxThres()
+      );
+      await this.natsAdapter.stockUpdated(updatedProduct, this.warehouseId);
+      if(product.getMaxThres() < newQuantity) this.natsAdapter.aboveMaxThres(updatedProduct,this.warehouseId);
+      await this.inventoryRepository.updateProduct(updatedProduct);
+    }
+
+    Logger.log('Le quantità riservate sono state rilasciate.');
+    return Promise.resolve();
+  }
+
+
 
   /**
    * Receives stock for a given order and updates the inventory accordingly.
