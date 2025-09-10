@@ -171,9 +171,9 @@ export class CommandHandler {
   }
 
   @MessagePattern('aggregatedWarehouses.inventory')
-  async getInventory(): Promise<SyncInventoryDTO> {
+  async getInventory(): Promise<string> {
       const products = (await this.cloudInventoryEventAdapter.getAll());
-      return Promise.resolve(products);
+      return Promise.resolve(JSON.stringify(products));
   }
 
   private async errorHandler(error: any): Promise<string> {

@@ -20,6 +20,7 @@
     });
     app.useGlobalPipes(new ValidationPipe({ exceptionFactory: (errors) => new RpcException(errors) }));
     await app.listen();
+    logger.log(`Routing NATS microservice running on ${process.env.NATS_URL || 'nats://nats:4222'}`);
     }
 
     bootstrap();
