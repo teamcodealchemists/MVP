@@ -56,7 +56,7 @@ export class InventoryRepositoryMongo implements InventoryRepository {
     if (!productDoc) return null;
 
     return new Product(
-      productDoc.id,
+      new ProductId(productDoc.id),
       productDoc.name,
       productDoc.unitPrice,
       productDoc.quantity,
