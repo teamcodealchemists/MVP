@@ -49,8 +49,8 @@ export class InboundEventController {
       const productIdDto = new ProductIdDto();
       productIdDto.id = item.itemId.id;
       return {
-      productId: productIdDto,
-      quantity: item.quantity,
+        productId: productIdDto,
+        quantity: item.quantity,
       };
     });
 
@@ -62,22 +62,26 @@ export class InboundEventController {
       logger.error('Errore parsing orderRequest payload', err);
     }
   }
-  
-  @EventPattern(`event.warehouse.${process.env.WAREHOUSE_ID}.order.ship`)
-  async handleShipOrderRequest(payload: any): Promise<void> {
-    const data =
-      typeof payload === 'string'
-        ? payload
-        : payload?.data
-          ? payload.data.toString()
-          : payload;
+
+  @EventPattern(`event.warehouse.${process.env.WAREHOUSE_ID}.inventory.ship.items`)
+  async handleShipOrderRequest(@Payload() payload: any): Promise<void> {
+
+    logger.debug('3️⃣ - handleShipOrderRequest payload:', payload);
+
+    let dto = new ProductQuantityArrayDto();
+    let orderDto = new OrderIdDTO();
+    orderDto.id = payload.orderIdDTO.id;
+    dto.id = orderDto;
+    dto.productQuantityArray = payload.itemsDTO.map((item: any) => {
+      const productIdDto = new ProductIdDto();
+      productIdDto.id = item.itemId.id;
+      return {
+        productId: productIdDto,
+        quantity: item.quantity,
+      };
+    });
+
     try {
-      const parsed = JSON.parse(data);
-      const dto = plainToInstance(ProductQuantityArrayDto, {
-        productQuantityArray: parsed,
-      });
-      const errors = await validateOrReject(dto);
-      logger.error('Validation failed for orderRequest:', errors);
       this.inboundEventListener.shipOrderRequest(dto);
     } catch (err) {
       logger.error('Errore parsing orderRequest payload', err);

@@ -1,5 +1,5 @@
 import { Controller, Logger  } from '@nestjs/common';
-import { MessagePattern, Payload, Ctx } from '@nestjs/microservices';
+import { MessagePattern, Payload, Ctx, EventPattern } from '@nestjs/microservices';
 import { RpcException } from '@nestjs/microservices';
 
 import { OrderQuantityDTO } from "src/interfaces/dto/orderQuantity.dto";
@@ -69,8 +69,12 @@ export class OrdersController {
   }
   
   // Riceve il messaggio dall'Inventario del magazzino di partenza dove dice che ha tutta la merce
-  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.sufficient.availability`)
-  async sufficientProductAvailability(@Payload() orderIdDTO: OrderIdDTO): Promise<void> {
+  @EventPattern(`warehouse.${process.env.WAREHOUSE_ID}.order.sufficientAvailability`)
+  async sufficientProductAvailability(@Payload() payload : any): Promise<void> {
+      this.logger.debug('1️⃣ Sufficient product availability received for order:', payload.orderId.id);
+
+      let orderIdDTO = new OrderIdDTO();
+      orderIdDTO.id = payload.orderId.id;
       await this.inboundPortsAdapter.sufficientProductAvailability(orderIdDTO);
   }
 
@@ -81,10 +85,11 @@ export class OrdersController {
     await this.inboundPortsAdapter.waitingForStock(orderId);
   }
 
-  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.*.stock.shipped`)
+  @MessagePattern(`warehouse.${process.env.WAREHOUSE_ID}.order.*.stockShipped`)
   async stockShipped(@Ctx() context: any): Promise<void> {
     const tokens = context.getSubject().split('.');
-    const orderId = tokens[tokens.length - 3];
+    const orderId = tokens[3];
+    this.logger.debug(`5️⃣ Stock shipped for order: ${orderId}`);
     await this.inboundPortsAdapter.stockShipped(orderId);
   }
 

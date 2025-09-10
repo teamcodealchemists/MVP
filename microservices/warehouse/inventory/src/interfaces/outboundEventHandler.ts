@@ -53,7 +53,7 @@ export class OutboundEventHandler implements OnModuleInit {
 
   async handlerSufficientProductAvailability(orderId : OrderIdDTO): Promise<void> {
     this.logger.log("sufficientProductAvailability");
-    this.natsClient.emit("inventory.sufficientAvailability", JSON.stringify({orderId}));
+    this.natsClient.emit(`warehouse.${process.env.WAREHOUSE_ID}.order.sufficientAvailability`, JSON.stringify({orderId}));
     return Promise.resolve();
   }
 
@@ -65,7 +65,8 @@ export class OutboundEventHandler implements OnModuleInit {
   
   async handlerStockShipped(orderId : OrderIdDTO): Promise<void> {
 
-    this.natsClient.emit("inventory.stockShipped", JSON.stringify({ orderId }));  //su questo file spec se si modificano qualsiasi stringa bisogna controllare
+    this.logger.log("🚚📦4️⃣ Preparing to ship order:", orderId);
+    this.natsClient.emit(`warehouse.${process.env.WAREHOUSE_ID}.order.${orderId.id}.stockShipped`, JSON.stringify({ orderId }));
     return Promise.resolve();
   }
 
