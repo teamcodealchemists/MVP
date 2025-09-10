@@ -1,12 +1,13 @@
-
 FROM node:22-alpine AS builder
 
 WORKDIR /usr/src/app
 
 COPY . .
 
-RUN npm install --legacy-peer-deps
-RUN npm run build
+RUN npm install
+
+#Removed for Live Reload
+RUN rm -rf ./src
 
 EXPOSE 3000
 
