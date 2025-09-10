@@ -50,11 +50,20 @@ async handleCloudInventoryRequest(): Promise<Inventory> {
   return DataMapper.toDomainInventory(parsed);
 }
 
-async handleCloudOrdersRequest(): Promise<Orders> {
-  const result = await firstValueFrom(this.natsClient.send("get.aggregate.orders", JSON.stringify({})));
+async handleCloudOrdersRequest(): Promise<Orders | null> {
+  const result = await firstValueFrom(
+    this.natsClient.send("get.aggregate.orders", JSON.stringify({}))
+  );
   console.log("handleCloudOrdersRequest result:", result);
+
   const parsed = typeof result === "string" ? JSON.parse(result) : result;
-  return DataMapper.ordersToDomain(parsed);
+
+  const ordersCollection = parsed?.result?.collection ?? parsed;
+
+  if (Array.isArray(ordersCollection) && ordersCollection.length === 0) {
+    return [] as unknown as Orders;
+  }
+  return DataMapper.ordersToDomain(ordersCollection);
 }
 
 async handleWarehouseDistance(warehouseId: warehouseIdDto): Promise<WarehouseId[]> {
