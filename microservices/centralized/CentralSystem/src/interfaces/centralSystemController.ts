@@ -63,19 +63,21 @@ export class centralSystemController {
   @EventPattern('inventory.belowMinThres')
   async handleCriticalQuantityMin(@Payload() data: any): Promise<void> {
     console.log('Arrivato in handleCriticalQuantityMin');
+    console.log('Payload raw:', JSON.stringify(data));
     try {
+      const pIdDto = new productIdDto();
+      pIdDto.id = data.product?.id?.id;
+
+      const warehouseDtoInstance = new warehouseIdDto();
+      warehouseDtoInstance.warehouseId = data.product?.warehouseId?.warehouseId;
+
       const productDtoInstance = new productDto();
-      productDtoInstance.id = new productIdDto();
-      productDtoInstance.id.id = data.product?.id;
+      productDtoInstance.id = pIdDto;
       productDtoInstance.name = data.product?.name;
       productDtoInstance.unitPrice = data.product?.unitPrice;
       productDtoInstance.quantity = data.product?.quantity;
       productDtoInstance.minThres = data.product?.minThres;
       productDtoInstance.maxThres = data.product?.maxThres;
-
-      const warehouseDtoInstance = new warehouseIdDto();
-      warehouseDtoInstance.warehouseId = data.product?.warehouseId;
-
       productDtoInstance.warehouseId = warehouseDtoInstance;
       await validateOrReject(productDtoInstance);
       logger.log(`Received criticalQuantity.min event with payload: ${JSON.stringify(productDtoInstance)}`);
@@ -92,19 +94,19 @@ export class centralSystemController {
   @EventPattern('inventory.aboveMaxThres')
   async handleCriticalQuantityMax(@Payload() data: any): Promise<void> {
     try {
+      const pIdDto = new productIdDto();
+      pIdDto.id = data.product?.id?.id;
+
+      const warehouseDtoInstance = new warehouseIdDto();
+      warehouseDtoInstance.warehouseId = data.product?.warehouseId?.warehouseId;
+
       const productDtoInstance = new productDto();
-      productDtoInstance.id = new productIdDto();
-      productDtoInstance.id.id = data.product?.id;
+      productDtoInstance.id = pIdDto;
       productDtoInstance.name = data.product?.name;
       productDtoInstance.unitPrice = data.product?.unitPrice;
       productDtoInstance.quantity = data.product?.quantity;
       productDtoInstance.minThres = data.product?.minThres;
       productDtoInstance.maxThres = data.product?.maxThres;
-
-      // Trasformazione warehouseId in DTO
-      const warehouseDtoInstance = new warehouseIdDto();
-      warehouseDtoInstance.warehouseId = data.product?.warehouseId; // assegni il numero al campo id
-
       productDtoInstance.warehouseId = warehouseDtoInstance;
       await validateOrReject(productDtoInstance);
       logger.log(`Received criticalQuantity.max event with payload: ${JSON.stringify(data)}`);

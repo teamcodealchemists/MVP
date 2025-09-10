@@ -35,7 +35,7 @@ export class centralSystemHandler implements OnModuleInit {
   async handleOrder(order: InternalOrderDTO): Promise<void> {
     console.log("handler : Magazzino mandato! \n"+ order);
     try {
-      this.natsClient.emit(`call.warehouse.${order.warehouseDeparture}.order.internal.new`, JSON.stringify(order));
+      this.natsClient.emit(`event.warehouse.${order.warehouseDeparture}.order.internal.new`, JSON.stringify(order));
     } catch (error) {
       console.error("Error creating internal order:", error);
       throw error;
