@@ -66,7 +66,7 @@ OrderRequestUseCase {
   }
   async receiveShipment(dto : ProductQuantityArrayDto) : Promise<void>{
     const { orderId, productQuantities } = DataMapper.toDomainProductQuantityArray(dto);
-    await this.service.shipOrder(orderId, productQuantities);
+    await this.service.receiveStock(orderId, productQuantities);
   }
   
 

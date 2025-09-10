@@ -194,6 +194,20 @@ export class InventoryService {
   }
 
 
+  /**
+   * Receives stock for a given order and updates the inventory accordingly.
+   *
+   * For each product in the provided list, this method:
+   * - Retrieves the current product from the inventory repository.
+   * - If the product exists, calculates the new quantity by adding the received quantity.
+   * - If the new quantity does not exceed the maximum threshold, updates the product in the repository.
+   * - If the new quantity exceeds the maximum threshold, triggers a notification via the NATS adapter.
+   * After processing all products, notifies that stock has been received for the order.
+   *
+   * @param order - The identifier of the order for which stock is being received.
+   * @param productQ - An array of product quantities to be received and processed.
+   * @returns A promise that resolves when the operation is complete.
+   */
   async receiveStock(order : OrderId, productQ :  ProductQuantity[]): Promise<void>{
     for (const pq of productQ) {
       const product = await this.inventoryRepository.getById(pq.getId());
@@ -208,6 +222,7 @@ export class InventoryService {
       }else{
         const p = new Product(new ProductId(product.getId().getId()), product.getName(), product.getUnitPrice(), newQuantity,
         product.getQuantityReserved(), product.getMinThres(), product.getMaxThres());
+        await this.inventoryRepository.updateProduct(p);
         this.natsAdapter.aboveMaxThres(p,this.warehouseId);
       }
     }
