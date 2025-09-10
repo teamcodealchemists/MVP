@@ -157,6 +157,7 @@ export class InventoryService {
           
           const p = new Product(new ProductId(pq.getId().getId()), product.getName(), product.getUnitPrice(), 0,
                                 newReserved, product.getMinThres(), product.getMaxThres());
+          console.log('Product ID:', product.getId().getId());
           const p1 = new ProductQuantity(new ProductId(product.getId().getId()), newReserved);
           if(product.getMinThres() > 0) this.natsAdapter.belowMinThres(p,this.warehouseId);
           reserved.push(p1);
@@ -164,6 +165,7 @@ export class InventoryService {
         }
       }
       if (allSufficient) {
+        console.log('Sufficient stock available for all products. Reserving stock.');
         const reserved: ProductQuantity[] = [];
         for (const pq of productQ) {
           const product = await this.inventoryRepository.getById(pq.getId());
@@ -171,13 +173,13 @@ export class InventoryService {
           const newQuantity = product.getQuantity() - pq.getQuantity();
           const newReserved = (product.getQuantityReserved() || 0) + pq.getQuantity();
           const updatedProduct = new Product(
-            product.getId(),
-            product.getName(),
-            product.getUnitPrice(),
-            newQuantity,
-            newReserved,
-            product.getMinThres(),
-            product.getMaxThres()
+          new ProductId(product.getId().getId()),
+          product.getName(),
+          product.getUnitPrice(),
+          newQuantity,
+          newReserved,
+          product.getMinThres(),
+          product.getMaxThres()
           );
           if(product.getMinThres() > newQuantity) this.natsAdapter.belowMinThres(updatedProduct,this.warehouseId);
           await this.inventoryRepository.updateProduct(updatedProduct);
@@ -185,6 +187,7 @@ export class InventoryService {
         }
         await this.natsAdapter.sufficientProductAvailability(order);
       } else {
+        console.log('Insufficient stock for one or more products. Reserving available quantities.');
         await this.natsAdapter.reservedQuantities(order, reserved);
       }
     return Promise.resolve();

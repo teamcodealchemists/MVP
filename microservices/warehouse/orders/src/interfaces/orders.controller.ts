@@ -39,7 +39,6 @@ export class OrdersController {
         warehouseDeparture: payload.warehouseDeparture,
         destinationAddress: payload.destinationAddress
       };
-      await this.inboundPortsAdapter.addSellOrder(sellOrderDTO);
       let newOrderId = await this.inboundPortsAdapter.addSellOrder(sellOrderDTO);
       let RID = `warehouse.${process.env.WAREHOUSE_ID}.order.${newOrderId}`;
       return Promise.resolve(JSON.stringify({ resource: { rid: RID } }));
