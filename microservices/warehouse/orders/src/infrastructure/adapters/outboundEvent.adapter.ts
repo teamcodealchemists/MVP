@@ -173,7 +173,7 @@ export class OutboundEventAdapter implements InternalOrderEventPublisher, OrderS
 
     if (context.destination === 'aggregate') {
       subject = `event.aggregate.order.sell.new`;
-      await this.natsService.emit(subject, JSON.parse(JSON.stringify(sellOrderDTO)));
+      await this.natsService.emit(subject, JSON.stringify(sellOrderDTO));
     }
 
     return Promise.resolve(JSON.stringify(sellOrder.getOrderId()));

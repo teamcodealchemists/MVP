@@ -39,6 +39,7 @@ export class OrdersController {
         warehouseDeparture: payload.warehouseDeparture,
         destinationAddress: payload.destinationAddress
       };
+      Logger.debug(`Adding Sell Order: ${JSON.stringify(sellOrderDTO)}`);
       let newOrderId = await this.inboundPortsAdapter.addSellOrder(sellOrderDTO);
       let RID = `warehouse.${process.env.WAREHOUSE_ID}.order.${newOrderId}`;
       return Promise.resolve(JSON.stringify({ resource: { rid: RID } }));
@@ -181,10 +182,11 @@ export class OrdersController {
   }
 
   @MessagePattern(`get.warehouse.${process.env.WAREHOUSE_ID}.order.*.state`)
-  async getOrderState(@Ctx() context: any): Promise<OrderStateDTO> {
+  async getOrderState(@Ctx() context: any): Promise<string> {
     const tokens = context.getSubject().split('.');
     const orderId = tokens[tokens.length - 2];
-    return await this.inboundPortsAdapter.getOrderState(orderId);
+    const orderState = await this.inboundPortsAdapter.getOrderState(orderId);
+    return Promise.resolve(JSON.stringify({ result: { model: orderState } }));
   }
 
   @MessagePattern(`get.warehouse.${process.env.WAREHOUSE_ID}.order.*`)

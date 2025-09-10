@@ -179,6 +179,7 @@ export class OrdersService {
         await this.ordersRepositoryMongo.addSellOrder(orderWithUniqueId);
         await this.orderSaga.startSellOrderSaga(uniqueOrderId);
         await this.outboundEventAdapter.publishSellOrder(orderWithUniqueId, { destination: 'aggregate' });
+        await this.updateOrderState(uniqueOrderId, OrderState.PROCESSING);
 
         return Promise.resolve(uniqueOrderId.getId());
     }

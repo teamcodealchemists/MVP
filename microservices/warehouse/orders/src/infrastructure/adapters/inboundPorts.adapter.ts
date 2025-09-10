@@ -71,6 +71,7 @@ export class InboundPortsAdapter implements
 
   async addSellOrder(sellOrderDTO: SellOrderDTO): Promise<string> {
     const sellOrderDomain = await this.dataMapper.sellOrderToDomain(sellOrderDTO);
+    Logger.debug(`Adding Sell Order: ${JSON.stringify(sellOrderDomain)}`);
     return Promise.resolve(await this.ordersService.createSellOrder(sellOrderDomain));
   }
 
@@ -98,12 +99,12 @@ export class InboundPortsAdapter implements
       if (order instanceof SellOrder) {
         // Per ordini di vendita, completa direttamente
         Logger.debug(`🚚📦✅ Ordine di vendita spedito: ${orderIdDomain.getId()} 🎉`);
+        await this.ordersService.updateOrderState(orderIdDomain, OrderState.SHIPPED);
         await this.ordersService.completeOrder(orderIdDomain);
       } else if (order instanceof InternalOrder) {
         // Per ordini interni, aggiorna stato e notifica destinazione
         Logger.debug(`🚚📦✅ Ordine interno spedito: ${orderIdDomain.getId()} 🎉`);
         await this.ordersService.receiveOrder(orderIdDomain);
-
       }
   }
 
