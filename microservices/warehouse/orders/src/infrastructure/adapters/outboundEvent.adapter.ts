@@ -29,7 +29,7 @@ export class OutboundEventAdapter implements InternalOrderEventPublisher, OrderS
   ) { }
 
   waitingForStock(orderId: OrderId, warehouseDepartureId: string): Promise<void> {
-    this.natsService.emit(`event.warehouse.${warehouseDepartureId}.order.${orderId.getId()}.waitingStock`, "");
+    this.natsService.emit(`event.warehouse.${warehouseDepartureId}.order.${orderId.getId()}.waitingStock`, "{}");
     this.logger.debug(`[2] Published waiting for stock event for order ${orderId.getId()} with warehouseDepartureId ${warehouseDepartureId}`);
     return Promise.resolve();
   }
@@ -98,12 +98,12 @@ export class OutboundEventAdapter implements InternalOrderEventPublisher, OrderS
       // Sincronizza con l'aggregato cloud Ordini
       if (context.destination === 'aggregate') {
         let aggregateSubject = `event.aggregate.order.${orderIdStr}.state.update.${orderState}`;
-        await this.natsService.emit(aggregateSubject, "");
+        await this.natsService.emit(aggregateSubject, "{}");
       }
       // Sincronizza con l'Ordini del warehouseDestination
       else if (context.destination === 'warehouse' && context.warehouseId) {
         let warehouseDestinationSubject = `event.warehouse.${context.warehouseId}.order.${orderIdStr}.state.update.${orderState}`;
-        await this.natsService.emit(warehouseDestinationSubject, "");
+        await this.natsService.emit(warehouseDestinationSubject, "{}");
       }
 
       return Promise.resolve();
@@ -119,7 +119,7 @@ export class OutboundEventAdapter implements InternalOrderEventPublisher, OrderS
       const orderIdStr = orderId.getId();
       // Sincronizza con l'aggregato
       let aggregateSubject = `event.aggregate.order.${orderIdStr}.cancel`;
-      await this.natsService.emit(aggregateSubject, "");
+      await this.natsService.emit(aggregateSubject, "{}");
 
     } catch (error) {
       console.error('Errore in orderCancelled:', error);
@@ -131,7 +131,7 @@ export class OutboundEventAdapter implements InternalOrderEventPublisher, OrderS
   async orderCompleted(orderID: OrderId, warehouse: number) {
     try {
       const orderIdDTO = await this.dataMapper.orderIdToDTO(orderID);
-      this.natsService.emit(`event.warehouse.${warehouse.toString()}.order.${orderIdDTO.id}.complete`, "");
+      this.natsService.emit(`event.warehouse.${warehouse.toString()}.order.${orderIdDTO.id}.complete`, "{}");
       return Promise.resolve();
     } catch (error) {
       console.error('Errore in orderCompleted:', error);

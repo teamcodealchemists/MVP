@@ -4,6 +4,7 @@ import { ProductDto } from './dto/product.dto';
 import { ProductIdDto } from './dto/productId.dto';
 import { InboundEventListener } from 'src/infrastructure/adapters/inbound-event.adapter';
 import { validateOrReject } from 'class-validator';
+import { classToPlain, instanceToPlain, plainToInstance } from 'class-transformer';
 
 const logger = new Logger('commandHandler');
 @Controller()
@@ -105,7 +106,19 @@ export class CommandHandler {
     try {
       await validateOrReject(productIdDTO);
       const result = await this.inboundEventListener.handleGetProduct(productIdDTO);
-      return Promise.resolve(JSON.stringify({ result: { model: result } }));
+      if (!result) {
+        throw new Error('Product not found');
+      }
+      let model= {
+        id: result.getId().getId(),
+        name: result.getName(),
+        unitPrice: result.getUnitPrice(),
+        quantity: result.getQuantity(),
+        quantityReserved: result.getQuantityReserved(),
+        minThres: result.getMinThres(),
+        maxThres: result.getMaxThres()
+      };
+      return Promise.resolve(JSON.stringify({ result: { model } }));
     } catch (error) {
       logger.error('Error in handleGetProduct:', error);
       return await this.errorHandler(error);

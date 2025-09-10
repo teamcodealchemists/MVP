@@ -56,6 +56,7 @@ export class OutboundEventHandler implements OnModuleInit {
     this.natsClient.emit(`warehouse.${process.env.WAREHOUSE_ID}.order.sufficientAvailability`, JSON.stringify({orderId}));
     return Promise.resolve();
   }
+
   async handlerReservetionQuantities(product: ProductQuantityArrayDto): Promise<void> {
     const event = `call.warehouse.${process.env.WAREHOUSE_ID}.order.${product.id.id}.replenishment.received`;
     this.logger.log(`Emitting event: ${event} with payload: ${JSON.stringify({ product })}`);
@@ -72,7 +73,7 @@ export class OutboundEventHandler implements OnModuleInit {
 
   async handlerStockReceived(orderId : OrderIdDTO): Promise<void> {
 
-    this.natsClient.emit(`warehouse.${process.env.WAREHOUSE_ID}.order.${orderId.id}.stockReceived`, "");  
+    this.natsClient.emit(`warehouse.${process.env.WAREHOUSE_ID}.order.${orderId.id}.stockReceived`, "{}");  
     return Promise.resolve();
   }
 }
