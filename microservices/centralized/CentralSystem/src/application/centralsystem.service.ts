@@ -203,37 +203,40 @@ async CheckInsufficientQuantity(
   orderQuantity: OrderQuantity,
   warehouseId: WarehouseId
 ): Promise<void> {
-  console.log("CheckInsufficientQuantity called with orderQuantity:", JSON.stringify(orderQuantity), "and warehouseId:", warehouseId.getId());
+  //console.log("CheckInsufficientQuantity called with orderQuantity:", JSON.stringify(orderQuantity), "and warehouseId:", warehouseId.getId());
   const { inv, order, dist } = await this.RequestAllNeededData(warehouseId);
 
   const internalOrdersToCreate: InternalOrder[] = []; 
   let productsToAllocate = [...orderQuantity.getItemId()];
+  //console.log(JSON.stringify(dist));
   for (const whState of dist) {
     const whId = whState.getId();
     const productsForThisWarehouse: OrderItem[] = [];
     let orderItemsDetails: OrderItemDetail[] = [];
     for (const product of productsToAllocate) {
       const productInInv = inv.getInventory().find(
-        (p) => p.getId() === product.getItemId().toString() && p.getIdWarehouse() === whId
+        (p) =>p.getIdWarehouse() === whId && p.getId() === product.getItemId().toString()
       );
+      //console.log(JSON.stringify(productInInv, null, 2));
       if (!productInInv){
-        //console.log("Non ci sono prodotti con questo Id");
+        console.log("Non ci sono prodotti con questo Id");
         continue;
       }
       const availableQty =
         productInInv.getQuantity() - product.getQuantity();
 
       if (availableQty < productInInv.getMinThres()){
-      /*  
+        /*
         console.log("WarehouseId : " + whState.getId());
         console.log("Parte Inventario | Problema scende sotto la soglia : ");
         console.log("Parte Inventario | Soglia : "+ productInInv.getMinThres());
         console.log("Parte Inventario | Quantità dell'inventario : "+ productInInv.getQuantity());
         console.log("Parte Inventario | Quantità richiesta : "+ product.getQuantity());
         console.log("Parte Inventario | Quantità rimanente se fosse stata tolta "+ availableQty);
-      */
+        */
         continue;
       }
+      console.log(JSON.stringify(order, null, 2));
       if(order !== null){
         const pendingOrdersInternal = order
           .getInternalOrders()
@@ -273,12 +276,10 @@ async CheckInsufficientQuantity(
             o.getItemsDetail().reduce(
                 (itemSum, item) => itemSum + item.getItem().getQuantity(),0
               ),0
-        );
-        /*
+        );/*
         console.log("Rimanente : "+ availableQty);
         console.log("Internal richiede : "+ pendingQtyInternal);
-        console.log("Sell richiede : "+ pendingQtySell);
-        */
+        console.log("Sell richiede : "+ pendingQtySell);*/
         const residualQty = availableQty - pendingQtyInternal - pendingQtySell;
         //console.log("Residuo : "+ residualQty);
         if (residualQty >= productInInv.getMinThres()) {
@@ -290,7 +291,7 @@ async CheckInsufficientQuantity(
           orderItemsDetails.push(oID);
           productsForThisWarehouse.push(product);
         }else{
-        /* 
+          /*
           console.log("WarehouseId : " + whState.getId());
           console.log("Parte Ordine | Problema scende sotto la soglia : ");
           console.log("Parte Ordine | Soglia : "+ productInInv.getMinThres());
@@ -309,7 +310,7 @@ async CheckInsufficientQuantity(
         orderItemsDetails.push(oID);
         productsForThisWarehouse.push(product);
       }
-
+    }
     if (orderItemsDetails.length > 0) {
       const internalOrder = new InternalOrder(
         new OrderId(""),
@@ -325,9 +326,9 @@ async CheckInsufficientQuantity(
       productsToAllocate = productsToAllocate.filter(
         (p) => !productsForThisWarehouse.some((fp) => fp.getItemId() === p.getItemId())
       );
-    }
 
-    if (productsToAllocate.length === 0) break;
+    if (productsToAllocate.length === 0) continue;
+    }
   }
 
   if (productsToAllocate.length > 0) {
@@ -347,7 +348,6 @@ async CheckInsufficientQuantity(
     //console.log("service : Magazzino mandato! \n"+ JSON.stringify(internalOrdersToCreate, null, 2));
   }
   return Promise.resolve();
-}
 }
 
 

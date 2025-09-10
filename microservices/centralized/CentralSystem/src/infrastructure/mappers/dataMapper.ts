@@ -240,14 +240,18 @@ async ordersToDTO(entity: Orders): Promise<OrdersDTO> {
     };
 },
 async ordersToDomain(dto: OrdersDTO): Promise<Orders> {
-    const internalOrders = await Promise.all(
+  let internalOrders: InternalOrder[] = [];
+  let sellOrders : SellOrder[] = [];
+    if(dto.internalOrders && dto.internalOrders.length > 0){
+        internalOrders = await Promise.all(
         dto.internalOrders.map(o => this.internalOrderToDomain(o))
-    );
-
-    const sellOrders = await Promise.all(
+      );
+    }
+    if(dto.sellOrders && dto.sellOrders.length > 0) {
+        sellOrders = await Promise.all(
         dto.sellOrders.map(o => this.sellOrderToDomain(o))
-    );
-
+      );
+    }
     return new Orders(internalOrders, sellOrders);
 },
 productQuantityToDTO(entity: { productId: ProductId; quantity: number }): productQuantityDto {
