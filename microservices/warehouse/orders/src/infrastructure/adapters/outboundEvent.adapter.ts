@@ -103,7 +103,7 @@ export class OutboundEventAdapter implements InternalOrderEventPublisher, OrderS
       // Sincronizza con l'Ordini del warehouseDestination
       else if (context.destination === 'warehouse' && context.warehouseId) {
         let warehouseDestinationSubject = `event.warehouse.${context.warehouseId}.order.${orderIdStr}.state.update.${orderState}`;
-        await this.natsService.emit(warehouseDestinationSubject, "");
+        await this.natsService.emit(warehouseDestinationSubject, "{}");
       }
 
       return Promise.resolve();

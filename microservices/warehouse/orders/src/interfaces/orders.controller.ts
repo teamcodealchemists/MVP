@@ -154,6 +154,7 @@ export class OrdersController {
       const tokens = context.getSubject().split('.');
       const orderId = tokens[4];
       const orderState = tokens[7];
+      Logger.log(`🔄 Aggiornamento stato ordine ${orderId} a ${orderState} da evento.`, "Order Controller");
       await this.inboundPortsAdapter.updateOrderState(orderId, orderState);
     } catch (error) {
         throw new Error(error.message);
