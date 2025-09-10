@@ -67,7 +67,7 @@ export class OrdersController {
       return Promise.resolve(JSON.stringify({ error: { code: 'system.internalError', message: error?.message || 'Unknown error' } }));
     }
   }
-  // NUOVA PORTA (Stefano)
+  
   // Riceve il messaggio dall'Inventario del magazzino di partenza dove dice che ha tutta la merce
   @EventPattern(`warehouse.${process.env.WAREHOUSE_ID}.order.sufficientAvailability`)
   async sufficientProductAvailability(@Payload() payload : any): Promise<void> {
