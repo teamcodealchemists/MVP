@@ -54,7 +54,10 @@ export class RoutingController implements WarehouseAddressSubscriber, CriticQuan
         try {
             const domainId = DataMapper.warehouseIdToDomain(warehouseId);
             const warehouses = await this.routingService.calculateDistance(domainId);
-            return Promise.resolve(JSON.stringify({ result: "Request received successfully", warehouses: warehouses }));
+            console.log('Received warehouseId:', warehouseId);
+            console.log('DomainId:', domainId);
+            console.log('Calculated warehouses:', warehouses);
+            return Promise.resolve(JSON.stringify({ result: warehouses }));
         } catch (error) {
             return Promise.resolve(JSON.stringify({
                 error: {
