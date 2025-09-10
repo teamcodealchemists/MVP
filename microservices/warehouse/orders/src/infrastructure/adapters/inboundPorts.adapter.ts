@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, Logger } from '@nestjs/common';
 import { OrdersService } from 'src/application/orders.service';
 import { DataMapper } from '../../infrastructure/mappers/data.mapper';
 import { OrdersRepository } from 'src/domain/orders.repository';
@@ -52,15 +52,7 @@ export class InboundPortsAdapter implements
     private readonly ordersRepository: OrdersRepository
   ) {}
 
-/*   async stockReserved(orderQuantityDTO: OrderQuantityDTO): Promise<void> {
-    const orderId = await this.dataMapper.orderIdToDomain(orderQuantityDTO.id);
-    const orderItems = await Promise.all(
-      orderQuantityDTO.items.map(itemDTO => this.dataMapper.orderItemToDomain(itemDTO))
-    );
-    await this.ordersService.updateReservedStock(orderId, orderItems);
-  } */
-
- // CASO STANDARD: Merce parzialmente disponibile 
+  // CASO STANDARD: Merce parzialmente disponibile 
   async stockReserved(orderQuantityDTO: OrderQuantityDTO): Promise<void> {
       const orderId = await this.dataMapper.orderIdToDomain(orderQuantityDTO.id);
       const orderItems = await Promise.all(
@@ -70,14 +62,12 @@ export class InboundPortsAdapter implements
       await this.ordersService.updateReservedStock(orderId, orderItems);
   }
 
-  // NUOVA FUNZIONE (Stefano)
   // CASO OTTIMO: Tutta la merce è disponibile
   async sufficientProductAvailability(orderIdDTO: OrderIdDTO): Promise<void> {
     const orderId = await this.dataMapper.orderIdToDomain(orderIdDTO);
     // Manda solo l'id perchè sa che deve settare le quantityReserved uguali al n° di quantity richiesta nell'ordine
     await this.ordersService.updateFullReservedStock(orderId);
   }
-
 
   async addSellOrder(sellOrderDTO: SellOrderDTO): Promise<string> {
     const sellOrderDomain = await this.dataMapper.sellOrderToDomain(sellOrderDTO);
@@ -88,27 +78,15 @@ export class InboundPortsAdapter implements
     const internalOrderDomain = await this.dataMapper.internalOrderToDomain(internalOrderDTO);
     return Promise.resolve(await this.ordersService.createInternalOrder(internalOrderDomain));
   }
-
-  /*   async waitingForStock(orderId: string): Promise<void> {
-    const orderIdDTO: OrderIdDTO = { id: orderId };
-    const orderIdDomain = await this.dataMapper.orderIdToDomain(orderIdDTO);
-    await this.ordersService.updateOrderState(orderIdDomain, OrderState.PROCESSING);
-    } */
    
-   async waitingForStock(orderId: string): Promise<void> {
+  async waitingForStock(orderId: string): Promise<void> {
        const orderIdDTO: OrderIdDTO = { id: orderId };
        const orderIdDomain = await this.dataMapper.orderIdToDomain(orderIdDTO);
        
-       // Magazzino di destinazione conferma di aver inserito l'ordine --> aggiorna stato in PROCESSING
-       await this.ordersService.updateOrderState(orderIdDomain, OrderState.PROCESSING);
-   }
+       // Inviamo l'ordine
+       await this.ordersService.shipOrder(orderIdDomain);
 
-/*   async stockShipped(orderId: string): Promise<void> {
-    const orderIdDTO: OrderIdDTO = { id: orderId };
-    const orderIdDomain = await this.dataMapper.orderIdToDomain(orderIdDTO);
-    await this.ordersService.updateOrderState(orderIdDomain, OrderState.SHIPPED);
-  } */
-
+  }
 
   async stockShipped(orderId: string): Promise<void> {
       const orderIdDTO: OrderIdDTO = { id: orderId };
@@ -118,19 +96,17 @@ export class InboundPortsAdapter implements
       const order = await this.ordersRepository.getById(orderIdDomain);
       
       if (order instanceof SellOrder) {
-          // Per ordini di vendita, completa direttamente
-          await this.ordersService.completeOrder(orderIdDomain);
+        // Per ordini di vendita, completa direttamente
+        await this.ordersService.completeOrder(orderIdDomain);
       } else if (order instanceof InternalOrder) {
-          // Per ordini interni, aggiorna stato e notifica destinazione
-          await this.ordersService.updateOrderState(orderIdDomain, OrderState.SHIPPED);
-/*           await this.outboundEventAdapter.notifyDestinationWarehouse(
-              orderIdDomain, 
-              order.getWarehouseDestination()
-          ); */
+        // Per ordini interni, aggiorna stato e notifica destinazione
+        Logger.debug(`🚚📦✅ Ordine interno spedito: ${orderIdDomain.getId()} 🎉`);
+        await this.ordersService.receiveOrder(orderIdDomain);
+
       }
   }
 
-/*   // NUOVO
+/*// NUOVO
   // 6. Orders verifica se può procedere
   async updateReservedStock(id: OrderId, items: OrderItem[]): Promise<void> {
       await this.ordersRepository.updateReservedStock(id, items);
@@ -147,27 +123,19 @@ export class InboundPortsAdapter implements
 
   async stockReceived(orderIdDTO: OrderIdDTO): Promise<void> {
     const orderId = await this.dataMapper.orderIdToDomain(orderIdDTO);
-    await this.ordersService.receiveOrder(orderId);
-  }
-
-/*   async replenishmentReceived(orderIdDTO: OrderIdDTO): Promise<void> {
-    const orderId = await this.dataMapper.orderIdToDomain(orderIdDTO);
     await this.ordersService.completeOrder(orderId);
-  } */
+  }
 
   async replenishmentReceived(orderIdDTO: OrderIdDTO): Promise<void> {
       const orderId = await this.dataMapper.orderIdToDomain(orderIdDTO);
-      
-      // Dopo riassortimento, verifica di nuovo le quantità riservate
       const order = await this.ordersRepository.getById(orderId);
-      
+
       if (order instanceof SellOrder) {
           await this.ordersService.checkReservedQuantityForSellOrder(order);
       } else if (order instanceof InternalOrder) {
           await this.ordersService.checkReservedQuantityForInternalOrder(order);
       }
   }
-
 
   async updateOrderState(orderId: string, orderState: string): Promise<void> {
     const orderIdDTO: OrderIdDTO = { id: orderId };
@@ -189,7 +157,7 @@ export class InboundPortsAdapter implements
   async completeOrder(orderId: string): Promise<void> {
     const orderIdDTO: OrderIdDTO = { id: orderId };
     const orderIdDomain = await this.dataMapper.orderIdToDomain(orderIdDTO);
-    await this.ordersService.updateOrderState(orderIdDomain, OrderState.COMPLETED);
+    await this.ordersService.completeOrder(orderIdDomain);
   }
 
   async getOrderState(orderId: string): Promise<OrderStateDTO> {

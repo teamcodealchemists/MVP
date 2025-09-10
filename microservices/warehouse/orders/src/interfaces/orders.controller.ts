@@ -1,5 +1,5 @@
 import { Controller, Logger  } from '@nestjs/common';
-import { MessagePattern, Payload, Ctx } from '@nestjs/microservices';
+import { MessagePattern, Payload, Ctx, EventPattern } from '@nestjs/microservices';
 import { RpcException } from '@nestjs/microservices';
 
 import { OrderQuantityDTO } from "src/interfaces/dto/orderQuantity.dto";
@@ -39,7 +39,6 @@ export class OrdersController {
         warehouseDeparture: payload.warehouseDeparture,
         destinationAddress: payload.destinationAddress
       };
-      await this.inboundPortsAdapter.addSellOrder(sellOrderDTO);
       let newOrderId = await this.inboundPortsAdapter.addSellOrder(sellOrderDTO);
       let RID = `warehouse.${process.env.WAREHOUSE_ID}.order.${newOrderId}`;
       return Promise.resolve(JSON.stringify({ resource: { rid: RID } }));
@@ -67,39 +66,67 @@ export class OrdersController {
       return Promise.resolve(JSON.stringify({ error: { code: 'system.internalError', message: error?.message || 'Unknown error' } }));
     }
   }
-  // NUOVA PORTA (Stefano)
+
+  @EventPattern(`event.warehouse.${process.env.WAREHOUSE_ID}.order.internal.new`)
+  async addInternalOrderEvent(@Payload('params') payload: any): Promise<string> {
+    try {
+    const internalOrderDTO: InternalOrderDTO = {
+      orderId: payload.orderId,
+      items: payload.items,
+      orderState: payload.orderState,
+      creationDate: payload.creationDate,
+      warehouseDeparture: payload.warehouseDeparture,
+      warehouseDestination: payload.warehouseDestination,
+      sellOrderReference : payload.sellOrderReference ?? "",
+    };
+    let newOrderId = await this.inboundPortsAdapter.addInternalOrder(internalOrderDTO);
+    let RID = `warehouse.${process.env.WAREHOUSE_ID}.order.${newOrderId}`;
+      return Promise.resolve(JSON.stringify({ resource: { rid: RID } }));
+    } catch (error) {
+      return Promise.resolve(JSON.stringify({ error: { code: 'system.internalError', message: error?.message || 'Unknown error' } }));
+    }
+  }
+  
   // Riceve il messaggio dall'Inventario del magazzino di partenza dove dice che ha tutta la merce
-  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.sufficient.availability`)
-  async sufficientProductAvailability(@Payload() orderIdDTO: OrderIdDTO): Promise<void> {
+  @EventPattern(`warehouse.${process.env.WAREHOUSE_ID}.order.sufficientAvailability`)
+  async sufficientProductAvailability(@Payload() payload : any): Promise<void> {
+      this.logger.debug('1️⃣ Sufficient product availability received for order:', payload.orderId.id);
+
+      let orderIdDTO = new OrderIdDTO();
+      orderIdDTO.id = payload.orderId.id;
       await this.inboundPortsAdapter.sufficientProductAvailability(orderIdDTO);
   }
 
-  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.*.waiting.stock`)
+  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.*.waitingStock`)
   async waitingForStock(@Ctx() context: any): Promise<void> {
+    this.logger.debug('[1] Waiting for stock for order:', context.getSubject());
     const tokens = context.getSubject().split('.');
     const orderId = tokens[tokens.length - 3];
     await this.inboundPortsAdapter.waitingForStock(orderId);
   }
 
-  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.*.stock.shipped`)
+  @EventPattern(`warehouse.${process.env.WAREHOUSE_ID}.order.*.stockShipped`)
   async stockShipped(@Ctx() context: any): Promise<void> {
     const tokens = context.getSubject().split('.');
-    const orderId = tokens[tokens.length - 3];
+    const orderId = tokens[3];
+    this.logger.debug(`5️⃣ Stock shipped for order: ${orderId}`);
     await this.inboundPortsAdapter.stockShipped(orderId);
   }
 
-  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.*.stock.received`)
+  @EventPattern(`warehouse.${process.env.WAREHOUSE_ID}.order.*.stockReceived`)
   async stockReceived(@Ctx() context: any): Promise<void> {
     const tokens = context.getSubject().split('.');
-    const orderId = tokens[tokens.length - 3];
+    const orderId = tokens[3];
     await this.inboundPortsAdapter.stockReceived(orderId);
   }
 
   // Messaggio ricevuto dal servizio di riassortimento
   @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.*.replenishment.received`)
   async replenishmentReceived(@Ctx() context: any): Promise<void> {
+    console.log('✅ Sono arrivato qua in replenishmentReceived');
     const tokens = context.getSubject().split('.');
-    const orderId = tokens[tokens.length - 3];
+    const orderId = new OrderIdDTO();
+    orderId.id = tokens[tokens.length - 3];
     await this.inboundPortsAdapter.replenishmentReceived(orderId);
   }
 
@@ -126,10 +153,11 @@ export class OrdersController {
     }
   }
 
-  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.*.complete`)
+
+  @EventPattern(`event.warehouse.${process.env.WAREHOUSE_ID}.order.*.complete`)
   async completeOrder(@Ctx() context: any): Promise<void> {
     const tokens = context.getSubject().split('.');
-    const orderId = tokens[tokens.length - 2];
+    const orderId = tokens[4];
     await this.inboundPortsAdapter.completeOrder(orderId);
   }
 

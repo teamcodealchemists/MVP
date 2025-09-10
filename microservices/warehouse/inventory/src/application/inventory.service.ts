@@ -138,6 +138,8 @@ export class InventoryService {
     await this.natsAdapter.stockShipped(order);
     return Promise.resolve();
   }
+
+  
   async reserveStock(order : OrderId, productQ :  ProductQuantity[]): Promise<void>{
       const reserved: ProductQuantity[] = [];
       let allSufficient = true;
@@ -155,6 +157,7 @@ export class InventoryService {
           
           const p = new Product(new ProductId(pq.getId().getId()), product.getName(), product.getUnitPrice(), 0,
                                 newReserved, product.getMinThres(), product.getMaxThres());
+          console.log('Product ID:', product.getId().getId());
           const p1 = new ProductQuantity(new ProductId(product.getId().getId()), newReserved);
           if(product.getMinThres() > 0) this.natsAdapter.belowMinThres(p,this.warehouseId);
           reserved.push(p1);
@@ -162,6 +165,7 @@ export class InventoryService {
         }
       }
       if (allSufficient) {
+        Logger.log('Sufficient stock available for all products. Reserving stock.');
         const reserved: ProductQuantity[] = [];
         for (const pq of productQ) {
           const product = await this.inventoryRepository.getById(pq.getId());
@@ -169,13 +173,13 @@ export class InventoryService {
           const newQuantity = product.getQuantity() - pq.getQuantity();
           const newReserved = (product.getQuantityReserved() || 0) + pq.getQuantity();
           const updatedProduct = new Product(
-            product.getId(),
-            product.getName(),
-            product.getUnitPrice(),
-            newQuantity,
-            newReserved,
-            product.getMinThres(),
-            product.getMaxThres()
+          new ProductId(product.getId().getId()),
+          product.getName(),
+          product.getUnitPrice(),
+          newQuantity,
+          newReserved,
+          product.getMinThres(),
+          product.getMaxThres()
           );
           if(product.getMinThres() > newQuantity) this.natsAdapter.belowMinThres(updatedProduct,this.warehouseId);
           await this.inventoryRepository.updateProduct(updatedProduct);
@@ -183,10 +187,27 @@ export class InventoryService {
         }
         await this.natsAdapter.sufficientProductAvailability(order);
       } else {
+        console.log('Insufficient stock for one or more products. Reserving available quantities.');
         await this.natsAdapter.reservedQuantities(order, reserved);
       }
     return Promise.resolve();
   }
+
+
+  /**
+   * Receives stock for a given order and updates the inventory accordingly.
+   *
+   * For each product in the provided list, this method:
+   * - Retrieves the current product from the inventory repository.
+   * - If the product exists, calculates the new quantity by adding the received quantity.
+   * - If the new quantity does not exceed the maximum threshold, updates the product in the repository.
+   * - If the new quantity exceeds the maximum threshold, triggers a notification via the NATS adapter.
+   * After processing all products, notifies that stock has been received for the order.
+   *
+   * @param order - The identifier of the order for which stock is being received.
+   * @param productQ - An array of product quantities to be received and processed.
+   * @returns A promise that resolves when the operation is complete.
+   */
   async receiveStock(order : OrderId, productQ :  ProductQuantity[]): Promise<void>{
     for (const pq of productQ) {
       const product = await this.inventoryRepository.getById(pq.getId());
@@ -194,14 +215,19 @@ export class InventoryService {
         continue;
       }
       const newQuantity = pq.getQuantity() + product.getQuantity();
-      if(product.getMaxThres() > newQuantity){
-        const p = new Product(new ProductId(product.getId().getId()), product.getName(), product.getUnitPrice(), newQuantity,
-        product.getQuantityReserved(), product.getMinThres(), product.getMaxThres());
-        await this.inventoryRepository.updateProduct(p);
-      }else{
-        const p = new Product(new ProductId(product.getId().getId()), product.getName(), product.getUnitPrice(), newQuantity,
-        product.getQuantityReserved(), product.getMinThres(), product.getMaxThres());
-        this.natsAdapter.aboveMaxThres(p,this.warehouseId);
+      const updatedProduct = new Product(
+        product.getId(),
+        product.getName(),
+        product.getUnitPrice(),
+        newQuantity,
+        product.getQuantityReserved(),
+        product.getMinThres(),
+        product.getMaxThres()
+      );
+      await this.inventoryRepository.updateProduct(updatedProduct);
+      
+      if (newQuantity > product.getMaxThres()) {
+        this.natsAdapter.aboveMaxThres(updatedProduct, this.warehouseId);
       }
     }
     this.natsAdapter.stockReceived(order);

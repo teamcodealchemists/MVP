@@ -18,22 +18,28 @@ import { InternalOrder } from "src/domain/internalOrder.entity";
 import { SellOrder } from "src/domain/sellOrder.entity";
 import { OrderState } from "src/domain/orderState.enum";
 import { OrderIdDTO } from 'src/interfaces/dto/orderId.dto';
+import { WaitingForStockPublisher } from 'src/interfaces/outbound-ports/waitingForStock.publisher';
 
 @Injectable()
 export class OutboundEventAdapter implements InternalOrderEventPublisher, OrderStatusEventPublisher, RequestStockReplenishmentPublisher, ReserveStockCommandPublisher,
-  SellOrderEventPublisher, ShipStockCommandPublisher, OnModuleInit {
-
+  SellOrderEventPublisher, ShipStockCommandPublisher, OnModuleInit, WaitingForStockPublisher {
   constructor(
     @Inject("NATS_SERVICE") private readonly natsService: ClientProxy,
     private readonly dataMapper: DataMapper
   ) { }
+
+  waitingForStock(orderId: OrderId, warehouseDepartureId: string): Promise<void> {
+    this.natsService.emit(`event.warehouse.${warehouseDepartureId}.order.${orderId.getId()}.waitingStock`, "");
+    this.logger.debug(`[2] Published waiting for stock event for order ${orderId.getId()} with warehouseDepartureId ${warehouseDepartureId}`);
+    return Promise.resolve();
+  }
 
   private readonly logger = new Logger(OutboundEventAdapter.name);
 
   async onModuleInit() {
     try {
       await this.natsService.connect();
-      this.logger.log('Connected to NATS service'); 
+      this.logger.log('Connected to NATS service');
     } catch (error) {
       this.logger.error('Error connecting to NATS service', error);
     }
@@ -54,41 +60,53 @@ export class OutboundEventAdapter implements InternalOrderEventPublisher, OrderS
     const orderIdDTO = await this.dataMapper.orderIdToDTO(orderId);
     const itemsDTO = await Promise.all(items.map(item => this.dataMapper.orderItemToDTO(item)));
 
+    this.logger.debug(`🚚📦2️⃣ Preparing to ship order: ${orderIdDTO.id} with items: ${JSON.stringify(itemsDTO)}`);
+
     // Comunica a Inventario di spedire la merce
     await this.natsService.emit(
-      `event.warehouse.${process.env.WAREHOUSE_ID}.inventory.ship.items`,JSON.stringify({ orderIdDTO, itemsDTO }));
+      `event.warehouse.${process.env.WAREHOUSE_ID}.inventory.ship.items`, JSON.stringify({ orderIdDTO, itemsDTO }));
   }
 
+  async publishStockRepl(orderId: OrderId, items: OrderItem[]): Promise<void> {
+    const orderIdDTO = await this.dataMapper.orderIdToDTO(orderId);
+    const itemsDTO = await Promise.all(items.map(item => this.dataMapper.orderItemToDTO(item)));
+
+    this.logger.debug(`🚚📦2️⃣ Preparing to riassortimento: ${orderIdDTO.id} with items: ${JSON.stringify(itemsDTO)}`);
+
+    // Spedisce il compito a sistema centralizzato
+    await this.natsService.emit(
+      `event.warehouse.${process.env.WAREHOUSE_ID}.centralSystem.request`, JSON.stringify({ orderIdDTO, itemsDTO, warehouseId: process.env.WAREHOUSE_ID }));
+    return Promise.resolve();
+  }
 
   // Corrisponde in SUB a stockReceived()
   async receiveShipment(orderId: OrderId, items: OrderItem[], destination: number) {
     const orderIdDTO = await this.dataMapper.orderIdToDTO(orderId);
-    await this.natsService.emit(`event.warehouse.${destination}.order.stock.received`, JSON.stringify({ orderIdDTO }));
-  }
-
-
-  // Corrisponde in SUB a stockReserved()
-  async publishStockRepl(orderId: OrderId, items: OrderItem[]) {
-    const orderIdDTO = await this.dataMapper.orderIdToDTO(orderId);
     const itemsDTO = await Promise.all(items.map(item => this.dataMapper.orderItemToDTO(item)));
-
-    await this.natsService.emit(
-      `event.warehouse.${process.env.WAREHOUSE_ID}.order.stock.reserved`, JSON.stringify({ orderIdDTO, itemsDTO }));
+    this.natsService.emit(`event.warehouse.${destination.toString()}.inventory.receiveShipment`, JSON.stringify({ orderIdDTO, itemsDTO }));
   }
-
 
   /* async orderUpdated(order: Order) {
       await this.natsService.publish('orders.updated', order);
     } 
   */
 
-
-  async orderStateUpdated(orderId: OrderId, orderState: OrderState) {
+  async orderStateUpdated(orderId: OrderId, orderState: OrderState, context: { destination: 'aggregate' | 'warehouse', warehouseId?: number }) {
     try {
       const orderIdStr = orderId.getId();
-      // Sincronizza con l'aggregato
-      let aggregateSubject = `event.aggregate.order.${orderIdStr}.state.update.${orderState}`;
-      await this.natsService.emit(aggregateSubject, "");
+
+      // Sincronizza con l'aggregato cloud Ordini
+      if (context.destination === 'aggregate') {
+        let aggregateSubject = `event.aggregate.order.${orderIdStr}.state.update.${orderState}`;
+        await this.natsService.emit(aggregateSubject, "");
+      }
+      // Sincronizza con l'Ordini del warehouseDestination
+      else if (context.destination === 'warehouse' && context.warehouseId) {
+        let warehouseDestinationSubject = `event.warehouse.${context.warehouseId}.order.${orderIdStr}.state.update.${orderState}`;
+        await this.natsService.emit(warehouseDestinationSubject, "");
+      }
+
+      return Promise.resolve();
 
     } catch (error) {
       console.error('Errore in orderStateUpdated:', error);
@@ -110,19 +128,16 @@ export class OutboundEventAdapter implements InternalOrderEventPublisher, OrderS
   }
 
 
-  async orderCompleted(orderId: OrderId) {
+  async orderCompleted(orderID: OrderId, warehouse: number) {
     try {
-      const orderIdStr = orderId.getId();
-      // Sincronizza con l'aggregato
-      let aggregateSubject = `event.aggregate.order.${orderIdStr}.complete`;
-      await this.natsService.emit(aggregateSubject, "");
-
+      const orderIdDTO = await this.dataMapper.orderIdToDTO(orderID);
+      this.natsService.emit(`event.warehouse.${warehouse.toString()}.order.${orderIdDTO.id}.complete`, "");
+      return Promise.resolve();
     } catch (error) {
       console.error('Errore in orderCompleted:', error);
       throw error;
     }
   }
-
 
   async publishInternalOrder(internalOrder: InternalOrder, context: { destination: 'aggregate' | 'warehouse', warehouseId?: number }) {
 
@@ -133,27 +148,24 @@ export class OutboundEventAdapter implements InternalOrderEventPublisher, OrderS
     if (context.destination === 'aggregate') {
       subject = `event.aggregate.order.internal.new`;
       await this.natsService.emit(subject, JSON.stringify(internalOrderDTO));
-    } /* 
-      else if (context.destination === 'warehouse' && context.warehouseId) {
-        subject = `call.warehouse.${context.warehouseId}.order.internal.new`;
-        await this.natsService.publish( subject,  internalOrderDTO );
-      } */
+    }
+    else if (context.destination === 'warehouse' && context.warehouseId) {
+      subject = `event.warehouse.${context.warehouseId}.order.internal.new`;
+      await this.natsService.emit(subject, JSON.stringify(internalOrderDTO));
+    }
   }
 
 
-  async publishSellOrder(sellOrder: SellOrder, context: { destination: 'aggregate' | 'warehouse', warehouseId?: number }) :  Promise<string> {
+  async publishSellOrder(sellOrder: SellOrder, context: { destination: 'aggregate' | 'warehouse', warehouseId?: number }): Promise<string> {
     console.log("[outbound] Manda SellOrder,", JSON.stringify(sellOrder, null, 2));
     const sellOrderDTO = await this.dataMapper.sellOrderToDTO(sellOrder);
     let subject: string;
 
     if (context.destination === 'aggregate') {
       subject = `event.aggregate.order.sell.new`;
-      await this.natsService.emit(subject, JSON.stringify(sellOrderDTO));
-    } /* 
-      else if (context.destination === 'warehouse' && context.warehouseId) {
-        subject = `call.warehouse.${context.warehouseId}.order.sell.new`;
-        await this.natsService.publish( subject, sellOrderDTO );
-      } */
+      await this.natsService.emit(subject, JSON.parse(JSON.stringify(sellOrderDTO)));
+    }
+
     return Promise.resolve(JSON.stringify(sellOrder.getOrderId()));
   }
 

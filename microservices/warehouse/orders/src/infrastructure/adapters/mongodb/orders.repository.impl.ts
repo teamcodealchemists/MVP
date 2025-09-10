@@ -18,6 +18,10 @@ import { InternalOrder } from "src/domain/internalOrder.entity";
 import { SellOrder } from "src/domain/sellOrder.entity";
 import { v4 as uuidv4 } from 'uuid';
 import { RpcException } from '@nestjs/microservices';
+import { InternalOrderDTO } from "src/interfaces/dto/internalOrder.dto";
+import { OrderIdDTO } from "src/interfaces/dto/orderId.dto";
+import { SellOrderDTO } from "src/interfaces/dto/sellOrder.dto";
+import { OrderStateDTO } from "src/interfaces/dto/orderState.dto";
 
 @Injectable()
 export class OrdersRepositoryMongo implements OrdersRepository {
@@ -79,8 +83,7 @@ export class OrdersRepositoryMongo implements OrdersRepository {
                     sellDoc.destinationAddress
                 );
             }
-            // Fallback        
-            throw new Error(`Ordine con ID ${id.getId()} non trovato`);
+            throw new NotFoundException(`Ordine con ID ${id.getId()} non trovato`);
         } catch (error) {
             Logger.error("Errore durante la ricerca dell'ordine per ID:"+ error, 'OrdersRepositoryMongo');
             throw error;
@@ -376,35 +379,19 @@ export class OrdersRepositoryMongo implements OrdersRepository {
             }).lean().exec() as any;
 
             let model: any;
-            let mapper: (doc: any) => Promise<InternalOrder | SellOrder>;
-        
+
             if (internalDoc) {
                 model = this.internalOrderModel;
-                mapper = async (doc) => {
-                    const internalOrderDTO = {
-                        orderId: doc.orderId,
-                        items: doc.items,
-                        orderState: doc.orderState,
-                        creationDate: doc.creationDate,
-                        warehouseDeparture: doc.warehouseDeparture,
-                        warehouseDestination: doc.warehouseDestination,
-                        sellOrderReference : doc.sellOrderReference
-                    };
-                    return this.mapper.internalOrderToDomain(internalOrderDTO);
-                };
             } else {
-                model = this.sellOrderModel;
-                mapper = async (doc) => {
-                    const sellOrderDTO = {
-                        orderId: doc.orderId,
-                        items: doc.items,
-                        orderState: doc.orderState,
-                        creationDate: doc.creationDate,
-                        warehouseDeparture: doc.warehouseDeparture,
-                        destinationAddress: doc.destinationAddress
-                    };
-                    return this.mapper.sellOrderToDomain(sellOrderDTO);
-                };
+                // Prova con SellOrder
+                const sellDoc = await this.sellOrderModel.findOne({ 
+                    "orderId.id": id.getId() 
+                }).lean().exec() as any;
+                if (sellDoc) {
+                    model = this.sellOrderModel;
+                } else {
+                    throw new Error(`Ordine con ID ${id.getId()} non trovato`);
+                }
             }
 
             // Prepara e esegui gli aggiornamenti
@@ -434,10 +421,53 @@ export class OrdersRepositoryMongo implements OrdersRepository {
             if (!updatedDoc) {
                 throw new Error(`Ordine con ID ${id.getId()} non trovato dopo l'aggiornamento`);
             }
+
+            Logger.debug(`Documento aggiornato: ${JSON.stringify(updatedDoc, null, 2)}`, 'OrdersRepositoryMongo');
             
             // Converti a dominio e restituisci il documento aggiornato
-            return await mapper(updatedDoc as any);
-            
+            if (updatedDoc.warehouseDestination) {
+                let internalOrderDto = new InternalOrderDTO();
+                let orderIdDto = new OrderIdDTO();
+                orderIdDto.id = updatedDoc.orderId.id;
+                internalOrderDto.orderId = orderIdDto;
+                internalOrderDto.items = updatedDoc.items.map((item: any) => ({
+                    item: { itemId: { id: item.item.itemId.id }, quantity: item.item.quantity },
+                    quantityReserved: item.quantityReserved,
+                    unitPrice: item.unitPrice
+                }));
+                // --- FIX: Check and log orderState ---
+                if (!updatedDoc.orderState) {
+                    Logger.error(`orderState mancante per InternalOrder ID ${updatedDoc.orderId.id}`, 'OrdersRepositoryMongo');
+                    throw new Error(`Stato ordine non valido : ${updatedDoc.orderState}. Stati validi: PENDING, PROCESSING, SHIPPED, CANCELED, COMPLETED`);
+                }
+                let orderStateDto = new OrderStateDTO();
+                orderStateDto.orderState = updatedDoc.orderState;
+                internalOrderDto.orderState = orderStateDto;
+                internalOrderDto.creationDate = updatedDoc.creationDate;
+                internalOrderDto.warehouseDeparture = updatedDoc.warehouseDeparture;
+                internalOrderDto.warehouseDestination = updatedDoc.warehouseDestination;
+                let orderRef = new OrderIdDTO();
+                orderRef.id = updatedDoc.sellOrderReference?.id;
+                internalOrderDto.sellOrderReference = orderRef;
+
+                return this.mapper.internalOrderToDomain(internalOrderDto);
+            } else {
+                let sellOrderDto = new SellOrderDTO();
+                let orderIdDto = new OrderIdDTO();
+                orderIdDto.id = updatedDoc.orderId.id;
+                sellOrderDto.orderId = orderIdDto;
+                sellOrderDto.items = updatedDoc.items.map((item: any) => ({
+                    item: { itemId: { id: item.item.itemId.id }, quantity: item.item.quantity },
+                    quantityReserved: item.quantityReserved,
+                    unitPrice: item.unitPrice
+                }));
+                sellOrderDto.orderState = updatedDoc.orderState;
+                sellOrderDto.creationDate = updatedDoc.creationDate;
+                sellOrderDto.warehouseDeparture = updatedDoc.warehouseDeparture;
+                sellOrderDto.destinationAddress = updatedDoc.destinationAddress;
+                return this.mapper.sellOrderToDomain(sellOrderDto);
+            }
+
         } catch (error) {
             console.error("Errore durante l'aggiornamento della quantità riservata:", error);
             throw new Error(`Impossibile trovare l'ordine con ID ${id.getId()}`);

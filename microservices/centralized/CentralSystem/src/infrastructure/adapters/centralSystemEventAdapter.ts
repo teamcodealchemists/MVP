@@ -23,6 +23,7 @@ import { WarehouseStateDTO } from "src/interfaces/http/dto/warehouseState.dto";
 import { InternalOrderDTO } from "src/interfaces/http/dto/internalOrder.dto";
 import { OrderId } from "src/domain/orderId.entity";
 import { ProductId } from "src/domain/productId.entity";
+import { warehouseIdDto } from "src/interfaces/http/dto/warehouseId.dto";
 
 @Injectable()
 export class OutboundPortsAdapter implements 
@@ -66,11 +67,12 @@ NotificationPublisher
         return Promise.resolve(DataMapper.ordersToDTO(domainOrders));
     }
 
-    async RequestDistanceWarehouse(warehouseId: WarehouseId): Promise<WarehouseStateDTO[]> {
+    async RequestDistanceWarehouse(warehouseId: WarehouseId): Promise<warehouseIdDto[]> {
         const dtoId = DataMapper.warehouseIdToDto(warehouseId);
-        const warehouseStatesDomain: WarehouseState[] = await this.centralSystemHandler.handleWarehouseDistance(dtoId);
-        const warehouseStatesDTO: WarehouseStateDTO[] = warehouseStatesDomain.map(ws => DataMapper.warehouseStatetoDto(ws));
-        return Promise.resolve(warehouseStatesDTO);
+        console.log("RequestDistanceWarehouse called with warehouseId:", dtoId);
+        const warehouseIdDomain: WarehouseId[] = await this.centralSystemHandler.handleWarehouseDistance(dtoId);
+        const warehouseIdDTO: warehouseIdDto[] = warehouseIdDomain.map(ws => DataMapper.warehouseIdToDto(ws));
+        return Promise.resolve(warehouseIdDTO);
     }
 
     async sendOrder(message : string, orderId : OrderId, warehouseId : WarehouseId): Promise<void> {

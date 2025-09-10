@@ -39,7 +39,7 @@ export class InventoryRepositoryMongo implements InventoryRepository {
 
   async updateProduct(product: Product): Promise<void> {
     await this.productModel.updateOne(
-      { id: product.getId() },
+      { id: typeof product.getId === 'function' && typeof product.getId().getId === 'function' ? product.getId().getId() : product.getId() }, // <-- FIX: usa .getId() o .getId().getId()
       {
         name: product.getName(),
         unitPrice: product.getUnitPrice(),
@@ -56,7 +56,7 @@ export class InventoryRepositoryMongo implements InventoryRepository {
     if (!productDoc) return null;
 
     return new Product(
-      productDoc.id,
+      new ProductId(productDoc.id),
       productDoc.name,
       productDoc.unitPrice,
       productDoc.quantity,

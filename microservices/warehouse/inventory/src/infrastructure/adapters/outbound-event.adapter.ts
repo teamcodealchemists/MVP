@@ -122,6 +122,7 @@ export class OutboundEventAdapter
   }
 
   async reservedQuantities(orderId: OrderId, product : ProductQuantity[]): Promise<void> {
+    console.log('reservedQuantities di OutboundEventAdapter');
     const prodDtos = product.map(pq =>
       DataMapper.toDTOProductQuantity(pq),
     );

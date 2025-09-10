@@ -28,14 +28,19 @@ export class CentralSystemService {
   ) {}
   private readonly logger = new Logger("CentralSystemService");
   // === Metodi applicativi ===
-  async RequestAllNeededData(warehouseId : WarehouseId): Promise<{ inv: Inventory; order: Orders; dist: WarehouseState[] }> {
- 
-    const invDto = await this.outboundPortsAdapter.CloudInventoryRequest();  
-    const orderDto = await this.outboundPortsAdapter.CloudOrderRequest();    
-    const distDto = await this.outboundPortsAdapter.RequestDistanceWarehouse(warehouseId);
+  async RequestAllNeededData(warehouseId : WarehouseId): Promise<{ inv: Inventory; order: Orders; dist: WarehouseId[] }> {
+
+    const invDto = await this.outboundPortsAdapter.CloudInventoryRequest();     
     const inv = DataMapper.toDomainInventory(invDto);
+    console.log("Inventario:", JSON.stringify(inv, null, 2));
+
+    const distDto = await this.outboundPortsAdapter.RequestDistanceWarehouse(warehouseId);
+    const dist: WarehouseId[] = distDto.map(dto => DataMapper.warehouseIdToDomain(dto));
+    console.log("Stato magazzini:", JSON.stringify(dist, null, 2));
+    
+    const orderDto = await this.outboundPortsAdapter.CloudOrderRequest();  
     const order = await DataMapper.ordersToDomain(orderDto); 
-    const dist: WarehouseState[] = distDto.map(dto => DataMapper.warehouseStatetoDomain(dto));
+    console.log("Ordini:", JSON.stringify(order, null, 2));  
     return Promise.resolve({ inv, order, dist });
     /*
     // --- Mock Inventory Products statici ---
@@ -116,6 +121,7 @@ export class CentralSystemService {
   async ManageCriticalMinThres(
     product: Product,
   ): Promise<void> {
+    console.log("ManageCriticalMinThres called with product:", JSON.stringify(product, null, 2));
     const warehouseId = new WarehouseId(product.getIdWarehouse());
     const { inv, order, dist } = await this.RequestAllNeededData(warehouseId);
     for (const whState of dist) {
@@ -185,6 +191,7 @@ async CheckInsufficientQuantity(
   orderQuantity: OrderQuantity,
   warehouseId: WarehouseId
 ): Promise<void> {
+  console.log("CheckInsufficientQuantity called with orderQuantity:", JSON.stringify(orderQuantity), "and warehouseId:", warehouseId.getId());
   const { inv, order, dist } = await this.RequestAllNeededData(warehouseId);
 
   const internalOrdersToCreate: InternalOrder[] = []; 
@@ -304,12 +311,13 @@ async CheckInsufficientQuantity(
 
   if (productsToAllocate.length > 0) {
     console.log("Alcuni prodotti non hanno quantità sufficiente nei magazzini:", productsToAllocate.map((p) => p.getItemId()));
-    this.outboundPortsAdapter.sendOrder("CANCELORDER", new OrderId(orderQuantity.getId()), warehouseId);
+    //this.outboundPortsAdapter.sendOrder("CANCELORDER", new OrderId(orderQuantity.getId()), warehouseId);
     return Promise.resolve();
   }else{
     //this.logger.log(`Received orderQuantity: ${JSON.stringify(internalOrdersToCreate)}`);
     for (const internalOrder of internalOrdersToCreate) {
       try {
+        console.log("Prodotti da allocare:", productsToAllocate.map(p => p.getItemId()));
         await this.outboundPortsAdapter.createInternalOrder(internalOrder, new OrderId(orderQuantity.getId()));
       } catch (err) {
         console.error("Errore invio InternalOrder:", err);
