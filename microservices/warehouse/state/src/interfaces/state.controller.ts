@@ -13,7 +13,7 @@ export class StateController{
     private readonly inboundPortsAdapter: InboundPortsAdapter,
   ) {}
 
-  @MessagePattern('call.state.get')
+  @MessagePattern('call.cloud.checkHeartbeat')
   async getSyncedState(data: any): Promise<void> {
     this.logger.log(`Raw inbound data: ${JSON.stringify(data)}`);
     let warehouseId = 0;
@@ -26,14 +26,14 @@ export class StateController{
       }
     }
 
-    if (data?.warehouseId?.id && typeof data.warehouseId.id === 'number') {
-      warehouseId = data.warehouseId.id;
+    if (data?.warehouseId && typeof data.warehouseId === 'number') {
+      warehouseId = data.warehouseId;
     }
 
     this.logger.log(`Received getSyncedState request for warehouse ${warehouseId}`);
 
     const warehouseIdDTO = { id: warehouseId };
-    this.inboundPortsAdapter.getSyncedState(warehouseIdDTO)
-    return Promise.resolve();
-  }
+    await this.inboundPortsAdapter.getSyncedState(warehouseIdDTO);
+    // Non serve return, la risposta viene inviata tramite evento dal service
+  } 
 }

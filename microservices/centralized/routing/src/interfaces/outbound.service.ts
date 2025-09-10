@@ -1,6 +1,7 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { WarehouseIdDTO } from "./dto/warehouseId.dto";
 import { WarehouseAddressDTO } from "./dto/warehouseAddress.dto";
+import { WarehouseStateDTO } from "./dto/warehouseState.dto";
 
 import { NatsService } from './../interfaces/nats/nats.service'; 
 
@@ -19,5 +20,10 @@ export class OutboundService {
   async sendWarehouseDistance(warehouseId: WarehouseIdDTO[]): Promise<void> {
     // Implementation for sending warehouse distance with NATS
     await this.natsService.publish("warehouse.distance", [warehouseId]);
+  }
+
+  async sendWarehouseAndState(warehouseState: WarehouseStateDTO): Promise<void> {
+    // Implementation for sending warehouse state with NATS
+    await this.natsService.publish("warehouse.state", warehouseState);
   }
 }

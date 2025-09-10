@@ -23,11 +23,13 @@ export class StateAggregateService implements OnModuleInit {
 private heartbeatCallbacks: Array<(id: CloudWarehouseId, isAlive: boolean) => void> = [];
 
 public onHeartbeatResponse(callback: (id: CloudWarehouseId, isAlive: boolean) => void) {
+  console.log('Registered heartbeat response callback');
   this.heartbeatCallbacks.push(callback);
 }
 
 // Questo metodo viene chiamato dal controller
 public async handleHeartbeatResponse(id: CloudWarehouseId, isAlive: boolean): Promise<string> {
+  console.log(`Handling heartbeat response for warehouse ${id.getId()}: isAlive=${isAlive}`);
   this.heartbeatCallbacks.forEach(cb => cb(id, isAlive));
   this.heartbeatCallbacks = []; // pulisci le callback dopo la risposta
   return Promise.resolve(JSON.stringify({ result: "Heartbeat processed successfully" }));
@@ -35,13 +37,24 @@ public async handleHeartbeatResponse(id: CloudWarehouseId, isAlive: boolean): Pr
 
 @Interval(60000) // ogni 60 secondi
 async startPeriodicHeartbeatCheck() {
+  console.log('Starting periodic heartbeat check for all warehouses');
   const allWarehouses = await this.cloudStateRepository.getAllWarehouseIds();
+  console.log(`Found ${allWarehouses.length} warehouses to check`);
+
+  if (allWarehouses.length === 0) {
+    console.log('Nessun magazzino registrato.');
+  }
+
   for (const warehouseId of allWarehouses) {
+    console.log(`Checking heartbeat for warehouse ${warehouseId.getId()}`);
     await this.checkHeartbeat(warehouseId);
+    console.log(`Completed heartbeat check for warehouse ${warehouseId.getId()}`);
   }
 }
 
+
 async checkHeartbeat(warehouseId: CloudWarehouseId): Promise<'ONLINE' | 'OFFLINE'> {
+  console.log(`Sending heartbeat request to warehouse ${warehouseId.getId()}`);
   this.CloudStateEventAdapter.publishHeartbeat(new CloudHeartbeat(warehouseId, 'ALIVE?', new Date()));
 
   const TIMEOUT_MS = 10000;
@@ -52,6 +65,7 @@ async checkHeartbeat(warehouseId: CloudWarehouseId): Promise<'ONLINE' | 'OFFLINE
       if (id.equals(warehouseId) && !resolved) {
         resolved = true;
         const newState = isAlive ? 'ONLINE' : 'OFFLINE';
+        console.log(`Heartbeat response received for warehouse ${warehouseId.getId()}: ${newState}`);
 
         // Recupera lo stato attuale dal db
         const currentState = await this.cloudStateRepository.getState(warehouseId);
@@ -65,12 +79,19 @@ async checkHeartbeat(warehouseId: CloudWarehouseId): Promise<'ONLINE' | 'OFFLINE
         resolve(newState);
       }
     };
-
+    console.log(`Registering heartbeat response callback for warehouse ${warehouseId.getId()}`);
     this.onHeartbeatResponse(onResponse);
+    console.log(`Heartbeat request sent to warehouse ${warehouseId.getId()}, waiting for response...`);
 
-    setTimeout(() => {
+    setTimeout(async() => {
       if (!resolved) {
         resolved = true;
+        console.log(`Heartbeat timeout for warehouse ${warehouseId.getId()}: OFFLINE`);
+        const currentState = await this.cloudStateRepository.getState(warehouseId);
+        if (!currentState || currentState.getState() !== 'OFFLINE') {
+          await this.cloudStateRepository.updateState(new CloudWarehouseState(warehouseId, 'OFFLINE'));
+          this.CloudStateEventAdapter.publishState(new CloudWarehouseState(warehouseId, 'OFFLINE'));
+        }
         resolve('OFFLINE');
       }
     }, TIMEOUT_MS);

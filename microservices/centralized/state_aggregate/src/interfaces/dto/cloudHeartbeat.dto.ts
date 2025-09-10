@@ -11,7 +11,7 @@ export class CloudHeartbeatDTO {
 
     @IsNotEmpty()
     @IsString()
-    heartbeatmsg: string;
+    heartbeatMsg: string;
 
     @IsNotEmpty()
     @IsISO8601()
