@@ -60,8 +60,9 @@ export class centralSystemController {
     }
 
 
-  @EventPattern('event.inventory.criticalQuantity.min')
+  @EventPattern('inventory.belowMinThres')
   async handleCriticalQuantityMin(@Payload() data: any): Promise<void> {
+    console.log('Arrivato in handleCriticalQuantityMin');
     try {
       const productDtoInstance = new productDto();
       productDtoInstance.id = new productIdDto();
@@ -88,7 +89,7 @@ export class centralSystemController {
   }
 
 
-  @EventPattern('event.inventory.criticalQuantity.max')
+  @EventPattern('inventory.aboveMaxThres')
   async handleCriticalQuantityMax(@Payload() data: any): Promise<void> {
     try {
       const productDtoInstance = new productDto();

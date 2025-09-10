@@ -121,6 +121,7 @@ export class CentralSystemService {
   async ManageCriticalMinThres(
     product: Product,
   ): Promise<void> {
+    console.log("ManageCriticalMinThres called with product:", JSON.stringify(product, null, 2));
     const warehouseId = new WarehouseId(product.getIdWarehouse());
     const { inv, order, dist } = await this.RequestAllNeededData(warehouseId);
     for (const whState of dist) {
