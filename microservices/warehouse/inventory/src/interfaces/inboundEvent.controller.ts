@@ -1,3 +1,4 @@
+import { productQuantityArrayDto } from 'src/interfaces/http/dto/productQuantityArray.dto';
 import { Controller, Logger } from '@nestjs/common';
 import { EventPattern, MessagePattern, Payload } from '@nestjs/microservices';
 import { plainToInstance } from 'class-transformer';
@@ -82,27 +83,28 @@ export class InboundEventController {
     });
 
     try {
-      this.inboundEventListener.shipOrderRequest(dto);
+      await this.inboundEventListener.shipOrderRequest(dto);
     } catch (err) {
       logger.error('Errore parsing orderRequest payload', err);
     }
   }
   @EventPattern(`event.warehouse.${process.env.WAREHOUSE_ID}.order.receiveShipment`)
-  async handleReceiveShipment(payload: any): Promise<void> {
-    const data =
-      typeof payload === 'string'
-        ? payload
-        : payload?.data
-          ? payload.data.toString()
-          : payload;
+  async handleReceiveShipment(@Payload() payload: any): Promise<void> {
+    let productQuantityArrayDto = new ProductQuantityArrayDto();
+    let orderDto = new OrderIdDTO();
+    orderDto.id = payload.orderIdDTO.id;
+    productQuantityArrayDto.id = orderDto;
+    productQuantityArrayDto.productQuantityArray = payload.itemsDTO.map((item: any) => {
+      const productIdDto = new ProductIdDto();
+      productIdDto.id = item.itemId.id;
+      return {
+        productId: productIdDto,
+        quantity: item.quantity,
+      };
+    });
+
     try {
-      const parsed = JSON.parse(data);
-      const dto = plainToInstance(ProductQuantityArrayDto, {
-        productQuantityArray: parsed,
-      });
-      const errors = await validateOrReject(dto);
-      logger.error('Validation failed for orderRequest:', errors);
-      this.inboundEventListener.receiveShipment(dto);
+      await this.inboundEventListener.receiveShipment(productQuantityArrayDto);
     } catch (err) {
       logger.error('Errore parsing orderRequest payload', err);
     }

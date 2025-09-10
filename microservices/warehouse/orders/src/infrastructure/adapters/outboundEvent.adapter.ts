@@ -129,13 +129,18 @@ export class OutboundEventAdapter implements InternalOrderEventPublisher, OrderS
   }
 
 
-  async orderCompleted(orderId: OrderId) {
+  async orderCompleted(orderID: OrderId, orderItem: OrderItem[]) {
     try {
-      const orderIdStr = orderId.getId();
       // Sincronizza con l'aggregato
-      let aggregateSubject = `event.aggregate.order.${orderIdStr}.complete`;
-      await this.natsService.emit(aggregateSubject, "");
+      //let aggregateSubject = `event.aggregate.order.${orderIdStr}.complete`;
+      //await this.natsService.emit(aggregateSubject, "");
+      // DA TOGLIERE PERCHE' GIA' GESTITO IN orderStateUpdated()
+      const orderIdDTO = await this.dataMapper.orderIdToDTO(orderID);
+      const itemsDTO = await Promise.all(orderItem.map(item => this.dataMapper.orderItemToDTO(item)));
 
+
+      this.natsService.emit(`event.warehouse.${process.env.WAREHOUSE_ID}.order.receiveShipment`, JSON.stringify({ orderIdDTO, itemsDTO }));
+      return Promise.resolve();
     } catch (error) {
       console.error('Errore in orderCompleted:', error);
       throw error;

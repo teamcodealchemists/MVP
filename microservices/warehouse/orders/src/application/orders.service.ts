@@ -141,26 +141,41 @@ export class OrdersService {
         await this.ordersRepositoryMongo.updateOrderState(id, newState);
 
         // Cerca l'ordine per poter prelevare il warehouseDestination
-        let order = this.ordersRepositoryMongo.getById(id);
+        let order = await this.ordersRepositoryMongo.getById(id);
 
-        // Se l'ordine è Internal, aggiorna lo state sia nell'aggregato che nell'Ordini del WarehouseDestination
-        if (order instanceof InternalOrder){
-            await this.outboundEventAdapter.orderStateUpdated(id, newState, { 
-                destination: 'warehouse', 
-                warehouseId: order.getWarehouseDestination() 
-            });
+        // Se l'ordine è in invio mando gli eventi altrimenti
+        if (process.env.WAREHOUSE_ID == order.getWarehouseDeparture().toString()) {
 
-            return await this.outboundEventAdapter.orderStateUpdated(id, newState, { 
-                destination: 'aggregate' 
-            });
-        } 
-        // Se l'ordine è Sell, aggiorna lo state sia nell'aggregato che nell'Ordini del WarehouseDestination
-        else if (order instanceof SellOrder){
-            return await this.outboundEventAdapter.orderStateUpdated(id, newState, { 
-                destination: 'aggregate' 
-            });
+            // Se l'ordine è Internal, aggiorna lo state sia nell'aggregato che nell'Ordini del WarehouseDestination
+            if (order instanceof InternalOrder){
+                await this.outboundEventAdapter.orderStateUpdated(id, newState, { 
+                    destination: 'warehouse', 
+                    warehouseId: order.getWarehouseDestination() 
+                });
 
-        } 
+                return await this.outboundEventAdapter.orderStateUpdated(id, newState, { 
+                    destination: 'aggregate' 
+                });
+            } 
+            // Se l'ordine è Sell, aggiorna lo state sia nell'aggregato che nell'Ordini del WarehouseDestination
+            else if (order instanceof SellOrder){
+                return await this.outboundEventAdapter.orderStateUpdated(id, newState, { 
+                    destination: 'aggregate' 
+                });
+
+            } 
+        } else {
+            if (order instanceof InternalOrder){
+                if (newState === OrderState.SHIPPED) {
+                    // Se l'ordine è in stato SHIPPED, significa che è arrivato a destinazione e quindi va completato
+                    await this.updateOrderState(id, OrderState.COMPLETED);
+
+                }
+                else if (newState === OrderState.COMPLETED) {
+                    this.outboundEventAdapter.orderCompleted(new OrderId(id.getId()), order.getItemsDetail().map(itemDetail => itemDetail.getItem()));
+                }
+            }
+        }
     }
 
     async checkOrderState(id: OrderId): Promise<void> {
@@ -364,7 +379,7 @@ export class OrdersService {
 
         if (order instanceof InternalOrder) {
             // Aggiorna stato a COMPLETED
-            await this.ordersRepositoryMongo.updateOrderState(id, OrderState.COMPLETED);
+            await this.updateOrderState(id, OrderState.COMPLETED);
 
             // Estrai gli OrderItem dagli OrderItemDetail
             const items = order.getItemsDetail().map(itemDetail =>
@@ -378,16 +393,13 @@ export class OrdersService {
                 order.getWarehouseDestination() // o il warehouse corrente?
             );
 
-            // Notifica completamento all'aggregato (che poi potrebbe notificare il magazzino sorgente)
-            await this.outboundEventAdapter.orderCompleted(id);
+            return Promise.resolve();
         }
     }
 
     async completeOrder(id: OrderId): Promise<void> {
         await this.updateOrderState(id, OrderState.COMPLETED);
         console.log(`L'ordine interno di rifornimento ${id} è stato completato!`, JSON.stringify(id, null, 2));
-
-        await this.outboundEventAdapter.orderCompleted(id);
     }
 
 }
