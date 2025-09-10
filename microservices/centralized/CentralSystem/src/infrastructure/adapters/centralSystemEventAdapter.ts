@@ -62,8 +62,11 @@ NotificationPublisher
         return Promise.resolve(DataMapper.toDtoInventory(domainInventory));
     }
 
-    async CloudOrderRequest(): Promise<OrdersDTO> {
-        const domainOrders: Orders = await this.centralSystemHandler.handleCloudOrdersRequest();
+    async CloudOrderRequest(): Promise<OrdersDTO | null> {
+        const domainOrders: Orders | null = await this.centralSystemHandler.handleCloudOrdersRequest();
+        if(domainOrders === null){
+            return Promise.resolve(null);
+        }
         return Promise.resolve(DataMapper.ordersToDTO(domainOrders));
     }
 

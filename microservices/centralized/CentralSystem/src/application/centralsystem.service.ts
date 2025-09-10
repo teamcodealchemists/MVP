@@ -28,7 +28,7 @@ export class CentralSystemService {
   ) {}
   private readonly logger = new Logger("CentralSystemService");
   // === Metodi applicativi ===
-  async RequestAllNeededData(warehouseId : WarehouseId): Promise<{ inv: Inventory; order: Orders; dist: WarehouseId[] }> {
+  async RequestAllNeededData(warehouseId : WarehouseId): Promise<{ inv: Inventory; order: Orders | null; dist: WarehouseId[]}> {
 
     const invDto = await this.outboundPortsAdapter.CloudInventoryRequest();     
     const inv = DataMapper.toDomainInventory(invDto);
@@ -39,6 +39,9 @@ export class CentralSystemService {
     console.log("Stato magazzini:", JSON.stringify(dist, null, 2));
     
     const orderDto = await this.outboundPortsAdapter.CloudOrderRequest();  
+    if(orderDto === null){
+        return Promise.resolve({ inv, order: null, dist });
+    }  
     const order = await DataMapper.ordersToDomain(orderDto); 
     console.log("Ordini:", JSON.stringify(order, null, 2));  
     return Promise.resolve({ inv, order, dist });
@@ -145,40 +148,49 @@ export class CentralSystemService {
         */
         continue;
       } 
-      const pendingOrdersInternal = order.getInternalOrders().filter(
-      (o) =>
-        o.getWarehouseDeparture() === whId &&
-        o.getItemsDetail().some((item) => item.getItem().getItemId().toString() === product.getId()) &&
-        (o.getOrderState() === OrderState.PENDING|| o.getOrderState() === OrderState.PROCESSING) 
-      );
-      
-      //console.log(JSON.stringify(order.getSellOrders(), null, 2));
-      const pendingOrdersSell = order.getSellOrders().filter(
-      (o) =>
-        o.getWarehouseDeparture() === whId &&
-        o.getItemsDetail().some((item) => item.getItem().getItemId().toString() === product.getId()) &&
-        (o.getOrderState() === OrderState.PENDING|| o.getOrderState() === OrderState.PROCESSING)
-      );
-      const pendingQtyInternal = pendingOrdersInternal.reduce((sum, o) => {
-        const qtyInOrderInternal = o.getItemsDetail().reduce((itemSum, item) => itemSum + item.getItem().getQuantity(), 0);
-          return sum + qtyInOrderInternal;
-        }, 0
-      );
-      const pendingQtySell = pendingOrdersSell.reduce((sum, o) => {
-        const qtyInOrderSell = o.getItemsDetail().reduce((itemSum, item) => itemSum + item.getItem().getQuantity(), 0);
-          return sum + qtyInOrderSell;
-        }, 0
-      );
-      const residualQty = availableQty - pendingQtyInternal - pendingQtySell;
+      if(order !== null){
+        const pendingOrdersInternal = order.getInternalOrders().filter(
+        (o) =>
+          o.getWarehouseDeparture() === whId &&
+          o.getItemsDetail().some((item) => item.getItem().getItemId().toString() === product.getId()) &&
+          (o.getOrderState() === OrderState.PENDING|| o.getOrderState() === OrderState.PROCESSING) 
+        );
+        
+        //console.log(JSON.stringify(order.getSellOrders(), null, 2));
+        const pendingOrdersSell = order.getSellOrders().filter(
+        (o) =>
+          o.getWarehouseDeparture() === whId &&
+          o.getItemsDetail().some((item) => item.getItem().getItemId().toString() === product.getId()) &&
+          (o.getOrderState() === OrderState.PENDING|| o.getOrderState() === OrderState.PROCESSING)
+        );
+        const pendingQtyInternal = pendingOrdersInternal.reduce((sum, o) => {
+          const qtyInOrderInternal = o.getItemsDetail().reduce((itemSum, item) => itemSum + item.getItem().getQuantity(), 0);
+            return sum + qtyInOrderInternal;
+          }, 0
+        );
+        const pendingQtySell = pendingOrdersSell.reduce((sum, o) => {
+          const qtyInOrderSell = o.getItemsDetail().reduce((itemSum, item) => itemSum + item.getItem().getQuantity(), 0);
+            return sum + qtyInOrderSell;
+          }, 0
+        );
+        const residualQty = availableQty - pendingQtyInternal - pendingQtySell;
 
-      if (residualQty >= productInInv.getMinThres()) {
-        //Chiamata per creare un ordine nuovo avendo già i dati del magazzino trovato
-        //per ricordare
-        let oI = new OrderItem(new ItemId(Number(product.getId())),product.getMinThres()-product.getQuantity());
-        let oID = new OrderItemDetail(oI,0,product.getUnitPrice());
-        let internalOrders = new InternalOrder(new OrderId(""),[oID],OrderState.PENDING, new Date(), whId,warehouseId.getId());
-        //console.log("service : Magazzino mandato! \n"+ JSON.stringify(internalOrders, null, 2));
-        this.outboundPortsAdapter.createInternalOrder(internalOrders, new OrderId(""));
+        if (residualQty >= productInInv.getMinThres()) {
+          //Chiamata per creare un ordine nuovo avendo già i dati del magazzino trovato
+          //per ricordare
+          let oI = new OrderItem(new ItemId(Number(product.getId())),product.getMinThres()-product.getQuantity());
+          let oID = new OrderItemDetail(oI,0,product.getUnitPrice());
+          let internalOrders = new InternalOrder(new OrderId(""),[oID],OrderState.PENDING, new Date(), whId,warehouseId.getId());
+          //console.log("service : Magazzino mandato! \n"+ JSON.stringify(internalOrders, null, 2));
+          this.outboundPortsAdapter.createInternalOrder(internalOrders, new OrderId(""));
+        }else{
+          let oI = new OrderItem(new ItemId(Number(product.getId())),product.getMinThres()-product.getQuantity());
+          let oID = new OrderItemDetail(oI,0,product.getUnitPrice());
+          let internalOrders = new InternalOrder(new OrderId(""),[oID],OrderState.PENDING, new Date(), whId,warehouseId.getId());
+          //console.log("service : Magazzino mandato! \n"+ JSON.stringify(internalOrders, null, 2));
+          this.outboundPortsAdapter.createInternalOrder(internalOrders, new OrderId(""));
+          return Promise.resolve();
+        }
       }else {
         //console.log("Magazzino : "+whId+"\nresidualQty >= product.getMinThres()\n availableQty : " + availableQty + "\n pendingQtyInternal : "+ pendingQtyInternal + "\n pendingQtySell : "+ pendingQtySell + "\n residualQty : "+ residualQty);
       }
@@ -222,72 +234,81 @@ async CheckInsufficientQuantity(
       */
         continue;
       }
-      const pendingOrdersInternal = order
-        .getInternalOrders()
-        .filter(
-          (o) =>
-            o.getWarehouseDeparture() === whId &&
-            o.getItemsDetail().some(
-              (item) =>
-                item.getItem().getItemId() === Number(product.getItemId())
-            ) &&
-            (o.getOrderState() === OrderState.PENDING ||
-              o.getOrderState() === OrderState.PROCESSING)
+      if(order !== null){
+        const pendingOrdersInternal = order
+          .getInternalOrders()
+          .filter(
+            (o) =>
+              o.getWarehouseDeparture() === whId &&
+              o.getItemsDetail().some(
+                (item) =>
+                  item.getItem().getItemId() === Number(product.getItemId())
+              ) &&
+              (o.getOrderState() === OrderState.PENDING ||
+                o.getOrderState() === OrderState.PROCESSING)
+          );
+        const pendingOrdersSell = order
+          .getSellOrders()
+          .filter(
+            (o) =>
+              o.getWarehouseDeparture() === whId &&
+              o.getItemsDetail().some(
+                (item) =>
+                  item.getItem().getItemId() === Number(product.getItemId())
+              ) &&
+              (o.getOrderState() === OrderState.PENDING ||
+                o.getOrderState() === OrderState.PROCESSING)
+          );
+        const pendingQtyInternal = pendingOrdersInternal.reduce(
+          (sum, o) =>
+            sum +
+            o.getItemsDetail().reduce(
+                (itemSum, item) => itemSum + item.getItem().getQuantity(),0
+              ),0
         );
-      const pendingOrdersSell = order
-        .getSellOrders()
-        .filter(
-          (o) =>
-            o.getWarehouseDeparture() === whId &&
-            o.getItemsDetail().some(
-              (item) =>
-                item.getItem().getItemId() === Number(product.getItemId())
-            ) &&
-            (o.getOrderState() === OrderState.PENDING ||
-              o.getOrderState() === OrderState.PROCESSING)
-        );
-      const pendingQtyInternal = pendingOrdersInternal.reduce(
-        (sum, o) =>
-          sum +
-          o.getItemsDetail().reduce(
-              (itemSum, item) => itemSum + item.getItem().getQuantity(),0
-            ),0
-      );
 
-      const pendingQtySell = pendingOrdersSell.reduce(
-        (sum, o) =>
-          sum +
-          o.getItemsDetail().reduce(
-              (itemSum, item) => itemSum + item.getItem().getQuantity(),0
-            ),0
-      );
-      /*
-      console.log("Rimanente : "+ availableQty);
-      console.log("Internal richiede : "+ pendingQtyInternal);
-      console.log("Sell richiede : "+ pendingQtySell);
-      */
-      const residualQty = availableQty - pendingQtyInternal - pendingQtySell;
-      //console.log("Residuo : "+ residualQty);
-      if (residualQty >= productInInv.getMinThres()) {
-         const oI = new OrderItem(
+        const pendingQtySell = pendingOrdersSell.reduce(
+          (sum, o) =>
+            sum +
+            o.getItemsDetail().reduce(
+                (itemSum, item) => itemSum + item.getItem().getQuantity(),0
+              ),0
+        );
+        /*
+        console.log("Rimanente : "+ availableQty);
+        console.log("Internal richiede : "+ pendingQtyInternal);
+        console.log("Sell richiede : "+ pendingQtySell);
+        */
+        const residualQty = availableQty - pendingQtyInternal - pendingQtySell;
+        //console.log("Residuo : "+ residualQty);
+        if (residualQty >= productInInv.getMinThres()) {
+          const oI = new OrderItem(
+            new ItemId(product.getItemId()),
+            product.getQuantity()
+          );
+          const oID = new OrderItemDetail(oI, 0, productInInv.getUnitPrice());
+          orderItemsDetails.push(oID);
+          productsForThisWarehouse.push(product);
+        }else{
+        /* 
+          console.log("WarehouseId : " + whState.getId());
+          console.log("Parte Ordine | Problema scende sotto la soglia : ");
+          console.log("Parte Ordine | Soglia : "+ productInInv.getMinThres());
+          console.log("Parte Ordine | Quantità disponibile : "+ availableQty);
+          console.log("Parte Ordine | Quantità da togliere per InternalOrder : "+ pendingQtyInternal);
+          console.log("Parte Ordine | Quantità da togliere per SellOrder : "+ pendingQtySell);
+          console.log("Parte Ordine | Quantità rimanente se fosse stata tolta "+ residualQty);
+          */
+        }
+      }else {
+        const oI = new OrderItem(
           new ItemId(product.getItemId()),
           product.getQuantity()
         );
         const oID = new OrderItemDetail(oI, 0, productInInv.getUnitPrice());
         orderItemsDetails.push(oID);
         productsForThisWarehouse.push(product);
-      }else{
-       /* 
-        console.log("WarehouseId : " + whState.getId());
-        console.log("Parte Ordine | Problema scende sotto la soglia : ");
-        console.log("Parte Ordine | Soglia : "+ productInInv.getMinThres());
-        console.log("Parte Ordine | Quantità disponibile : "+ availableQty);
-        console.log("Parte Ordine | Quantità da togliere per InternalOrder : "+ pendingQtyInternal);
-        console.log("Parte Ordine | Quantità da togliere per SellOrder : "+ pendingQtySell);
-        console.log("Parte Ordine | Quantità rimanente se fosse stata tolta "+ residualQty);
-        */
       }
-    }
 
     if (orderItemsDetails.length > 0) {
       const internalOrder = new InternalOrder(
@@ -326,6 +347,7 @@ async CheckInsufficientQuantity(
     //console.log("service : Magazzino mandato! \n"+ JSON.stringify(internalOrdersToCreate, null, 2));
   }
   return Promise.resolve();
+}
 }
 
 
@@ -392,32 +414,38 @@ async CheckInsufficientQuantity(
       }
 
       //Controllo se ci sono destinazioni che vengono da me
-      const pendingOrdersInternal = order.getInternalOrders().filter(
-      (o) =>
-        o.getWarehouseDestination() === whId &&
-        o.getItemsDetail().some((item) => item.getItem().getItemId().toString() === product.getId()) &&
-        (o.getOrderState() === OrderState.PENDING|| o.getOrderState() === OrderState.PROCESSING)
-      );
-      const pendingQtyInternal = pendingOrdersInternal.reduce((sum, o) => {
-        const qtyInOrderInternal = o.getItemsDetail().reduce((itemSum, item) => itemSum + item.getItem().getQuantity(), 0);
-          return sum + qtyInOrderInternal;
-        }, 0
-      );
-      const residualQty = availableQty + pendingQtyInternal;
-      if (residualQty <= productInInv.getMaxThres()) {
-        //Chiamata per creare un ordine nuovo avendo già i dati del magazzino trovato
-        //per ricordare
+      if(order !== null){
+        const pendingOrdersInternal = order.getInternalOrders().filter(
+        (o) =>
+          o.getWarehouseDestination() === whId &&
+          o.getItemsDetail().some((item) => item.getItem().getItemId().toString() === product.getId()) &&
+          (o.getOrderState() === OrderState.PENDING|| o.getOrderState() === OrderState.PROCESSING)
+        );
+        const pendingQtyInternal = pendingOrdersInternal.reduce((sum, o) => {
+          const qtyInOrderInternal = o.getItemsDetail().reduce((itemSum, item) => itemSum + item.getItem().getQuantity(), 0);
+            return sum + qtyInOrderInternal;
+          }, 0
+        );
+        const residualQty = availableQty + pendingQtyInternal;
+        if (residualQty <= productInInv.getMaxThres()) {
+          //Chiamata per creare un ordine nuovo avendo già i dati del magazzino trovato
+          //per ricordare
+          let oI = new OrderItem(new ItemId(Number(product.getId())), product.getQuantity() - product.getMaxThres());
+          let oID = new OrderItemDetail(oI,0,product.getUnitPrice());
+          let internalOrders = new InternalOrder(new OrderId(""),[oID],OrderState.PENDING, new Date(),warehouseId.getId(),whId);
+          //console.log("service : Magazzino mandato! \n"+ JSON.stringify(internalOrders, null, 2));
+          this.outboundPortsAdapter.createInternalOrder(internalOrders, new OrderId(""));
+        
+          return Promise.resolve();
+        }//else console.log("!residualQty <= productInInv.getMaxThres()");
+      }else {
         let oI = new OrderItem(new ItemId(Number(product.getId())), product.getQuantity() - product.getMaxThres());
         let oID = new OrderItemDetail(oI,0,product.getUnitPrice());
         let internalOrders = new InternalOrder(new OrderId(""),[oID],OrderState.PENDING, new Date(),warehouseId.getId(),whId);
-        //console.log("service : Magazzino mandato! \n"+ JSON.stringify(internalOrders, null, 2));
         this.outboundPortsAdapter.createInternalOrder(internalOrders, new OrderId(""));
-        
-        return;
-      }//else console.log("!residualQty <= productInInv.getMaxThres()");
     }
     this.outboundPortsAdapter.sendInventory("MAX - Non disponibile", new ProductId(product.getId()), new WarehouseId(product.getIdWarehouse()));
     return Promise.resolve()
   }
-  
+  }
 }
