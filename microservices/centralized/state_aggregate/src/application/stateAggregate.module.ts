@@ -8,10 +8,12 @@ import { AccessController } from './../interfaces/access.controller';
 import { CloudStateRepositoryModule } from './../infrastructure/adapters/mongodb/cloudState.repository.module';
 import { OutboundService } from './../interfaces/outbound.service';
 import { CloudStateEventAdapter } from './../infrastructure/adapters/cloudState.event.adapter';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
     //MongooseModule.forRoot('mongodb://host.docker.internal:27017/state_aggregate'),
+    ScheduleModule.forRoot(),
     MongooseModule.forRoot(process.env.MONGO_DB || 'mongodb://host.docker.internal:27017/state_aggregate'),
     NatsModule,
     CloudStateRepositoryModule

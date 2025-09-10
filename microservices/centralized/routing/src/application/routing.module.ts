@@ -28,6 +28,9 @@ import { AccessController } from './../interfaces/access.controller';
       useClass: RoutingRepositoryMongo,
     },
   ],
+  exports: [RoutingService, RoutingEventAdapter],
+=======
   exports: [RoutingService,RoutingEventAdapter],
+>>>>>>> 3b843318b429be1ac4c9bdb32c9d7abc6142eaf4
 })
 export class RoutingModule {}

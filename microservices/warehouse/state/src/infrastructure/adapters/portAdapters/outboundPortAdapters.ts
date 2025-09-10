@@ -25,6 +25,7 @@ export class OutboundPortsAdapter implements StatePortPublisher {
   }
 
     async publishHeartbeat(heartbeat : Heartbeat): Promise<void> {
+    console.log(`Publishing heartbeat for warehouse: ${JSON.stringify(heartbeat)}`);
     const heartbeatDto = DataMapper.toDTOHeartbeat(heartbeat);
     try {
       await this.stateEvent.publishHeartbeat(heartbeatDto); 

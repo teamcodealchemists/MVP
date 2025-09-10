@@ -1,14 +1,14 @@
 import { WarehouseId } from "./warehouse-id.entity";
 
 export class Heartbeat {
+  private warehouseId: WarehouseId;
   private heartbeatMsg: string;
   private timestamp: Date;
-  private warehouseId: WarehouseId;
 
-  constructor(heartbeatMsg: string, timestamp: Date, warehouseId: WarehouseId) {
+  constructor(warehouseId: WarehouseId, heartbeatMsg: string, timestamp: Date) {
+    this.warehouseId = warehouseId;
     this.heartbeatMsg = heartbeatMsg;
     this.timestamp = timestamp;
-    this.warehouseId = warehouseId;
   }
 
   public getHeartbeatMsg(): string {

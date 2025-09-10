@@ -17,7 +17,7 @@ export const DataMapper = {
 
   toDomainHeartbeat(dto: HeartbeatDTO): Heartbeat {
     const warehouseId = new WarehouseId(dto.warehouseId);
-    return new Heartbeat(dto.heartbeatMsg, dto.timestamp, warehouseId);
+    return new Heartbeat(warehouseId, dto.heartbeatMsg, dto.timestamp);
   },
 
   
@@ -37,9 +37,9 @@ export const DataMapper = {
 
   toDTOHeartbeat(entity: Heartbeat): HeartbeatDTO {
     let heartbeatDto = new HeartbeatDTO();
+    heartbeatDto.warehouseId = entity.getId();
     heartbeatDto.heartbeatMsg =  entity.getHeartbeatMsg();
     heartbeatDto.timestamp = entity.getTimestamp();
-    heartbeatDto.warehouseId = entity.getId();
     return heartbeatDto;
   }
 };

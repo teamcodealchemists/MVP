@@ -21,8 +21,8 @@ export class InboundPortsAdapter implements GetStateEventListener {
 
   async getSyncedState(warehouseIdDTO: WarehouseIdDTO): Promise<void> {
     const warehouseId = DataMapper.toDomainWarehouseId(warehouseIdDTO)
-    this.stateService.sendHeartBeat(warehouseId, new WarehouseState("Attivo"));
-    return Promise.resolve();
+    //this.stateService.sendHeartBeat(warehouseId, new WarehouseState("Attivo"));
+    this.stateService.sendHeartBeat(warehouseId, new WarehouseState("ONLINE"));
   /*
   if (!warehouseState) {
     
@@ -34,6 +34,6 @@ export class InboundPortsAdapter implements GetStateEventListener {
 
   await this.stateEvenntHandler.publishHeartbeat(heartbeat);
   */
-}
   }
+}
 

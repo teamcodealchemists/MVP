@@ -4,12 +4,14 @@ import { WarehouseAddress } from '../domain/warehouseAddress.entity';
 import { WarehouseState } from '../domain/warehouseState.entity';
 import { RoutingRepository } from '../domain/routing.repository';
 import { haversine, geocodeAddress} from '../interfaces/geo';
+import { RoutingEventAdapter } from '../infrastructure/adapters/routing.event.adapter';
 
 @Injectable()
 export class RoutingService {
   constructor(
     @Inject("ROUTINGREPOSITORY")
     private readonly RoutingRepository: RoutingRepository,
+    private readonly RoutingEventAdapter: RoutingEventAdapter,
   ) {}
 
   async calculateDistance(sourceWarehouseId: WarehouseId): Promise<WarehouseId[]> {
@@ -77,6 +79,7 @@ export class RoutingService {
         address: address,
     });
     await this.saveWarehouseAddress(warehouseId, address, state);
+    this.RoutingEventAdapter.sendWarehouseAndState({warehouseId: warehouseId.getId()}, state as 'ONLINE' | 'OFFLINE');
     return JSON.stringify({ result: 'Warehouse created successfully with id ' + warehouseId.getId() });
   }
 

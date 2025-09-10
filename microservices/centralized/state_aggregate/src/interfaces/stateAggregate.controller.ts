@@ -11,16 +11,18 @@ import { CloudHeartbeatDTO } from './dto/cloudHeartbeat.dto';
 import { DataMapper } from './data.mapper';
 import { CloudWarehouseIdDTO } from './dto/cloudWarehouseId.dto';
 
+
 @Controller()
 export class StateAggregateController implements GetStateUseCase, HeartbeatReceivedEvent, UpdateStateUseCase {
   constructor(private readonly stateAggregateService: StateAggregateService) {}
 
-  @MessagePattern(`call.cloudState.warehouse.${process.env.WAREHOUSE_ID}.heartbeat.response`)
-  async syncReceivedHeartbeat(@Payload('params') message: CloudHeartbeatDTO) {
+  @MessagePattern(`call.cloudState.warehouse.*.heartbeat.response`)
+  async syncReceivedHeartbeat(@Payload() payload: any) : Promise<string> {
     try{
-      const domainHeartbeat = DataMapper.cloudHeartbeatToDomain(message);
+      const domainHeartbeat = DataMapper.cloudHeartbeatToDomain(payload.data);
       const warehouseId = new CloudWarehouseId(domainHeartbeat.getId().getId());
       const isAlive = domainHeartbeat.getHeartbeatMsg() === 'ONLINE';
+      console.log(`isAlive: ${isAlive}`);
       // Notifica il service che è arrivata la risposta
       return await this.stateAggregateService.handleHeartbeatResponse(warehouseId, isAlive);
     } catch (error) {
@@ -41,6 +43,7 @@ export class StateAggregateController implements GetStateUseCase, HeartbeatRecei
 
       // Recupera lo stato attuale dal db
       const currentState = await this.stateAggregateService.getState(warehouseId);
+      console.log(`Current state: ${currentState ? currentState.getState() : 'none'}, New state: ${newState}`);
 
       // Se lo stato è cambiato, aggiorna il db
       if (!currentState || currentState.getState() !== newState) {
@@ -83,6 +86,21 @@ export class StateAggregateController implements GetStateUseCase, HeartbeatRecei
             message: error.message
           }
         }));
+    }
+  }
+
+  @EventPattern('warehouse.state')
+  async handleWarehouseStateEvent(@Payload() payload: { warehouseId: CloudWarehouseIdDTO, warehouseState: 'ONLINE' | 'OFFLINE' }) {
+    try {
+      const warehouseIdNum = payload.warehouseId.warehouseId;
+      const warehouseId = new CloudWarehouseId(warehouseIdNum);
+      const state = payload.warehouseState;
+      await this.stateAggregateService.updateState(new CloudWarehouseState(warehouseId, state));
+      // Puoi anche notificare l'evento di stato aggiornato se serve
+      this.stateAggregateService.notifyStateUpdated(new CloudWarehouseState(warehouseId, state));
+    } catch (error) {
+      // Logga l'errore se vuoi
+      console.error('Errore durante la ricezione evento warehouse.state:', error);
     }
   }
 }

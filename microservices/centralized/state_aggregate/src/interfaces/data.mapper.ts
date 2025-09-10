@@ -22,7 +22,7 @@ export const DataMapper = {
     cloudHeartbeatToDomain(cloudHeartbeatDTO: CloudHeartbeatDTO): CloudHeartbeat {
         return new CloudHeartbeat(
             new CloudWarehouseId(cloudHeartbeatDTO.warehouseId),
-            cloudHeartbeatDTO.heartbeatmsg,
+            cloudHeartbeatDTO.heartbeatMsg,
             typeof cloudHeartbeatDTO.timestamp === 'string' ? new Date(cloudHeartbeatDTO.timestamp) : cloudHeartbeatDTO.timestamp
         );
     },
@@ -42,7 +42,7 @@ export const DataMapper = {
     cloudHeartbeatToDTO(cloudHeartbeat: CloudHeartbeat): CloudHeartbeatDTO {
         return {
             warehouseId: cloudHeartbeat.getId().getId(),
-            heartbeatmsg: cloudHeartbeat.getHeartbeatMsg(),
+            heartbeatMsg: cloudHeartbeat.getHeartbeatMsg(),
             timestamp: cloudHeartbeat.getTimestamp()
         };
     }
