@@ -426,6 +426,7 @@ export class OrdersRepositoryMongo implements OrdersRepository {
             
             // Converti a dominio e restituisci il documento aggiornato
             if (updatedDoc.warehouseDestination) {
+                Logger.debug(`Convertendo documento aggiornato in InternalOrder`, 'OrdersRepositoryMongo');
                 let internalOrderDto = new InternalOrderDTO();
                 let orderIdDto = new OrderIdDTO();
                 orderIdDto.id = updatedDoc.orderId.id;
@@ -452,6 +453,7 @@ export class OrdersRepositoryMongo implements OrdersRepository {
 
                 return this.mapper.internalOrderToDomain(internalOrderDto);
             } else {
+                Logger.debug(`Convertendo documento aggiornato in SellOrder`, 'OrdersRepositoryMongo');
                 let sellOrderDto = new SellOrderDTO();
                 let orderIdDto = new OrderIdDTO();
                 orderIdDto.id = updatedDoc.orderId.id;
@@ -461,7 +463,9 @@ export class OrdersRepositoryMongo implements OrdersRepository {
                     quantityReserved: item.quantityReserved,
                     unitPrice: item.unitPrice
                 }));
-                sellOrderDto.orderState = updatedDoc.orderState;
+                let orderStateDto = new OrderStateDTO();
+                orderStateDto.orderState = updatedDoc.orderState;
+                sellOrderDto.orderState = orderStateDto;
                 sellOrderDto.creationDate = updatedDoc.creationDate;
                 sellOrderDto.warehouseDeparture = updatedDoc.warehouseDeparture;
                 sellOrderDto.destinationAddress = updatedDoc.destinationAddress;

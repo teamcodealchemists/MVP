@@ -99,9 +99,36 @@ export class CloudOrdersController {
     return Promise.resolve(JSON.stringify( {result : { model }}));
   }
 
+@MessagePattern(`get.aggregate.filtered.orders`)
+async getAllFilteredOrders(): Promise<string> {
+  this.logger.verbose('[Controller] Richiesta ordini filtrati ricevuta');
+  try {
+    this.logger.verbose('[Controller] Chiamando inboundPortsAdapter...');
+    const orders = await this.inboundPortsAdapter.getAllFilteredOrders();
+    this.logger.verbose('[Controller] Richiesta elaborata con successo');
+
+    const internalOrderRids = orders.internalOrders.map(order => ({
+      rid: `aggregate.order.${order.orderId?.id ?? order.orderId}`
+    }));
+
+    const sellOrderRids = orders.sellOrders.map(order => ({
+      rid: `aggregate.order.${order.orderId?.id ?? order.orderId}`
+    }));
+
+    const collection = [...internalOrderRids, ...sellOrderRids];
+
+    return Promise.resolve(JSON.stringify({ result: { collection } }));
+  } catch (error) {
+    this.logger.error('[Controller] Errore in getAllFilteredOrders:', error);
+    this.logger.error('[Controller] Stack trace:', error.stack);
+
+    return Promise.resolve(JSON.stringify( {error: { code: 'system.internalError', message: 'Internal server error' } }));
+  }
+}
+
 @MessagePattern(`get.aggregate.orders`)
 async getAllOrders(): Promise<string> {
-  this.logger.verbose('[Controller] CIAONES - Richiesta ricevuta');
+  this.logger.verbose('[Controller] Richiesta ricevuta');
   try {
     this.logger.verbose('[Controller] Chiamando inboundPortsAdapter...');
     const orders = await this.inboundPortsAdapter.getAllOrders();

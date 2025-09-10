@@ -110,6 +110,25 @@ export class CloudInboundPortsAdapter implements SyncGetAllOrdersUseCase,
     throw new Error(`[AggregateO] Tipo di ordine non riconosciuto per l'ordine: ${orderId}`);
   }
 
+  async getAllFilteredOrders(): Promise<SyncOrdersDTO> {
+      try {
+          const ordersDomain = await this.cloudOrdersRepositoryMongo.getAllFilteredOrders();
+          this.logger.log('[Adapter] Ordini filtrati recuperati dal repository');
+          
+          const ordersDTO = await this.dataMapper.syncOrdersToDTO(ordersDomain);
+          this.logger.log('[Adapter] Conversione a DTO completata');
+          
+          return ordersDTO;
+      } catch (error) {
+          this.logger.log('[Adapter] Errore in getAllFilteredOrders:', error);
+          // Restituisci un DTO vuoto invece di propagare l'errore
+          return {
+              sellOrders: [],
+              internalOrders: []
+          };
+      }
+  }
+
   async getAllOrders(): Promise<SyncOrdersDTO> {
      
       try {
