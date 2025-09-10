@@ -439,7 +439,7 @@ export class OrdersRepositoryMongo implements OrdersRepository {
                 // --- FIX: Check and log orderState ---
                 if (!updatedDoc.orderState) {
                     Logger.error(`orderState mancante per InternalOrder ID ${updatedDoc.orderId.id}`, 'OrdersRepositoryMongo');
-                    throw new Error(`Stato ordine non valido NOU: ${updatedDoc.orderState}. Stati validi: PENDING, PROCESSING, SHIPPED, CANCELED, COMPLETED`);
+                    throw new Error(`Stato ordine non valido : ${updatedDoc.orderState}. Stati validi: PENDING, PROCESSING, SHIPPED, CANCELED, COMPLETED`);
                 }
                 let orderStateDto = new OrderStateDTO();
                 orderStateDto.orderState = updatedDoc.orderState;

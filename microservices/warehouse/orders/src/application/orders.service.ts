@@ -140,21 +140,27 @@ export class OrdersService {
         // Aggiorna lo stato nella repository
         await this.ordersRepositoryMongo.updateOrderState(id, newState);
 
+        // Cerca l'ordine per poter prelevare il warehouseDestination
+        let order = this.ordersRepositoryMongo.getById(id);
 
-        // Se l'ordine è passato a PROCESSING, notifica WarehouseDeparture
-        if (newState === OrderState.PROCESSING) {
-            const order = await this.ordersRepositoryMongo.getById(id);
-            if (order instanceof InternalOrder) {
-                // Notifica il magazzino di partenza usando receiveShipment
-                console.log(`Notifico magazzino ${order.getWarehouseDeparture()} che può spedire ordine ${id.getId()}`);
-                await this.outboundEventAdapter.receiveShipment(
-                    id,
-                    [],
-                    order.getWarehouseDeparture()
-                );
-            }
-        }
-        return await this.outboundEventAdapter.orderStateUpdated(id, newState);
+        // Se l'ordine è Internal, aggiorna lo state sia nell'aggregato che nell'Ordini del WarehouseDestination
+        if (order instanceof InternalOrder){
+            await this.outboundEventAdapter.orderStateUpdated(id, newState, { 
+                destination: 'warehouse', 
+                warehouseId: order.getWarehouseDestination() 
+            });
+
+            return await this.outboundEventAdapter.orderStateUpdated(id, newState, { 
+                destination: 'aggregate' 
+            });
+        } 
+        // Se l'ordine è Sell, aggiorna lo state sia nell'aggregato che nell'Ordini del WarehouseDestination
+        else if (order instanceof SellOrder){
+            return await this.outboundEventAdapter.orderStateUpdated(id, newState, { 
+                destination: 'aggregate' 
+            });
+
+        } 
     }
 
     async checkOrderState(id: OrderId): Promise<void> {
@@ -238,8 +244,9 @@ export class OrdersService {
             
             Logger.debug(`Order published to aggregate and warehouse ${order.getWarehouseDestination()}`, 'OrdersService');
         } else {
-            // Se il warehouse corrente NON è quello di partenza, fai solo il salvataggio nella repo dell'altro magazzino
+            // Se il warehouse corrente NON è quello di partenza, fai solo il salvataggio nella repo nel magazzino di destinazione
             // => (E' per evitare di evitare dati duplicati all'aggregate Orders)
+            this.outboundEventAdapter.waitingForStock(uniqueOrderId, order.getWarehouseDeparture().toString());
             Logger.debug(`Order created but not published (current warehouse: ${currentWarehouseId})`, 'OrdersService');
         }
         

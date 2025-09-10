@@ -18,15 +18,22 @@ import { InternalOrder } from "src/domain/internalOrder.entity";
 import { SellOrder } from "src/domain/sellOrder.entity";
 import { OrderState } from "src/domain/orderState.enum";
 import { OrderIdDTO } from 'src/interfaces/dto/orderId.dto';
+import { WaitingForStockPublisher } from 'src/interfaces/outbound-ports/waitingForStock.publisher';
 
 @Injectable()
 export class OutboundEventAdapter implements InternalOrderEventPublisher, OrderStatusEventPublisher, RequestStockReplenishmentPublisher, ReserveStockCommandPublisher,
-  SellOrderEventPublisher, ShipStockCommandPublisher, OnModuleInit {
+  SellOrderEventPublisher, ShipStockCommandPublisher, OnModuleInit, WaitingForStockPublisher {
 
   constructor(
     @Inject("NATS_SERVICE") private readonly natsService: ClientProxy,
     private readonly dataMapper: DataMapper
   ) { }
+
+  waitingForStock(orderId: OrderId, warehouseDepartureId: string): Promise<void> {
+    this.natsService.emit(`event.warehouse.${warehouseDepartureId}.order.${orderId.getId()}.waitingStock`, "");
+    this.logger.debug(`[2] Published waiting for stock event for order ${orderId.getId()} with warehouseDepartureId ${warehouseDepartureId}`);
+    return Promise.resolve();
+  }
 
   private readonly logger = new Logger(OutboundEventAdapter.name);
 
@@ -85,13 +92,23 @@ export class OutboundEventAdapter implements InternalOrderEventPublisher, OrderS
   */
 
 
-  async orderStateUpdated(orderId: OrderId, orderState: OrderState) {
+  async orderStateUpdated(orderId: OrderId, orderState: OrderState, context: { destination: 'aggregate' | 'warehouse', warehouseId?: number }) {
     try {
       const orderIdStr = orderId.getId();
-      // Sincronizza con l'aggregato
-      let aggregateSubject = `event.aggregate.order.${orderIdStr}.state.update.${orderState}`;
-      await this.natsService.emit(aggregateSubject, "");
+
+      // Sincronizza con l'aggregato cloud Ordini
+      if (context.destination === 'aggregate') {
+        let aggregateSubject = `event.aggregate.order.${orderIdStr}.state.update.${orderState}`;
+        await this.natsService.emit(aggregateSubject, "");
+      }  
+      // Sincronizza con l'Ordini del warehouseDestination
+      else if (context.destination === 'warehouse' && context.warehouseId) {
+        let warehouseDestinationSubject = `event.warehouse.${context.warehouseId}.order.${orderIdStr}.state.update.${orderState}`;
+        await this.natsService.emit(warehouseDestinationSubject, "" );
+      } 
+
       return Promise.resolve();
+
     } catch (error) {
       console.error('Errore in orderStateUpdated:', error);
       throw error;
