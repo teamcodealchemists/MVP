@@ -53,8 +53,7 @@ export class InboundEventController {
         quantity: item.quantity,
       };
     });
-
-
+    
     try {
       //validateOrReject(dto);
       this.inboundEventListener.orderRequest(dto);

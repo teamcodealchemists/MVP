@@ -66,6 +66,26 @@ export class OrdersController {
       return Promise.resolve(JSON.stringify({ error: { code: 'system.internalError', message: error?.message || 'Unknown error' } }));
     }
   }
+
+  @EventPattern(`event.warehouse.${process.env.WAREHOUSE_ID}.order.internal.new`)
+  async addInternalOrderEvent(@Payload('params') payload: any): Promise<string> {
+    try {
+    const internalOrderDTO: InternalOrderDTO = {
+      orderId: payload.orderId,
+      items: payload.items,
+      orderState: payload.orderState,
+      creationDate: payload.creationDate,
+      warehouseDeparture: payload.warehouseDeparture,
+      warehouseDestination: payload.warehouseDestination,
+      sellOrderReference : payload.sellOrderReference ?? "",
+    };
+    let newOrderId = await this.inboundPortsAdapter.addInternalOrder(internalOrderDTO);
+    let RID = `warehouse.${process.env.WAREHOUSE_ID}.order.${newOrderId}`;
+      return Promise.resolve(JSON.stringify({ resource: { rid: RID } }));
+    } catch (error) {
+      return Promise.resolve(JSON.stringify({ error: { code: 'system.internalError', message: error?.message || 'Unknown error' } }));
+    }
+  }
   
   // Riceve il messaggio dall'Inventario del magazzino di partenza dove dice che ha tutta la merce
   @EventPattern(`warehouse.${process.env.WAREHOUSE_ID}.order.sufficientAvailability`)

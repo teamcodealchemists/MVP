@@ -86,14 +86,14 @@ export class OrdersService {
         // Aggiorna nel repository
         await this.ordersRepositoryMongo.updateReservedStock(id, itemsWithFullReservation);
 
+        Logger.log(`Ordine ${id.getId()} - Tutta la merce è disponibile e riservata`);
+
         // Procedi con il flusso normale
         if (order instanceof SellOrder) {
             await this.checkReservedQuantityForSellOrder(order);
         } else if (order instanceof InternalOrder) {
             await this.checkReservedQuantityForInternalOrder(order);
         }
-
-        console.log(`Ordine ${id.getId()} - Tutta la merce è disponibile e riservata`);
     }
 
     /*     async updateOrderState(id: OrderId, state: OrderState): Promise<void> {
@@ -116,6 +116,11 @@ export class OrdersService {
     async updateOrderState(id: OrderId, newState: OrderState): Promise<void> {
         // Recupera lo stato corrente
         const currentState = await this.ordersRepositoryMongo.getState(id);
+
+        Logger.debug(
+            `Order ID: ${id.getId()} | Current state: ${currentState} | New state: ${newState} | `,
+            'OrdersService'
+        );
 
         // Controlla la validità della transizione di stato
         // Se è in uno degli Stati finali: non può cambiare
@@ -144,6 +149,22 @@ export class OrdersService {
         let order = await this.ordersRepositoryMongo.getById(id);
 
         // Se l'ordine è in invio mando gli eventi altrimenti
+
+
+        if (process.env.WAREHOUSE_ID == order.getWarehouseDeparture().toString()) {
+            if (order instanceof InternalOrder) {
+                
+            }
+            else if (order instanceof SellOrder) {
+
+            }
+        }
+        else {
+
+        }
+
+
+        // DA ELIMINARE
         if (process.env.WAREHOUSE_ID == order.getWarehouseDeparture().toString()) {
 
             // Se l'ordine è Internal, aggiorna lo state sia nell'aggregato che nell'Ordini del WarehouseDestination
@@ -243,22 +264,20 @@ export class OrdersService {
         await this.ordersRepositoryMongo.addInternalOrder(orderWithUniqueId);
         
         // Controlla se il warehouse di partenza è quello corrente
-        const currentWarehouseId = process.env.WAREHOUSE_ID;
+        const currentWarehouseId = process.env.WAREHOUSE_ID; //Chi siamo noi
         
         if (order.getWarehouseDeparture().toString() === currentWarehouseId) {
             // Se il warehouse di partenza è quello corrente:
             //  => avvia l'InternalOrderSaga, pubblica all'aggregate Orders e pubblica al warehouse di destinazione
-            await this.orderSaga.startInternalOrderSaga(uniqueOrderId);
 
             await this.outboundEventAdapter.publishInternalOrder(orderWithUniqueId, { 
                 destination: 'aggregate' 
             });
 
-            await this.outboundEventAdapter.publishInternalOrder(orderWithUniqueId, { 
-                destination: 'warehouse', 
-                warehouseId: order.getWarehouseDestination() 
-            });
             
+            await this.orderSaga.startInternalOrderSaga(uniqueOrderId);
+            await this.updateOrderState(uniqueOrderId, OrderState.PROCESSING);
+
             Logger.debug(`Order published to aggregate and warehouse ${order.getWarehouseDestination()}`, 'OrdersService');
         } else {
             // Se il warehouse corrente NON è quello di partenza, fai solo il salvataggio nella repo nel magazzino di destinazione
@@ -358,7 +377,8 @@ export class OrdersService {
             );
 
             // Tutta la merce è riservata, procedi con la spedizione
-            await this.outboundEventAdapter.publishShipment(idDomain, items);
+            //await this.outboundEventAdapter.publishShipment(idDomain, items);
+            await this.outboundEventAdapter.publishInternalOrder(internalOrder, { destination: 'warehouse', warehouseId: internalOrder.getWarehouseDestination() });
         } catch (error) {
             // Se c'è errore, avvia riassortimento
             /* TODO: Cosa chiamare per avviare riassortimento?*/

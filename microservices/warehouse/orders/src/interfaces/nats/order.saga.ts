@@ -27,6 +27,7 @@ export class OrderSaga {
         const items = order.getItemsDetail().map(itemDetail => 
             itemDetail.getItem()
         );
+        
         await this.outboundEventAdapter.publishReserveStock(orderId, items);
     }
 
