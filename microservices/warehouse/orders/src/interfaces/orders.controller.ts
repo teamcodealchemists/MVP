@@ -103,8 +103,10 @@ export class OrdersController {
   // Messaggio ricevuto dal servizio di riassortimento
   @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.*.replenishment.received`)
   async replenishmentReceived(@Ctx() context: any): Promise<void> {
+    console.log('✅ Sono arrivato qua in replenishmentReceived');
     const tokens = context.getSubject().split('.');
-    const orderId = tokens[tokens.length - 3];
+    const orderId = new OrderIdDTO();
+    orderId.id = tokens[tokens.length - 3];
     await this.inboundPortsAdapter.replenishmentReceived(orderId);
   }
 

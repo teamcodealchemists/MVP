@@ -9,6 +9,7 @@ import { OrderIdDTO } from 'src/interfaces/http/dto/orderId.dto';
 import { OrderItemDTO } from 'src/interfaces/http/dto/orderItem.dto';
 import { validateOrReject } from 'class-validator';
 import { productIdDto } from 'src/interfaces/http/dto/productId.dto';
+import { ItemIdDTO } from './http/dto/itemId.dto';
 
 const logger = new Logger('centralSystemController');
 
@@ -18,30 +19,46 @@ export class centralSystemController {
     private readonly inboundPortsAdapter: InboundPortsAdapter,
   ) {}
 
-  @EventPattern('event.inventory.insufficientQuantity')
-  async handleInsufficientQuantity(@Payload() data : any): Promise<void> {
-    try {
-      let oQ = new OrderQuantityDTO();
-          oQ.id = new OrderIdDTO();
-      oQ.id.id = data.id;
+  @EventPattern('event.warehouse.*.centralSystem.request')
+    async handleInsufficientQuantity(@Payload() raw: any): Promise<void> {
+      console.log('Arrivato in handleInsufficientQuantity');
+      try {
+        // se arriva come stringa fai il parse
+        const data = typeof raw === 'string' ? JSON.parse(raw) : raw;
+        console.log('Payload parsed:', data);
 
-      oQ.items = data.items?.map((item: any) => {
-        const orderItem = new OrderItemDTO();
-        orderItem.itemId = item.itemId;
-        orderItem.quantity = item.quantity;
-        return orderItem;
-      }) || [];
+        const oQ = new OrderQuantityDTO();
 
-      await validateOrReject(oQ);
-      const id = new warehouseIdDto();
-      id.warehouseId = data.warehouseId;
-      logger.log(`Received insufficientQuantity event with payload: ${JSON.stringify(oQ)}`);
-      await this.inboundPortsAdapter.handleInsufficientQuantity(oQ,id);
-    } catch (error) {
-      logger.error(`Error handling insufficientQuantity event: ` + error );
+        // Mappa l'OrderIdDTO
+        oQ.id = new OrderIdDTO();
+        oQ.id.id = data.orderIdDTO.id;
+
+        // Mappa gli itemsDTO
+        oQ.items = data.itemsDTO?.map((item: any) => {
+          const orderItem = new OrderItemDTO();
+          orderItem.itemId = new ItemIdDTO();
+          orderItem.itemId.id = item.itemId.id;
+          orderItem.quantity = item.quantity;
+          return orderItem;
+        }) || [];
+
+        await validateOrReject(oQ);
+
+        // Mappa warehouseId
+        const id = new warehouseIdDto();
+        id.warehouseId = Number(data.warehouseId);
+        await validateOrReject(id);
+        logger.log(
+          `Received insufficientQuantity event with payload: ${JSON.stringify(oQ)}, warehouseId=${id.warehouseId}`
+        );
+
+        await this.inboundPortsAdapter.handleInsufficientQuantity(oQ, id);
+      } catch (error) {
+        logger.error(`Error handling insufficientQuantity event: ` + error);
+      }
+      return Promise.resolve();
     }
-    return Promise.resolve();
-  }
+
 
   @EventPattern('event.inventory.criticalQuantity.min')
   async handleCriticalQuantityMin(@Payload() data: any): Promise<void> {

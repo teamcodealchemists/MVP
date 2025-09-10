@@ -83,8 +83,7 @@ export class OrdersRepositoryMongo implements OrdersRepository {
                     sellDoc.destinationAddress
                 );
             }
-            // Fallback        
-            throw new Error(`Ordine con ID ${id.getId()} non trovato`);
+            throw new NotFoundException(`Ordine con ID ${id.getId()} non trovato`);
         } catch (error) {
             Logger.error("Errore durante la ricerca dell'ordine per ID:"+ error, 'OrdersRepositoryMongo');
             throw error;
