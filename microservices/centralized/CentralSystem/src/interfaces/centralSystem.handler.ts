@@ -56,24 +56,12 @@ async handleCloudOrdersRequest(): Promise<Orders> {
 
 async handleWarehouseDistance(warehouseId: warehouseIdDto): Promise<WarehouseId[]> {
   console.log("Requesting warehouse distance for:", warehouseId);
-
-  try {
-    const result = await this.natsClient.send("get.routing.warehouse.distance", JSON.stringify(warehouseId));
-    console.log("Warehouse distance raw result:", result);
-
-    const parsed = typeof result === "string" ? JSON.parse(result) : result;
-
-    if (!Array.isArray(parsed)) {
-      console.warn("Warehouse distance response is not an array, returning empty array");
-      return [];
-    }
-    return parsed.map((item: any) => DataMapper.warehouseIdToDomain(item));
-
-  } catch (err) {
-    console.error("Error fetching warehouse distance:", err);
-    return [];
-  }
+  const result = await this.natsClient.send("call.routing.warehouse."+warehouseId.warehouseId+".receiveRequest.set", JSON.stringify(warehouseId));
+  console.log("Warehouse distance result:", result);
+  const parsed = typeof result === "string" ? JSON.parse(result) : result;
+  return parsed.map((item: any) => DataMapper.warehouseStatetoDomain(item));
 }
+
 
    async handleRequestInvResult(message : string, productId : ProductId, warehouseId : WarehouseId): Promise<void> {
     /*
