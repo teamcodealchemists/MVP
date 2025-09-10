@@ -249,17 +249,17 @@ export class OrdersService {
         
         // Preleva l'array di OrderItemDetails dall'ordine e mappalo dentro un array di OrderItem dove qtyReserved = qty
         const order = await this.ordersRepositoryMongo.getById(id);
-        let itemsToBeUnreserved = order.getItemsDetail();
+        let items = order.getItemsDetail();
 
-        itemsToBeUnreserved.map(detail => {
+        let itemsToBeUnreserved = items.map(detail => {
         // Crea un nuovo OrderItem con quantity = quantityReserved
-         new OrderItem(
+         return new OrderItem(
             detail.getItem().getItemId(), // Mantieni lo stesso ItemId
             detail.getQuantityReserved() // Usa quantityReserved come nuova quantity
         );
       });   
       
-      await this.outboundEventAdapter.unReserveStock(id, itemsToBeUnreserved);
+      await this.outboundEventAdapter.unreserveStock(id, itemsToBeUnreserved);
     }
 
 
