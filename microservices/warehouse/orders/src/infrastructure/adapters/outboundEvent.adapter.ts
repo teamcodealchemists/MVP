@@ -85,13 +85,23 @@ export class OutboundEventAdapter implements InternalOrderEventPublisher, OrderS
   */
 
 
-  async orderStateUpdated(orderId: OrderId, orderState: OrderState) {
+  async orderStateUpdated(orderId: OrderId, orderState: OrderState, context: { destination: 'aggregate' | 'warehouse', warehouseId?: number }) {
     try {
       const orderIdStr = orderId.getId();
-      // Sincronizza con l'aggregato
-      let aggregateSubject = `event.aggregate.order.${orderIdStr}.state.update.${orderState}`;
-      await this.natsService.emit(aggregateSubject, "");
+
+      // Sincronizza con l'aggregato cloud Ordini
+      if (context.destination === 'aggregate') {
+        let aggregateSubject = `event.aggregate.order.${orderIdStr}.state.update.${orderState}`;
+        await this.natsService.emit(aggregateSubject, "");
+      }  
+      // Sincronizza con l'Ordini del warehouseDestination
+      else if (context.destination === 'warehouse' && context.warehouseId) {
+        let warehouseDestinationSubject = `event.warehouse.${context.warehouseId}.order.${orderIdStr}.state.update.${orderState}`;
+        await this.natsService.emit(warehouseDestinationSubject, "" );
+      } 
+
       return Promise.resolve();
+
     } catch (error) {
       console.error('Errore in orderStateUpdated:', error);
       throw error;
