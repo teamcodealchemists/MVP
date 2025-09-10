@@ -18,15 +18,22 @@ import { InternalOrder } from "src/domain/internalOrder.entity";
 import { SellOrder } from "src/domain/sellOrder.entity";
 import { OrderState } from "src/domain/orderState.enum";
 import { OrderIdDTO } from 'src/interfaces/dto/orderId.dto';
+import { WaitingForStockPublisher } from 'src/interfaces/outbound-ports/waitingForStock.publisher';
 
 @Injectable()
 export class OutboundEventAdapter implements InternalOrderEventPublisher, OrderStatusEventPublisher, RequestStockReplenishmentPublisher, ReserveStockCommandPublisher,
-  SellOrderEventPublisher, ShipStockCommandPublisher, OnModuleInit {
+  SellOrderEventPublisher, ShipStockCommandPublisher, OnModuleInit, WaitingForStockPublisher {
 
   constructor(
     @Inject("NATS_SERVICE") private readonly natsService: ClientProxy,
     private readonly dataMapper: DataMapper
   ) { }
+
+  waitingForStock(orderId: OrderId, warehouseDepartureId: string): Promise<void> {
+    this.natsService.emit(`event.warehouse.${warehouseDepartureId}.order.${orderId.getId()}.waitingStock`, "");
+    this.logger.debug(`[2] Published waiting for stock event for order ${orderId.getId()} with warehouseDepartureId ${warehouseDepartureId}`);
+    return Promise.resolve();
+  }
 
   private readonly logger = new Logger(OutboundEventAdapter.name);
 

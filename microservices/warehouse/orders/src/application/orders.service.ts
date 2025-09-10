@@ -244,8 +244,9 @@ export class OrdersService {
             
             Logger.debug(`Order published to aggregate and warehouse ${order.getWarehouseDestination()}`, 'OrdersService');
         } else {
-            // Se il warehouse corrente NON è quello di partenza, fai solo il salvataggio nella repo dell'altro magazzino
+            // Se il warehouse corrente NON è quello di partenza, fai solo il salvataggio nella repo nel magazzino di destinazione
             // => (E' per evitare di evitare dati duplicati all'aggregate Orders)
+            this.outboundEventAdapter.waitingForStock(uniqueOrderId, order.getWarehouseDeparture().toString());
             Logger.debug(`Order created but not published (current warehouse: ${currentWarehouseId})`, 'OrdersService');
         }
         

@@ -78,8 +78,9 @@ export class OrdersController {
       await this.inboundPortsAdapter.sufficientProductAvailability(orderIdDTO);
   }
 
-  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.*.waiting.stock`)
+  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.*.waitingStock`)
   async waitingForStock(@Ctx() context: any): Promise<void> {
+    this.logger.debug('[1] Waiting for stock for order:', context.getSubject());
     const tokens = context.getSubject().split('.');
     const orderId = tokens[tokens.length - 3];
     await this.inboundPortsAdapter.waitingForStock(orderId);
