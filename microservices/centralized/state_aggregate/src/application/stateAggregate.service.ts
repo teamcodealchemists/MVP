@@ -88,11 +88,10 @@ async checkHeartbeat(warehouseId: CloudWarehouseId): Promise<'ONLINE' | 'OFFLINE
         resolved = true;
         console.log(`Heartbeat timeout for warehouse ${warehouseId.getId()}: OFFLINE`);
         const currentState = await this.cloudStateRepository.getState(warehouseId);
-        console.log(`Current state for warehouse ${warehouseId.getId()}: ${currentState ? currentState.getState() : 'unknown'}`);
         if (!currentState || currentState.getState() !== 'OFFLINE') {
           await this.cloudStateRepository.updateState(new CloudWarehouseState(warehouseId, 'OFFLINE'));          
+          this.CloudStateEventAdapter.publishState(new CloudWarehouseState(warehouseId, 'OFFLINE'));
         }
-        this.CloudStateEventAdapter.publishState(new CloudWarehouseState(warehouseId, 'OFFLINE'));
         resolve('OFFLINE');
       }
     }, TIMEOUT_MS);
