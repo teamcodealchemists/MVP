@@ -18,7 +18,7 @@ export class productDto {
 
   @IsNumber()
   quantity: number;
-
+  
   @IsNumber()
   @Min(0)
   minThres: number;

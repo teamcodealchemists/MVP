@@ -153,4 +153,26 @@ async getAllOrders(): Promise<string> {
   }
 }
 
+@MessagePattern(`get.aggregate.orders.centralized`)
+async getAllOrdersForCentralized(): Promise<string|null> {
+  this.logger.verbose('[Controller] Richiesta ricevuta');
+  try {
+    this.logger.verbose('[Controller] Chiamando inboundPortsAdapter...');
+    const orders = await this.inboundPortsAdapter.getAllOrders();
+    this.logger.verbose('[Controller] Richiesta elaborata con successo');
+
+    const collection = [...(orders.internalOrders ?? []),...(orders.sellOrders ?? [])];
+    if(collection.length === 0){
+      return Promise.resolve(null);
+    }else{
+      return Promise.resolve(JSON.stringify({ result: { collection } }));
+    }
+  } catch (error) {
+    this.logger.error('[Controller] Errore in getAllOrders:', error);
+    this.logger.error('[Controller] Stack trace:', error.stack);
+
+    return Promise.resolve(JSON.stringify( {error: { code: 'system.internalError', message: 'Internal server error' } }));
+  }
+}
+
 }
