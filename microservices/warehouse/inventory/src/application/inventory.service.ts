@@ -50,20 +50,22 @@ export class InventoryService {
     const existingProduct = await this.inventoryRepository.getById(editedProduct.getId());
     if (!existingProduct) {
       throw new NotFoundException(`Product with id ${editedProduct.getId().getId()} not found`);
-    }
-    const result = await this.inventoryRepository.getById(editedProduct.getId());
-    if(result){
-      if((editedProduct.getQuantity()) < result.getMinThres()){
+    } 
+       console.log('editedProduct.getQuantity() > existingProduct.getMaxThres()', editedProduct.getQuantity() > existingProduct.getMaxThres());
+
+       console.log('editedProduct.getQuantity()', editedProduct.getQuantity());
+       console.log('existingProduct.getMaxThres()', existingProduct.getMaxThres());
+      if((editedProduct.getQuantity()) < existingProduct.getMinThres()){
         await this.inventoryRepository.updateProduct(editedProduct);
         const result1 = await this.inventoryRepository.getById(editedProduct.getId());
         if(result1) this.natsAdapter.belowMinThres(result1, this.warehouseId);
       }
-      if(editedProduct.getQuantity() > result.getMaxThres()){
+      if(editedProduct.getQuantity() > existingProduct.getMaxThres()){
+        console.log('entro in editedProduct.getQuantity() > existingProduct.getMaxThres()');
         await this.inventoryRepository.updateProduct(editedProduct);
         const result1 = await this.inventoryRepository.getById(editedProduct.getId());
         if(result1) this.natsAdapter.aboveMaxThres(result1, this.warehouseId);
       }
-    }
     await this.natsAdapter.stockUpdated(editedProduct, this.warehouseId);
     return Promise.resolve();
   }
