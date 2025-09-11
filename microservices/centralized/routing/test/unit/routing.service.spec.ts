@@ -7,6 +7,7 @@ import { RoutingRepositoryMongo } from '../../src/infrastructure/adapters/mongod
 import * as nest from '@nestjs/core';
 import { Transport } from "@nestjs/microservices";
 import { RoutingModule } from "../../src/application/routing.module";
+import { RoutingEventAdapter } from "../../src/infrastructure/adapters/routing.event.adapter";
 
 const mockRoutingRepository = {
     getById: jest.fn(),
@@ -34,6 +35,14 @@ jest.mock('../../src/interfaces/geo', () => ({
   haversine: jest.requireActual('../../src/interfaces/geo').haversine,
 }));
 
+const mockRoutingEventAdapter = {
+    emitWarehouseUpdatedEvent: jest.fn(),
+    emitWarehouseRemovedEvent: jest.fn(),
+    emitWarehouseCreatedEvent: jest.fn(),
+    emitWarehouseStateUpdatedEvent: jest.fn(),
+    sendWarehouseAndState: jest.fn()
+};
+
 describe("Test per Routing Service", () => {
 let service: any;
 
@@ -45,6 +54,10 @@ let service: any;
                 {
                     provide: 'ROUTINGREPOSITORY',
                     useValue: mockRoutingRepository,
+                },
+                {
+                    provide: RoutingEventAdapter,
+                    useValue: mockRoutingEventAdapter,
                 }]
         }).compile();
         service = moduleA.get(RoutingService);
