@@ -59,15 +59,22 @@ export class OrdersService {
         // Aggiorna nel repository
         await this.ordersRepositoryMongo.updateReservedStock(id, itemsWithUpdatedReservation);
 
-        // TODO: Per sincronizzare il cambiamento di quantityReserved anche nell'aggregato
-/*         // Recupera l'ordine aggiornato + Aggiorna l'aggregato con le nuove quantità riservate
+        // Per sincronizzare l'update di quantityReserved anche nell'aggregato
+        // => Recupera l'ordine aggiornato + Aggiorna l'aggregato con le nuove qtyReserved
         const updatedOrder = await this.ordersRepositoryMongo.getById(id);
-        
-        if (updatedOrder instanceof SellOrder) {
-            await this.outboundEventAdapter.publishReserveStock(id, { destination: 'aggregate' });
-        } else if (order instanceof InternalOrder) {
-            await this.outboundEventAdapter.publishReserveStock(id, { destination: 'aggregate' });
-        }      */   
+        // ==> Prende le quantità ancora da riservare e le invia all'aggregato Orders (che farà: qtyReserved= qty totali richieste  - qty ancora da riservte)
+        if (updatedOrder) {
+                const reservedItems = updatedOrder.getItemsDetail();
+                const toBeReserved : OrderItem[] = [];
+                
+            for (const ri of reservedItems) {
+                    let tmp :OrderItem = new OrderItem(ri.getItem().getItemId(), ri.getItem().getQuantity() - ri.getQuantityReserved());
+                    toBeReserved.push(tmp);
+            }
+                
+            await this.outboundEventAdapter.publishUpdatedReservedStock(id, toBeReserved);
+        }
+
 
         // Procedi con il flusso normale
         if (order instanceof SellOrder) {
@@ -147,11 +154,6 @@ export class OrdersService {
             });
         }
     }
-
-    async checkOrderState(id: OrderId): Promise<void> {
-        await this.ordersRepositoryMongo.getState(id);
-    }
-
 
     async createSellOrder(order: SellOrder): Promise<string> {
         let uniqueOrderId: OrderId;
@@ -286,8 +288,8 @@ export class OrdersService {
             return itemDetail;
         });
 
-        // Aggiorna le quantità riservate nel repository
-        await this.ordersRepositoryMongo.updateReservedStock(orderId, updatedItems);
+        // Aggiorna le quantità riservate nel repository 
+        await this.ordersRepositoryMongo.updateReservedStock(orderId, updatedItems);  
 
         // Verifica se tutta la merce è stata riservata
         if (order instanceof SellOrder) {
@@ -321,7 +323,6 @@ export class OrdersService {
                 itemDetail.getItem()
             );
             await this.outboundEventAdapter.publishStockRepl(idDomain, items);
-            /* TODO: Cosa chiamare per avviare riassortimento?*/
         }
     }
 
@@ -380,22 +381,6 @@ export class OrdersService {
         }
     }
 
-    /*async receiveOrder(id: OrderId): Promise<void> {
-        // Per ordini in arrivo (destinazione)
-        const order = await this.ordersRepositoryMongo.getById(id);
-
-        if (order instanceof InternalOrder) {
-
-            // Aggiorna stato a COMPLETED
-            await this.updateOrderState(id, OrderState.COMPLETED);
-
-            //Notifica il magazzino di partenza che l'ordine è completato ed è arrivato a destinazione
-            this.outboundEventAdapter.completeSagaOrdertoDestination(id, order.getWarehouseDestination().toString());
-
-            return Promise.resolve();
-        }
-    }*/
-
     async completeOrder(id: OrderId): Promise<void> {
         await this.updateOrderState(id, OrderState.COMPLETED);
 
@@ -404,10 +389,10 @@ export class OrdersService {
             Logger.log(`✅ L'ordine vendita ${id} è stato completato! YIPPIE!`, JSON.stringify(id, null, 2));
         }
         else if (order instanceof InternalOrder && process.env.WAREHOUSE_ID == order.getWarehouseDestination().toString()) {
-            //Notifica il magazzino di partenza che l'ordine di traferimento è completato ed è arrivato a destinazione
+            // Notifica il magazzino di partenza che l'ordine di trasferimento è completato ed è arrivato a destinazione
             this.outboundEventAdapter.orderCompleted(id, order.getWarehouseDeparture());
 
-            //Verifica se esiste un riferimento a un ordine di vendita e lo fa proseguire
+            // Verifica se esiste un riferimento a un ordine di vendita e lo fa proseguire
             let sellorderid: OrderId = order.getSellOrderReference();
             let sellorder = await this.ordersRepositoryMongo.getById(sellorderid);
             if(sellorder instanceof SellOrder) {
