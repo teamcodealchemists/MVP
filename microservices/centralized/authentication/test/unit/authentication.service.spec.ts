@@ -137,7 +137,7 @@ describe('AuthService', () => {
         it('should fail if token is null', async () => {
             authRepository.getToken.mockResolvedValue(null);
             const result = await service.logout('sub123');
-            expect(result).toContain('Token has already been logged out');
+            expect(result).toContain("{\"error\":{\"code\":\"system.internalError\",\"message\":\"You are already logged out\"},\"meta\":{\"status\":401}}");
         });
 
         it('should fail if token is revoked', async () => {
