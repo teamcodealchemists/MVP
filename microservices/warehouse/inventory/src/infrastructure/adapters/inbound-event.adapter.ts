@@ -69,6 +69,10 @@ OrderRequestUseCase {
     await this.service.receiveStock(orderId, productQuantities);
   }
   
+  async unreserveStock(dto: ProductQuantityArrayDto) : Promise<void>{
+    const { orderId, productQuantities } = DataMapper.toDomainProductQuantityArray(dto);
+    await this.service.unreserveStock(orderId, productQuantities);
+  }
 
 }
 

@@ -187,7 +187,7 @@ export class InventoryService {
         }
         await this.natsAdapter.sufficientProductAvailability(order);
       } else {
-        Logger.warn('Insufficient stock for one or more products. Reserving available quantities.');
+        Logger.warn('Insufficient stock for one or more products. Reserving available quantities.'+JSON.stringify(reserved), 'InventoryService');
         await this.natsAdapter.reservedQuantities(order, reserved);
       }
     return Promise.resolve();

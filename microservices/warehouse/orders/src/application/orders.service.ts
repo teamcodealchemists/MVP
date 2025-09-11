@@ -245,6 +245,8 @@ export class OrdersService {
         const order = await this.ordersRepositoryMongo.getById(id);
         let items = order.getItemsDetail();
 
+        Logger.debug(`Annullamento ordine ${id.getId()} - Items da annullare: ${JSON.stringify(items)}`, 'OrdersService');
+
         let itemsToBeUnreserved = items.map(detail => {
         // Crea un nuovo OrderItem con quantity = quantityReserved
          return new OrderItem(
@@ -328,6 +330,7 @@ export class OrdersService {
         const idStr = internalOrder.getOrderId();
         const idDomain = new OrderId(idStr);
         try {
+            Logger.debug(`Verifica quantità riservate per ordine interno ${JSON.stringify(internalOrder)}`, 'OrdersService');
             // Usa il repository per verificare le quantità riservate
             await this.ordersRepositoryMongo.checkReservedQuantityForInternalOrder(internalOrder);
 
