@@ -22,7 +22,7 @@ describe('CloudStateEventAdapter', () => {
     expect(outboundService.publishHeartbeat).toHaveBeenCalledWith(
       expect.objectContaining({
         warehouseId: 1,
-        heartbeatmsg: 'ALIVE',
+        heartbeatMsg: 'ALIVE',
         timestamp: new Date('2025-09-07T16:34:56.789Z')
       })
     );

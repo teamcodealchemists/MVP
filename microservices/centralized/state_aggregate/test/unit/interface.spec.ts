@@ -24,7 +24,7 @@ describe('DataMapper', () => {
   });
 
   it('cloudHeartbeatToDomain converte DTO in Domain', () => {
-    const dto: CloudHeartbeatDTO = { warehouseId: 3, heartbeatmsg: 'ALIVE', timestamp: new Date('2025-09-07T16:34:56.789Z') };
+    const dto: CloudHeartbeatDTO = { warehouseId: 3, heartbeatMsg: 'ALIVE', timestamp: new Date('2025-09-07T16:34:56.789Z') };
     const domain = DataMapper.cloudHeartbeatToDomain(dto);
     expect(domain).toBeInstanceOf(CloudHeartbeat);
     expect(domain.getId().getId()).toBe(3);
@@ -47,7 +47,7 @@ describe('DataMapper', () => {
   it('cloudHeartbeatToDTO converte Domain in DTO', () => {
     const domain = new CloudHeartbeat(new CloudWarehouseId(6), 'ALIVE', new Date('2025-09-07T16:34:56.789Z'));
     const dto = DataMapper.cloudHeartbeatToDTO(domain);
-    expect(dto).toEqual({ warehouseId: 6, heartbeatmsg: 'ALIVE', timestamp: new Date('2025-09-07T16:34:56.789Z') });
+    expect(dto).toEqual({ warehouseId: 6, heartbeatMsg: 'ALIVE', timestamp: new Date('2025-09-07T16:34:56.789Z') });
   });
 });
 
@@ -64,15 +64,15 @@ describe('OutboundService', () => {
   });
 
   it('publishHeartbeat chiama natsService.publish con il topic corretto', () => {
-    const heartbeat: CloudHeartbeatDTO = { warehouseId: 1, heartbeatmsg: 'ONLINE', timestamp: new Date() };
+    const heartbeat: CloudHeartbeatDTO = { warehouseId: 1, heartbeatMsg: 'ONLINE', timestamp: new Date() };
     service.publishHeartbeat(heartbeat);
-    expect(natsService.publish).toHaveBeenCalledWith('cloud.checkHeartbeat', heartbeat);
+    expect(natsService.publish).toHaveBeenCalledWith('call.cloud.checkHeartbeat.1', heartbeat);
   });
 
   it('publishState chiama natsService.publish con il topic corretto', () => {
     const state: CloudWarehouseStateDTO = { warehouseId: 2, state: 'OFFLINE' };
     service.publishState(state);
-    expect(natsService.publish).toHaveBeenCalledWith('cloud.state', state);
+    expect(natsService.publish).toHaveBeenCalledWith('call.routing.warehouse.2.warehouseState.set', JSON.stringify(state));
   });
 
   it('stateUpdated chiama natsService.publish con il topic corretto', () => {

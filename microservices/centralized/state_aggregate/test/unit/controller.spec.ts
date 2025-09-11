@@ -22,16 +22,21 @@ describe('StateAggregateController', () => {
   describe('syncReceivedHeartbeat', () => {
     it('chiama handleHeartbeatResponse con i parametri corretti', async () => {
       mockService.handleHeartbeatResponse.mockResolvedValue('OK');
+
       const dto: CloudHeartbeatDTO = {
         warehouseId: 1,
-        heartbeatmsg: 'ONLINE',
+        heartbeatMsg: 'ONLINE',
         timestamp: new Date('2025-09-07T16:34:56.789Z'),
       };
-      const result = await controller.syncReceivedHeartbeat(dto);
+      const payload = { data: dto };
+
+      const result = await controller.syncReceivedHeartbeat(payload);
+
       expect(mockService.handleHeartbeatResponse).toHaveBeenCalledWith(
         expect.any(CloudWarehouseId),
         true
       );
+
       expect(result).toBe('OK');
     });
 
@@ -39,7 +44,7 @@ describe('StateAggregateController', () => {
       mockService.handleHeartbeatResponse.mockImplementation(() => { throw new Error('fail'); });
       const dto: CloudHeartbeatDTO = {
         warehouseId: 1,
-        heartbeatmsg: 'ONLINE',
+        heartbeatMsg: 'ONLINE',
         timestamp: new Date('2025-09-07T16:34:56.789Z'),
       };
       const result = await controller.syncReceivedHeartbeat(dto);
