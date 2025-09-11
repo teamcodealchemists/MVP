@@ -15,6 +15,7 @@ describe('InboundEventListener', () => {
 
   beforeEach(() => {
     service = {
+      receiveStock: jest.fn(),
       addProduct: jest.fn(),
       removeProduct: jest.fn(),
       editProduct: jest.fn(),
@@ -89,11 +90,12 @@ describe('InboundEventListener', () => {
     expect(service.shipOrder).toHaveBeenCalledWith(...Object.values(DataMapper.toDomainProductQuantityArray(dto)));
   });
 
-  it('should call shipOrder when receiveShipment is invoked', async () => {
+  it('should call receiveStock when receiveShipment is invoked', async () => {
     const idDto = new OrderIdDTO();
     idDto.id = 'o1';
     const dto: ProductQuantityArrayDto = { id: idDto, productQuantityArray: [] };
     await listener.receiveShipment(dto);
-    expect(service.shipOrder).toHaveBeenCalledWith(...Object.values(DataMapper.toDomainProductQuantityArray(dto)));
+    const { orderId, productQuantities } = DataMapper.toDomainProductQuantityArray(dto);
+    expect(service.receiveStock).toHaveBeenCalledWith(orderId, productQuantities);
   });
 });

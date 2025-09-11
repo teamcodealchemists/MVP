@@ -55,14 +55,13 @@ export class InventoryService {
 
        console.log('editedProduct.getQuantity()', editedProduct.getQuantity());
        console.log('existingProduct.getMaxThres()', existingProduct.getMaxThres());
+       await this.inventoryRepository.updateProduct(editedProduct);
       if((editedProduct.getQuantity()) < existingProduct.getMinThres()){
-        await this.inventoryRepository.updateProduct(editedProduct);
         const result1 = await this.inventoryRepository.getById(editedProduct.getId());
         if(result1) this.natsAdapter.belowMinThres(result1, this.warehouseId);
       }
       if(editedProduct.getQuantity() > existingProduct.getMaxThres()){
         console.log('entro in editedProduct.getQuantity() > existingProduct.getMaxThres()');
-        await this.inventoryRepository.updateProduct(editedProduct);
         const result1 = await this.inventoryRepository.getById(editedProduct.getId());
         if(result1) this.natsAdapter.aboveMaxThres(result1, this.warehouseId);
       }

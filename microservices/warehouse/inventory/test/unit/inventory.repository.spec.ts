@@ -99,7 +99,7 @@ describe("InventoryRepositoryMongo", () => {
     });
 
     const product = await repo.getById(new ProductId("p1"));
-    expect(product?.getId()).toBe("p1");
+    expect(JSON.stringify(product?.getId())).toBe(JSON.stringify(new ProductId("p1")));
     expect(product?.getQuantity()).toBe(5);
   });
 
