@@ -51,17 +51,23 @@ export class CloudInboundPortsAdapter implements SyncGetAllOrdersUseCase,
       orderQuantityDTO.items.map(itemDTO => this.dataMapper.syncOrderItemToDomain(itemDTO))
     );
     await this.ordersService.syncUpdateReservedStock(orderId, orderItems);
-    console.log(`[AggregateO] Quantità riservata aggiornata per l'ordine: ${orderQuantityDTO.id.id}`);
+    this.logger.log(`[AggregateO] Quantità riservate aggiornate per l'ordine: ${orderQuantityDTO.id.id}`);
+  }
+
+  async unreserveStock(orderIdDTO: SyncOrderIdDTO): Promise<void> {
+    const orderId = await this.dataMapper.syncOrderIdToDomain(orderIdDTO);
+    await this.ordersService.syncUnreserveStock(orderId);
+    this.logger.log(`[AggregateO] Quantità riservate azzerate per l'ordine: ${orderIdDTO.id}`);
   }
 
   async syncAddSellOrder(sellOrderDTO: SyncSellOrderDTO): Promise<void> {
-    console.log("[AggregateO] Ricevuto nuovo SellOrder,", JSON.stringify(sellOrderDTO, null, 2));
+    this.logger.log("[AggregateO] Ricevuto nuovo SellOrder,", JSON.stringify(sellOrderDTO, null, 2));
     const sellOrderDomain = await this.dataMapper.syncSellOrderToDomain(sellOrderDTO);
     await this.ordersService.syncCreateSellOrder(sellOrderDomain);
   }
 
   async syncAddInternalOrder(internalOrderDTO: SyncInternalOrderDTO): Promise<void> {
-    console.log("[AggregateO] Ricevuto nuovo InternalOrder,", JSON.stringify(internalOrderDTO, null, 2));
+    this.logger.log("[AggregateO] Ricevuto nuovo InternalOrder,", JSON.stringify(internalOrderDTO, null, 2));
     const internalOrderDomain = await this.dataMapper.syncInternalOrderToDomain(internalOrderDTO);
     await this.ordersService.syncCreateInternalOrder(internalOrderDomain);
   }
@@ -74,7 +80,7 @@ export class CloudInboundPortsAdapter implements SyncGetAllOrdersUseCase,
     const orderStateDomain = await this.dataMapper.syncOrderStateToDomain(orderStateDTO);
     
     await this.ordersService.syncUpdateOrderState(orderIdDomain, orderStateDomain);
-    console.log(`[AggregateO] Lo stato dell'ordine con ID ${orderId} è stato aggiornato con successo a ${orderState}`);
+    this.logger.log(`[AggregateO] Lo stato dell'ordine con ID ${orderId} è stato aggiornato con successo a ${orderState}`);
   }
 
   async cancelOrder(orderId: string): Promise<void> {

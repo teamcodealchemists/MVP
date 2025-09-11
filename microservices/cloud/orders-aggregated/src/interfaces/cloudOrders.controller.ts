@@ -3,10 +3,9 @@ import { MessagePattern, Payload, Ctx } from '@nestjs/microservices';
 import { CloudInboundPortsAdapter } from '../infrastructure/adapters/cloudInboundPorts.adapter';
 
 import { SyncOrderQuantityDTO} from "src/interfaces/dto/syncOrderQuantity.dto";
-import { SyncSellOrderDTO } from "src/interfaces/dto/syncSellOrder.dto";
-import { SyncInternalOrderDTO } from "src/interfaces/dto/syncInternalOrder.dto";
-import { SyncOrdersDTO } from "src/interfaces/dto/syncOrders.dto";
+import { SyncOrderIdDTO } from "src/interfaces/dto/syncOrderId.dto";
 import { SyncOrderStateDTO } from "src/interfaces/dto/syncOrderState.dto";
+import { SyncItemIdDTO } from './dto/syncItemId.dto';
 
 @Controller()
 export class CloudOrdersController {
@@ -17,8 +16,40 @@ export class CloudOrdersController {
   ) {}
 
   @MessagePattern(`event.aggregate.orders.stock.reserved`)
-  async stockReserved(@Payload() orderQuantityDTO: SyncOrderQuantityDTO): Promise<void> {
-    await this.inboundPortsAdapter.stockReserved(orderQuantityDTO);
+  async stockReserved(@Payload() payload: any): Promise<void> {
+    this.logger.log("Ricevuta chiamata di update qtyReserved!");
+
+    let orderQuantityDTO = new SyncOrderQuantityDTO();
+    let orderIdDto = new SyncOrderIdDTO();
+    orderIdDto.id = payload.orderIdDTO.id;
+    orderQuantityDTO.id = orderIdDto;
+    orderQuantityDTO.items = payload.itemsDTO.map((item: any) => {
+      const itemIdDto = new SyncItemIdDTO();
+      itemIdDto.id = item.itemId.id;
+      return {
+        itemId: itemIdDto,
+        quantity: item.quantity,
+      };
+    });
+
+    try {
+      await this.inboundPortsAdapter.stockReserved(orderQuantityDTO);
+    } catch (err) {
+      this.logger.error('Error while parsing stockReserved payload', err);
+    }
+  }
+
+ @MessagePattern(`event.aggregate.orders.stock.unreserve`)
+  async unreserveStock(@Payload() payload: any): Promise<void> {
+    let orderIdDto = new SyncOrderIdDTO();
+    orderIdDto.id = payload.orderIdDTO.id;
+    
+    this.logger.log(`Ricevuta chiamata di sync unreserveStock per l'ordine ${orderIdDto.id}!`);
+    try {
+      await this.inboundPortsAdapter.unreserveStock(orderIdDto);
+    } catch (err) {
+      this.logger.error('Error while parsing stockReserved payload', err);
+    }
   }
 
   @MessagePattern(`event.aggregate.order.sell.new`)

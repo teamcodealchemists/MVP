@@ -7,7 +7,7 @@ import { OrdersRepository } from 'src/domain/orders.repository';
 import { GetAllOrdersUseCase } from '../../interfaces/inbound-ports/getAllOrders.useCase';
 import { GetOrderUseCase } from '../../interfaces/inbound-ports/getOrder.useCase';
 import { GetOrderStateUseCase } from '../../interfaces/inbound-ports/getOrderState.useCase';
-import { UpdateOrderStateUseCase } from '../../interfaces/inbound-ports/updateOrderState.useCase';
+import { UpdateOrderStateEventListener } from '../../interfaces/inbound-ports/updateOrderStateEvent.listener';
 
 // Event Listeners
 import { InternalOrderEventListener } from '../../interfaces/inbound-ports/internalOrderEvent.listener';
@@ -43,7 +43,7 @@ export class InboundPortsAdapter implements
   ReservationEventListener,
   SellOrderEventListener, 
   ShipmentEventListener, 
-  UpdateOrderStateUseCase {
+  UpdateOrderStateEventListener {
 
   constructor(
     private readonly ordersService: OrdersService,
@@ -107,21 +107,6 @@ export class InboundPortsAdapter implements
         await this.ordersService.receiveOrder(orderIdDomain);
       }
   }
-
-/*// NUOVO
-  // 6. Orders verifica se può procedere
-  async updateReservedStock(id: OrderId, items: OrderItem[]): Promise<void> {
-      await this.ordersRepository.updateReservedStock(id, items);
-      
-      const order = await this.ordersRepository.getById(id);
-      const isFullyReserved = await this.ordersRepository.isOrderFullyReserved(id);
-      
-      if (isFullyReserved) {
-          await this.ordersService.shipOrder(id); // → Procede con spedizione
-      } else {
-          await this.ordersService.requestReplenishment(id); // → Richiede riassortimento
-      }
-  } */
 
   async stockReceived(orderIdDTO: OrderIdDTO): Promise<void> {
     const orderId = await this.dataMapper.orderIdToDomain(orderIdDTO);
