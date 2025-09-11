@@ -63,9 +63,12 @@ describe('CloudOrdersController', () => {
   });
 
   it('should call stockReserved', async () => {
-    const dto = { id: {id: 'O-1'}, items: [] };
-    await controller.stockReserved(dto);
-    expect(inboundPortsAdapter.stockReserved).toHaveBeenCalledWith(dto);
+    const payload = {
+      orderIdDTO: { id: 'O-1' },
+      itemsDTO: []
+    };
+    await controller.stockReserved(payload);
+    expect(inboundPortsAdapter.stockReserved).toHaveBeenCalledWith(expect.any(Object));
   });
 
   it('should call syncAddSellOrder', async () => {

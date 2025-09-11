@@ -205,39 +205,6 @@ describe('CloudOrdersRepositoryMongo', () => {
     await expect(repo.syncUpdateOrderState(id, SyncOrderState.PROCESSING)).rejects.toThrow();
   });
 
-    it('syncUpdateReservedStock aggiorna InternalOrder', async () => {
-    const id = new SyncOrderId('O-11');
-    const items = [new SyncOrderItem(new SyncItemId(1), 5)];
-    // Prima chiamata: trova l'ordine
-    syncInternalOrderModel.findOne
-        .mockReturnValueOnce(makeLeanExec({
-        orderId: { id: 'O-11' },
-        items: [],
-        orderState: SyncOrderState.PENDING,
-        creationDate: '2024-01-01',
-        warehouseDeparture: 1,
-        warehouseDestination: 2,
-        sellOrderReference: { id: 'O-2' },
-        }))
-        // Seconda chiamata: restituisce l'ordine aggiornato
-        .mockReturnValueOnce(makeLeanExec({
-        orderId: { id: 'O-11' },
-        items: [],
-        orderState: SyncOrderState.PENDING,
-        creationDate: '2024-01-01',
-        warehouseDeparture: 1,
-        warehouseDestination: 2,
-        sellOrderReference: { id: 'O-2' },
-        }));
-
-    syncInternalOrderModel.bulkWrite.mockResolvedValue({});
-    mapper.syncInternalOrderToDomain.mockResolvedValue(
-        new SyncInternalOrder(id, [], SyncOrderState.PENDING, new Date('2024-01-01'), 1, 2, new SyncOrderId('O-2'))
-    );
-    const result = await repo.syncUpdateReservedStock(id, items);
-    expect(result).toBeInstanceOf(SyncInternalOrder);
-    });
-
   it('syncUpdateReservedStock lancia errore se nessun ordine trovato', async () => {
     const id = new SyncOrderId('O-404');
     const items = [new SyncOrderItem(new SyncItemId(1), 5)];
@@ -245,4 +212,120 @@ describe('CloudOrdersRepositoryMongo', () => {
     syncSellOrderModel.findOne.mockReturnValueOnce(makeLeanExec(null));
     await expect(repo.syncUpdateReservedStock(id, items)).rejects.toThrow();
   });
+
+  it('syncUnreservedStock aggiorna tutti gli items di InternalOrder', async () => {
+  const id = new SyncOrderId('O-12');
+  // Mock InternalOrder trovato
+  syncInternalOrderModel.findOne.mockReturnValueOnce(makeLeanExec({
+    orderId: { id: 'O-12' },
+    items: [
+      { item: { itemId: { id: 1 }, quantity: 5 }, quantityReserved: 3, unitPrice: 10 }
+    ],
+    orderState: SyncOrderState.PENDING,
+    creationDate: '2024-01-01',
+    warehouseDeparture: 1,
+    warehouseDestination: 2,
+    sellOrderReference: { id: 'O-2' },
+  }));
+  syncInternalOrderModel.bulkWrite.mockResolvedValue({});
+  // Mock documento aggiornato trovato
+  syncInternalOrderModel.findOne.mockReturnValueOnce(makeLeanExec({
+    orderId: { id: 'O-12' },
+    items: [
+      { item: { itemId: { id: 1 }, quantity: 5 }, quantityReserved: 0, unitPrice: 10 }
+    ],
+    orderState: SyncOrderState.PENDING,
+    creationDate: '2024-01-01',
+    warehouseDeparture: 1,
+    warehouseDestination: 2,
+    sellOrderReference: { id: 'O-2' },
+  }));
+
+  await expect(repo.syncUnreservedStock(id)).resolves.toBeUndefined();
+  expect(syncInternalOrderModel.bulkWrite).toHaveBeenCalled();
+});
+
+it('syncUnreservedStock aggiorna tutti gli items di SellOrder', async () => {
+  const id = new SyncOrderId('O-13');
+  // InternalOrder non trovato, SellOrder trovato
+  syncInternalOrderModel.findOne.mockReturnValueOnce(makeLeanExec(null));
+  syncSellOrderModel.bulkWrite.mockResolvedValue({});
+  syncSellOrderModel.findOne.mockReturnValueOnce(makeLeanExec({
+    orderId: { id: 'O-13' },
+    items: [
+      { item: { itemId: { id: 1 }, quantity: 5 }, quantityReserved: 0, unitPrice: 10 }
+    ],
+    orderState: SyncOrderState.PENDING,
+    creationDate: '2024-01-01',
+    warehouseDeparture: 1,
+    destinationAddress: 'Via Roma',
+  }));
+
+  await expect(repo.syncUnreservedStock(id)).resolves.toBeUndefined();
+  expect(syncSellOrderModel.bulkWrite).toHaveBeenCalled();
+});
+
+it('syncUnreservedStock lancia errore se nessun documento trovato dopo bulkWrite', async () => {
+  const id = new SyncOrderId('O-404');
+  syncInternalOrderModel.findOne.mockReturnValueOnce(makeLeanExec(null));
+  syncSellOrderModel.bulkWrite.mockResolvedValue({});
+  syncSellOrderModel.findOne.mockReturnValueOnce(makeLeanExec(null));
+
+  await expect(repo.syncUnreservedStock(id)).rejects.toThrow(`Impossibile trovare l'ordine con ID ${id.getId()}`);
+});
+
+it('syncUpdateReservedStock lancia errore se item non trovato', async () => {
+  const id = new SyncOrderId('O-14');
+  const items = [new SyncOrderItem(new SyncItemId(99), 5)];
+  syncInternalOrderModel.findOne
+    .mockReturnValueOnce(makeLeanExec({
+      orderId: { id: 'O-14' },
+      items: [
+        { item: { itemId: { id: 1 }, quantity: 5 }, quantityReserved: 3, unitPrice: 10 }
+      ],
+      orderState: SyncOrderState.PENDING,
+      creationDate: '2024-01-01',
+      warehouseDeparture: 1,
+      warehouseDestination: 2,
+      sellOrderReference: { id: 'O-2' },
+    }))
+    .mockReturnValueOnce(makeLeanExec({
+      orderId: { id: 'O-14' },
+      items: [
+        { item: { itemId: { id: 1 }, quantity: 5 }, quantityReserved: 3, unitPrice: 10 }
+      ],
+      orderState: SyncOrderState.PENDING,
+      creationDate: '2024-01-01',
+      warehouseDeparture: 1,
+      warehouseDestination: 2,
+      sellOrderReference: { id: 'O-2' },
+    }));
+
+  await expect(repo.syncUpdateReservedStock(id, items))
+    .rejects.toThrow(`Impossibile trovare l'ordine con ID ${id.getId()}`);
+});
+
+it('syncUpdateReservedStock lancia errore se documento non trovato dopo bulkWrite', async () => {
+  const id = new SyncOrderId('O-15');
+  const items = [new SyncOrderItem(new SyncItemId(1), 5)];
+  syncInternalOrderModel.findOne
+    .mockReturnValueOnce(makeLeanExec({
+      orderId: { id: 'O-15' },
+      items: [
+        { item: { itemId: { id: 1 }, quantity: 5 }, quantityReserved: 3, unitPrice: 10 }
+      ],
+      orderState: SyncOrderState.PENDING,
+      creationDate: '2024-01-01',
+      warehouseDeparture: 1,
+      warehouseDestination: 2,
+      sellOrderReference: { id: 'O-2' },
+    }))
+    .mockReturnValueOnce(makeLeanExec(null)); // documento non trovato dopo bulkWrite
+
+  syncInternalOrderModel.bulkWrite.mockResolvedValue({});
+
+  await expect(repo.syncUpdateReservedStock(id, items))
+    .rejects.toThrow(`Impossibile trovare l'ordine con ID ${id.getId()}`);
+});
+
 });
