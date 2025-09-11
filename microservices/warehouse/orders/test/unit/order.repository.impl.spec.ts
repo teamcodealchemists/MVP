@@ -168,7 +168,21 @@ beforeEach(() => {
       
       loggerSpy.mockRestore();
     });
+    
+    it("should log errors in getById", async () => {
+      const loggerSpy = jest.spyOn(Logger, 'error').mockImplementation();
+      
+      internalOrderModel.findOne.mockReturnValue({
+        lean: () => ({
+          exec: () => Promise.reject(new Error("Database error"))
+        })
+      });
 
+      await expect(repo.getById(new OrderId("I123"))).rejects.toThrow();
+      expect(loggerSpy).toHaveBeenCalled();
+      
+      loggerSpy.mockRestore();
+    });
   });
 
   describe("getState", () => {
@@ -347,6 +361,54 @@ beforeEach(() => {
       await expect(repo.getAllOrders()).rejects.toThrow("Errore conversione sellDoc");
     });
 
+    it("should handle null items in internal orders", async () => {
+    internalOrderModel.find.mockReturnValue({
+      lean: () => ({
+        exec: () => Promise.resolve([
+          {
+            orderId: { id: "I123" },
+            items: null, // Items null
+            orderState: OrderState.PENDING,
+            creationDate: new Date(),
+            warehouseDeparture: 1,
+            warehouseDestination: 2,
+            sellOrderReference: { id: "S456" }
+          }
+        ])
+      })
+    });
+    sellOrderModel.find.mockReturnValue({
+      lean: () => ({
+        exec: () => Promise.resolve([])
+      })
+    });
+
+    await expect(repo.getAllOrders()).rejects.toThrow();
+  });
+
+  it("should handle undefined items in sell orders", async () => {
+    internalOrderModel.find.mockReturnValue({
+      lean: () => ({
+        exec: () => Promise.resolve([])
+      })
+    });
+    sellOrderModel.find.mockReturnValue({
+      lean: () => ({
+        exec: () => Promise.resolve([
+          {
+            orderId: { id: "S123" },
+            items: undefined, // Items undefined
+            orderState: OrderState.PENDING,
+            creationDate: new Date(),
+            warehouseDeparture: 1,
+            destinationAddress: "Via Roma"
+          }
+        ])
+      })
+    });
+
+    await expect(repo.getAllOrders()).rejects.toThrow();
+  });
   });
 
 
@@ -383,6 +445,26 @@ beforeEach(() => {
 
     await expect(repo.addSellOrder(sellOrder)).rejects.toThrow("Save error");
   });
+
+  it("should handle validation errors in addSellOrder", async () => {
+      const sellOrder = new SellOrder(
+        new OrderId(""), // ID vuoto - potrebbe causare errore
+        [],
+        OrderState.PENDING,
+        new Date(),
+        1,
+        "Via Roma"
+      );
+
+      // Mock per far fallire la validazione
+      const mockInstance = { 
+        save: jest.fn().mockRejectedValue(new Error("Validation error")) 
+      };
+      (repo as any)._sellOrderConstructorMock.mockReturnValue(mockInstance);
+
+      await expect(repo.addSellOrder(sellOrder)).rejects.toThrow("Validation error");
+    });
+
 });
 
   describe("addInternalOrder", () => {
@@ -463,6 +545,16 @@ beforeEach(() => {
       await expect(repo.removeById(new OrderId("I123"))).rejects.toThrow("Update error");
     });
 
+    it("should return false if updateOrderState doesn't return CANCELED", async () => {
+      const orderId = new OrderId("I123");
+      repo.getState = jest.fn().mockResolvedValue(OrderState.PENDING);
+      repo.updateOrderState = jest.fn().mockResolvedValue({
+        getOrderState: () => OrderState.PENDING // Non CANCELED
+      });
+
+      const result = await repo.removeById(orderId);
+      expect(result).toBe(false);
+    });
   });
 
   describe("updateOrderState", () => {
@@ -526,6 +618,18 @@ beforeEach(() => {
       });
 
       await expect(repo.updateOrderState(orderId, OrderState.COMPLETED)).rejects.toThrow();
+    });
+
+    it("should handle update errors", async () => {
+      const orderId = new OrderId("I123");
+      internalOrderModel.findOneAndUpdate.mockReturnValue({
+        lean: () => ({
+          exec: () => Promise.reject(new Error("Update error"))
+        })
+      });
+
+      await expect(repo.updateOrderState(orderId, OrderState.COMPLETED))
+        .rejects.toThrow("Update error");
     });
   });
 
@@ -591,7 +695,38 @@ beforeEach(() => {
       (global as any).OrderId = originalOrderId;
     });
 
+    it("should handle case where getById returns an actual order (ID exists)", async () => {
+      // Mock per far sì che getById restituisca un ordine (ID già esistente)
+      repo.getById = jest.fn().mockResolvedValue({
+        getOrderId: () => "Iexisting123"
+      });
 
+      // Mock di console per evitare output
+      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+      
+      // Dovrebbe rigenerare un nuovo ID
+      const result = await repo.genUniqueId("I");
+      
+      expect(result.getId()).toMatch(/^I[0-9a-fA-F\-]{36}$/);
+      expect(repo.getById).toHaveBeenCalled();
+      
+      consoleSpy.mockRestore();
+    });
+
+    it("should handle errors in OrderId constructor", async () => {
+      // Salva il costruttore originale
+      const originalOrderId = OrderId;
+      
+      // Mock per far fallire il costruttore OrderId
+      (global as any).OrderId = jest.fn().mockImplementation(() => {
+        throw new Error("Invalid ID format");
+      });
+
+      await expect(repo.genUniqueId("I")).rejects.toThrow("Errore durante la verifica dell'ID");
+
+      // Ripristina il costruttore originale
+      (global as any).OrderId = originalOrderId;
+    });
   });
 
   describe("updateReservedStock", () => {
@@ -742,6 +877,65 @@ beforeEach(() => {
         .rejects.toThrow("Impossibile trovare l'ordine con ID I123");
     });
 
+    it("should handle missing orderState in InternalOrder", async () => {
+      internalOrderModel.findOne.mockReturnValue({
+        lean: () => ({
+          exec: () => Promise.resolve({ 
+            orderId: { id: "I123" }, 
+            items: [], 
+            orderState: null, // orderState mancante
+            creationDate: new Date(), 
+            warehouseDeparture: 1, 
+            warehouseDestination: 2, 
+            sellOrderReference: { id: "S456" } 
+          })
+        })
+      });
+      
+      internalOrderModel.bulkWrite.mockResolvedValue(undefined);
+      internalOrderModel.findOne.mockReturnValueOnce({
+        lean: () => ({
+          exec: () => Promise.resolve({ 
+            orderId: { id: "I123" }, 
+            items: [], 
+            orderState: null, // orderState mancante
+            creationDate: new Date(), 
+            warehouseDeparture: 1, 
+            warehouseDestination: 2, 
+            sellOrderReference: { id: "S456" } 
+          })
+        })
+      });
+
+      const items = [
+        new OrderItemDetail(new OrderItem(new ItemId(1), 5), 5, 10)
+      ];
+      
+      await expect(repo.updateReservedStock(new OrderId("I123"), items))
+        .rejects.toThrow("Stato ordine non valido");
+    });
+
+    it("should handle empty items array in updateReservedStock", async () => {
+      internalOrderModel.findOne.mockReturnValue({
+        lean: () => ({
+          exec: () => Promise.resolve({ 
+            orderId: { id: "I123" }, 
+            items: [], 
+            orderState: OrderState.PENDING, 
+            creationDate: new Date(), 
+            warehouseDeparture: 1, 
+            warehouseDestination: 2, 
+            sellOrderReference: { id: "S456" } 
+          })
+        })
+      });
+      
+      // Items array vuoto
+      const items: OrderItemDetail[] = [];
+      
+      const result = await repo.updateReservedStock(new OrderId("I123"), items);
+      expect(result).toBeInstanceOf(InternalOrder);
+    });
   });
 
   describe("checkReservedQuantityForSellOrder", () => {
@@ -844,6 +1038,32 @@ beforeEach(() => {
         .rejects.toThrow();
     });
 
+    it("should handle invalid items structure in SellOrder", async () => {
+      sellOrderModel.findOne.mockReturnValue({
+        lean: () => ({
+          exec: () => Promise.resolve({
+            orderId: { id: "S123" },
+            items: "completely-invalid-structure", // Struttura completamente invalida
+            orderState: OrderState.PENDING,
+            creationDate: new Date(),
+            warehouseDeparture: 1,
+            destinationAddress: "Via Roma"
+          })
+        })
+      });
+
+      const sellOrder = new SellOrder(
+        new OrderId("S123"),
+        [],
+        OrderState.PENDING,
+        new Date(),
+        1,
+        "Via Roma"
+      );
+
+      await expect(repo.checkReservedQuantityForSellOrder(sellOrder))
+        .rejects.toThrow();
+    });
   });
 
   describe("checkReservedQuantityForInternalOrder", () => {
