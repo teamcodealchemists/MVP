@@ -247,8 +247,8 @@ describe('CommandHandler', () => {
     adapter.getAll.mockResolvedValue(mockProducts);
 
     const result = await handler.getInventory();
-
+    const parsed = JSON.parse(result);
     expect(adapter.getAll).toHaveBeenCalled();
-    expect(result.productList[0].id.id).toBe('1');
+    expect(parsed.productList[0].id.id).toBe('1');
   });
 });
