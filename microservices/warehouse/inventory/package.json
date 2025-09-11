@@ -85,6 +85,15 @@
       "text",
       "clover"
     ],
+    "coveragePathIgnorePatterns": [
+      "/node_modules/",
+      "inbound-response\\.deserializer\\.ts",
+      "outbound-request\\.serializer\\.ts",
+      "outbound-response\\.serializer\\.ts",
+      "natsClient\\.module\\.ts",
+      "access\\.controller\\.ts",
+      "inventory\\.repository\\.module\\.ts"
+    ],
     "coverageDirectory": "../../../coverage/warehouse/inventory",
     "testEnvironment": "node",
     "moduleNameMapper": {

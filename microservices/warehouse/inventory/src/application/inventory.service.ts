@@ -27,10 +27,7 @@ export class InventoryService {
 
   async addProduct(newProduct: Product): Promise<void> {
     if (await this.inventoryRepository.getById(newProduct.getId()) == null) {
-      if(newProduct.getQuantity() > newProduct.getMaxThres()){
-        this.natsAdapter.aboveMaxThres(newProduct, this.warehouseId);
-      }
-      await this.inventoryRepository.addProduct(newProduct);
+          await this.inventoryRepository.addProduct(newProduct);
       console.log('Publishing stockAdded event', newProduct);
       this.natsAdapter.stockAdded(newProduct, this.warehouseId);
       console.log('PUBBLICATO stockAdded event');
@@ -53,14 +50,21 @@ export class InventoryService {
     const existingProduct = await this.inventoryRepository.getById(editedProduct.getId());
     if (!existingProduct) {
       throw new NotFoundException(`Product with id ${editedProduct.getId().getId()} not found`);
-    }
-    if(editedProduct.getQuantity() < editedProduct.getMinThres()){
-      this.natsAdapter.belowMinThres(editedProduct, this.warehouseId);
-    }
-    if(editedProduct.getQuantity() > editedProduct.getMaxThres()){
-      this.natsAdapter.aboveMaxThres(editedProduct, this.warehouseId);
-    }
-    await this.inventoryRepository.updateProduct(editedProduct);
+    } 
+       console.log('editedProduct.getQuantity() > existingProduct.getMaxThres()', editedProduct.getQuantity() > existingProduct.getMaxThres());
+
+       console.log('editedProduct.getQuantity()', editedProduct.getQuantity());
+       console.log('existingProduct.getMaxThres()', existingProduct.getMaxThres());
+       await this.inventoryRepository.updateProduct(editedProduct);
+      if((editedProduct.getQuantity()) < existingProduct.getMinThres()){
+        const result1 = await this.inventoryRepository.getById(editedProduct.getId());
+        if(result1) this.natsAdapter.belowMinThres(result1, this.warehouseId);
+      }
+      if(editedProduct.getQuantity() > existingProduct.getMaxThres()){
+        console.log('entro in editedProduct.getQuantity() > existingProduct.getMaxThres()');
+        const result1 = await this.inventoryRepository.getById(editedProduct.getId());
+        if(result1) this.natsAdapter.aboveMaxThres(result1, this.warehouseId);
+      }
     await this.natsAdapter.stockUpdated(editedProduct, this.warehouseId);
     return Promise.resolve();
   }
@@ -113,6 +117,10 @@ export class InventoryService {
     }
     product.setQuantity(product.getQuantity() + productQuantity.getQuantity());
     await this.inventoryRepository.updateProduct(product);
+    const productUpdated = await this.inventoryRepository.getById(productQuantity.getId());
+    if(productUpdated && productUpdated?.getMaxThres() < productUpdated.getQuantity()){
+        this.natsAdapter.aboveMaxThres(productUpdated, this.warehouseId);
+    }
     return Promise.resolve();
   }
 
@@ -187,7 +195,7 @@ export class InventoryService {
         }
         await this.natsAdapter.sufficientProductAvailability(order);
       } else {
-        Logger.warn('Insufficient stock for one or more products. Reserving available quantities.');
+        Logger.warn('Insufficient stock for one or more products. Reserving available quantities.'+JSON.stringify(reserved), 'InventoryService');
         await this.natsAdapter.reservedQuantities(order, reserved);
       }
     return Promise.resolve();

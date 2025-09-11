@@ -39,6 +39,6 @@ describe('InboundPortsAdapter', () => {
     expect(stateService.sendHeartBeat).toHaveBeenCalledWith(domainWarehouseId, expect.any(WarehouseState));
     
     const sentState = (stateService.sendHeartBeat as jest.Mock).mock.calls[0][1];
-    expect(sentState.getState()).toBe('Attivo');
+    expect(sentState.getState()).toBe('ONLINE');
   });
 });

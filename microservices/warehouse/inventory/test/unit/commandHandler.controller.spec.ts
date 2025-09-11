@@ -98,8 +98,16 @@ describe('CommandHandler', () => {
 
   it('should handle get product', async () => {
     const ctx = { getSubject: () => 'get.warehouse.1.stock.p1' };
-    const product = { id: 'p1', name: 'Product 1' };
-    (listener.handleGetProduct as jest.Mock).mockResolvedValue(product);
+    const productMock = {
+    getId: () => ({ getId: () => 'p1' }),
+    getName: () => 'Product 1',
+    getUnitPrice: () => 100,
+    getQuantity: () => 10,
+    getQuantityReserved: () => 2,
+    getMinThres: () => 1,
+    getMaxThres: () => 50,
+    };
+    (listener.handleGetProduct as jest.Mock).mockResolvedValue(productMock);
 
     const result = await controller.handleGetProduct(ctx as any);
     expect(listener.handleGetProduct).toHaveBeenCalledWith({ id: 'p1' });

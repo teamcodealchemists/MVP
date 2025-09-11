@@ -122,7 +122,7 @@ jobs:
         run: npm install || echo "No tests for routing"
 
       - name: Run Routing tests
-        working-directory: microservices/cloud/inventory-aggregated
+        working-directory: microservices/centralized/routing
         run: npm run test:cov || echo "No tests for routing"
 
       - name: Upload Routing coverage to Codecov

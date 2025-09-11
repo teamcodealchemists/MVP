@@ -35,8 +35,9 @@ describe('RoutingController', () => {
       getAddress: () => 'Via Roma 1'
     });
     const dto: WarehouseAddressDTO = { warehouseState: { warehouseId: { warehouseId: 1 }, state: 'ATTIVO' }, address: 'Via Roma 1' };
-    const result = await controller.updateAddress(dto);
-    expect(routingService.updateWarehouseAddress).toHaveBeenCalledWith(1, 'Via Roma 1');
+    const mockContext = { getSubject: () => 'call.routing.warehouse.1.address.set' };
+    const result = await controller.updateAddress(dto, mockContext);
+    expect(routingService.updateWarehouseAddress).toHaveBeenCalledWith({ id: 1 }, 'Via Roma 1');
     expect(result).toBe('ok');
   });
 
@@ -69,7 +70,7 @@ describe('RoutingController', () => {
     const dto: WarehouseIdDTO = { warehouseId: 3 };
     const result = await controller.receiveRequest(dto);
     expect(routingService.calculateDistance).toHaveBeenCalledWith(3);
-    expect(JSON.parse(result as string).warehouses).toEqual([1, 2, 3]);
+    expect(JSON.parse(result as string)).toEqual({ result: { warehouses: [1, 2, 3] } });
   });
 
   it('receiveRequest gestisce errori', async () => {
@@ -109,5 +110,33 @@ describe('RoutingController', () => {
     const dto = { state: 'ATTIVO', address: 'Via Roma 5' };
     const result = await controller.createWarehouse(dto);
     expect(JSON.parse(result as string).error.code).toBe('system.invalidParams');
+  });
+});
+
+import { AccessController } from '../../src/interfaces/access.controller';
+
+describe('AccessController', () => {
+  let controller: AccessController;
+
+  beforeEach(() => {
+    controller = new AccessController();
+  });
+
+  it('should return access granted for global token', async () => {
+    const payload = { token: { isGlobal: true, error: undefined } };
+    const result = await controller.access(payload);
+    expect(JSON.parse(result)).toEqual({ result: { get: true, call: "*" } });
+  });
+
+  it('should return access denied for token with error', async () => {
+    const payload = { token: { isGlobal: false, error: 'Invalid token' } };
+    const result = await controller.access(payload);
+    expect(JSON.parse(result)).toEqual({ error: { code: 'system.accessDenied', message: 'Invalid token' } });
+  });
+
+  it('should return access denied for missing token', async () => {
+    const payload = {};
+    const result = await controller.access(payload);
+    expect(JSON.parse(result)).toEqual({ error: { code: 'system.accessDenied', message: 'Operation not allowed.' } });
   });
 });

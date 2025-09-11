@@ -107,4 +107,27 @@ export class InboundEventController {
       logger.error('Errore parsing orderRequest payload', err);
     }
   }
+
+  @EventPattern(`event.warehouse.${process.env.WAREHOUSE_ID}.inventory.unreserveStock`)
+  async unreserveStock(@Payload() payload: any): Promise<void> {
+    let productQuantityArrayDto = new ProductQuantityArrayDto();
+    let orderDto = new OrderIdDTO();
+    orderDto.id = payload.orderIdDTO.id;
+    productQuantityArrayDto.id = orderDto;
+    productQuantityArrayDto.productQuantityArray = payload.itemsDTO.map((item: any) => {
+      const productIdDto = new ProductIdDto();
+      productIdDto.id = item.itemId.id;
+      return {
+        productId: productIdDto,
+        quantity: item.quantity,
+      };
+    });
+
+    try {
+      await this.inboundEventListener.unreserveStock(productQuantityArrayDto);
+    } catch (err) {
+      logger.error('Errore parsing unreserveStock payload', err);
+    }
+  }
+
 }

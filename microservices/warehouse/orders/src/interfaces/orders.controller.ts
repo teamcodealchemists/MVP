@@ -11,6 +11,7 @@ import { SellOrderDTO } from "src/interfaces/dto/sellOrder.dto";
 import { OrdersDTO } from "src/interfaces/dto/orders.dto";
 
 import { InboundPortsAdapter } from '../infrastructure/adapters/inboundPorts.adapter';
+import { OrderItemDTO } from './dto/orderItem.dto';
 
 
 @Controller()
@@ -127,13 +128,26 @@ export class OrdersController {
   }
 
   // Messaggio ricevuto dal servizio di riassortimento
-  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.*.replenishment.received`)
-  async replenishmentReceived(@Ctx() context: any): Promise<void> {
+  @EventPattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.*.replenishment.received`)
+  async replenishmentReceived(@Ctx() context: any, @Payload() payload: any): Promise<void> {
     console.log('✅ Sono arrivato qua in replenishmentReceived');
-    const tokens = context.getSubject().split('.');
-    const orderId = new OrderIdDTO();
-    orderId.id = tokens[tokens.length - 3];
-    await this.inboundPortsAdapter.replenishmentReceived(orderId);
+
+    let product = payload.product;
+
+    const orderQuantityDto = new OrderQuantityDTO();
+    const orderQuantityIdDto = new OrderIdDTO();
+    orderQuantityIdDto.id = product.id.id;
+    orderQuantityDto.id = orderQuantityIdDto;
+
+    const orderItemDtos = product.productQuantityArray.map((pq: any) => {
+      const orderItemDto = new OrderItemDTO();
+      orderItemDto.itemId = { id: pq.productId.id };
+      orderItemDto.quantity = pq.quantity;
+      return orderItemDto;
+    });
+    orderQuantityDto.items = orderItemDtos;
+
+    await this.inboundPortsAdapter.replenishmentReceived(orderQuantityDto);
   }
 
   @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.order.*.state.update.*`)

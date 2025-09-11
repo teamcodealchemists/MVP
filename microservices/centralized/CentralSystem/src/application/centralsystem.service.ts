@@ -443,6 +443,7 @@ async CheckInsufficientQuantity(
         let oID = new OrderItemDetail(oI,0,product.getUnitPrice());
         let internalOrders = new InternalOrder(new OrderId(""),[oID],OrderState.PENDING, new Date(),warehouseId.getId(),whId);
         this.outboundPortsAdapter.createInternalOrder(internalOrders, new OrderId(""));
+        Promise.resolve();
     }
     this.outboundPortsAdapter.sendInventory("MAX - Non disponibile", new ProductId(product.getId()), new WarehouseId(product.getIdWarehouse()));
     return Promise.resolve()

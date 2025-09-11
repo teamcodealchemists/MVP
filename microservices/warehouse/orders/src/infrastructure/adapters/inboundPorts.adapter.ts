@@ -113,14 +113,33 @@ export class InboundPortsAdapter implements
     await this.ordersService.completeOrder(orderId);
   }
 
-  async replenishmentReceived(orderIdDTO: OrderIdDTO): Promise<void> {
-      const orderId = await this.dataMapper.orderIdToDomain(orderIdDTO);
+  async replenishmentReceived(orderQuantityDto: OrderQuantityDTO): Promise<void> {
+      const orderId = await this.dataMapper.orderIdToDomain(orderQuantityDto.id);
       const order = await this.ordersRepository.getById(orderId);
 
+      let orderItems = order.getItemsDetail();
+
+      // Aggiorna la reservedQuantity di ogni item sommando la quantità ricevuta dal DTO
+      for (let itemDetail of orderItems) {
+        const dtoItem = orderQuantityDto.items.find(i => i.itemId.id === itemDetail.getItem().getItemId().getId());
+        if (dtoItem) {
+          const newReservedQuantity = itemDetail.getQuantityReserved() + dtoItem.quantity;
+          itemDetail.setQuantityReserved(newReservedQuantity);
+        }
+      }
+
+      order.setItemsDetail(orderItems);
+
+      Logger.debug(`Replenishment received for order ${orderId.getId()}. Updated order: ${JSON.stringify(order)}`, 'InboundPortsAdapter');
+
+      // Aggiorna l'ordine nel repository
+      await this.ordersRepository.updateReservedStock(orderId, orderItems);
+
+      // Verifica il tipo di ordine e aggiorna lo stato
       if (order instanceof SellOrder) {
-          await this.ordersService.checkReservedQuantityForSellOrder(order);
+        await this.ordersService.checkReservedQuantityForSellOrder(order);
       } else if (order instanceof InternalOrder) {
-          await this.ordersService.checkReservedQuantityForInternalOrder(order);
+        await this.ordersService.checkReservedQuantityForInternalOrder(order);
       }
   }
 

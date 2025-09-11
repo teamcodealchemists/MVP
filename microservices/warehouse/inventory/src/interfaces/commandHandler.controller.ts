@@ -62,11 +62,11 @@ export class CommandHandler {
     }
   }
 
-  @MessagePattern(`warehouse.${process.env.WAREHOUSE_ID}.stock.*.set`)
+  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.stock.*.set`)
   async handleEditStock(@Payload('params') payload: any, @Ctx() context: any): Promise<string> {
 
     const subjectParts = context.getSubject().split('.');
-    const itemIdStr = subjectParts[subjectParts.length - 2] ?? null;
+    const itemIdStr = subjectParts[4];
 
     const productObj = payload;
 
@@ -84,6 +84,7 @@ export class CommandHandler {
     productDTO.maxThres = productObj.maxThres;
     productDTO.warehouseId = productObj.warehouseId ?? process.env.WAREHOUSE_ID;
 
+    console.log(JSON.stringify(productDTO));
     try {
       await validateOrReject(productDTO);
       await this.inboundEventListener.editStock(productDTO);

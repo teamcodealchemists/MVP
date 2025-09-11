@@ -64,7 +64,7 @@ export class OutboundEventAdapter
     maxThres: product.getMaxThres(),
     warehouseId: whIdDto,
     };
-    this.outboundEventHandler.handlerBelowMinThres(p);
+    this.outboundEventHandler.handlerAboveMaxThres(p);
     return Promise.resolve();
   }
 
