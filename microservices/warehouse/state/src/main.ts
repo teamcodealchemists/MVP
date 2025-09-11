@@ -1,0 +1,28 @@
+import { StateModule } from './application/state.module';
+import { NestFactory } from '@nestjs/core';
+import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+import { Logger, ValidationPipe } from '@nestjs/common';
+import { InboundRequestDeserializer } from './interfaces/nats/natsSerial/inbound-request.deserializer';
+import { OutboundResponseSerializer } from './interfaces/nats/natsSerial/outbound-request.serializer';
+const logger = new Logger('StateMicroservice');
+
+export async function bootstrap() {
+  const app = await NestFactory.createMicroservice<MicroserviceOptions>(StateModule, {
+    logger: logger,
+    transport: Transport.NATS,
+    options: {
+      servers: [`${process.env.NATS_URL}`],
+         deserializer: new InboundRequestDeserializer(),
+      serializer: new OutboundResponseSerializer(),
+    },
+   
+  });
+
+
+  app.useGlobalPipes(new ValidationPipe());
+
+  await app.listen();
+  logger.log('State microservice is listening...');
+}
+
+bootstrap();

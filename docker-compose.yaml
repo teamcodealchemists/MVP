@@ -1,0 +1,264 @@
+services:
+
+#==========================================================================#
+#                         Warehouse Microservices                          #
+#==========================================================================#
+  inventory-1:
+    build:
+      context: ./microservices/warehouse/inventory
+      dockerfile: Dockerfile
+    container_name: inventory-1
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/inventory-1
+      - WAREHOUSE_ID=1
+      - NATS_URL=nats://nats:4222
+    volumes:
+      - ./microservices/warehouse/inventory/src:/usr/src/app/src
+    networks:
+      - shared-warehouses
+    depends_on:
+      - mongodb
+      - nats
+      - resgate
+
+  inventory-2:
+    build:
+      context: ./microservices/warehouse/inventory
+      dockerfile: Dockerfile
+    container_name: inventory-2
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/inventory-2
+      - WAREHOUSE_ID=2
+      - NATS_URL=nats://nats:4222
+    volumes:
+      - ./microservices/warehouse/inventory/src:/usr/src/app/src
+    networks:
+      - shared-warehouses
+    depends_on:
+      - mongodb
+      - nats
+      - resgate
+
+  orders-1:
+    build:
+      context: ./microservices/warehouse/orders
+      dockerfile: Dockerfile
+    container_name: orders-1
+    environment:
+      - WAREHOUSE_ID=1
+      - NATS_URL=nats://nats:4222
+      - MONGODB_URI=mongodb://mongo:27017/orders-1
+    volumes:
+      - ./microservices/warehouse/orders/src:/usr/src/app/src
+    networks:
+      - shared-warehouses
+    depends_on:
+      - nats    
+      - mongodb
+      - resgate 
+
+  orders-2:
+    build:
+      context: ./microservices/warehouse/orders
+      dockerfile: Dockerfile
+    container_name: orders-2
+    environment:
+      - WAREHOUSE_ID=2
+      - NATS_URL=nats://nats:4222
+      - MONGODB_URI=mongodb://mongo:27017/orders-2
+    volumes:
+      - ./microservices/warehouse/orders/src:/usr/src/app/src
+    networks:
+      - shared-warehouses
+    depends_on:
+      - nats    
+      - mongodb
+      - resgate 
+
+
+  state-1:
+    build:
+      context: ./microservices/warehouse/state
+      dockerfile: Dockerfile
+    container_name: state-1
+    environment:
+      - WAREHOUSE_ID=1
+      - MONGO_URI=mongodb://mongo:27017/state-1 
+      - NATS_URL=nats://nats:4222
+    volumes:
+      - ./microservices/warehouse/state/src:/usr/src/app/src
+    networks:
+      - shared-warehouses
+    depends_on:
+      - nats
+      - mongodb
+      - resgate
+
+  state-2:
+    build:
+      context: ./microservices/warehouse/state
+      dockerfile: Dockerfile
+    container_name: state-2
+    environment:
+      - WAREHOUSE_ID=2
+      - MONGO_URI=mongodb://mongo:27017/state-2
+      - NATS_URL=nats://nats:4222
+    volumes:
+      - ./microservices/warehouse/state/src:/usr/src/app/src
+    networks:
+      - shared-warehouses
+    depends_on:
+      - nats
+      - mongodb
+      - resgate
+#==========================================================================#
+#                         Cloud Microservices                              #
+#==========================================================================#
+
+  inventory-aggregated:
+    build:
+      context: ./microservices/cloud/inventory-aggregated
+      dockerfile: Dockerfile
+    container_name: inventory-aggregated
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/inventory-aggregated
+      - NATS_URL=nats://nats:4222
+    volumes:
+      - ./microservices/cloud/inventory-aggregated/src:/usr/src/app/src
+    networks:
+      - shared-warehouses
+    depends_on:
+      - mongodb
+      - nats
+      - resgate
+
+  orders-aggregated:
+    build:
+      context: ./microservices/cloud/orders-aggregated
+      dockerfile: Dockerfile
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/orders-aggregated
+      - NATS_URL=nats://nats:4222
+    volumes:
+      - ./microservices/cloud/orders-aggregated/src:/usr/src/app/src
+    networks:
+      - shared-warehouses
+    depends_on:
+      - nats
+      - mongodb
+      - resgate
+
+#==========================================================================#
+#                 Centralized System Microservices                         #
+#==========================================================================#
+
+  authentication:
+    container_name: authentication
+    build:
+      context: ./microservices/centralized/authentication
+      dockerfile: Dockerfile
+    environment:
+      - MONGO_DB=mongodb://mongo:27017/authentication
+      - JWT_SECRET=IREALLYLOVEM31!!!!!!!!!!!!!!!!!!
+    volumes:
+      - ./microservices/centralized/authentication/src:/usr/src/app/src
+    networks:
+      - shared-warehouses
+    depends_on:
+      - nats
+      - mongodb
+      - resgate
+
+  routing:
+    build:
+      context: ./microservices/centralized/routing
+      dockerfile: Dockerfile
+    environment:
+      - MONGO_DB=mongodb://mongo:27017/routing
+    volumes:
+      - ./microservices/centralized/routing/src:/usr/src/app/src
+    networks:
+      - shared-warehouses
+    depends_on:
+      - nats
+      - mongodb
+      - resgate
+  state_aggregate:
+    build:
+      context: ./microservices/centralized/state_aggregate
+      dockerfile: Dockerfile
+    environment:
+      - MONGO_DB=mongodb://mongo:27017/state_aggregate
+      - WAREHOUSE_ID=1
+    volumes:
+      - ./microservices/centralized/state_aggregate/src:/usr/src/app/src
+    networks:
+      - shared-warehouses
+    depends_on:
+      - nats
+      - mongodb
+      - resgate
+
+  centralsystem:
+    container_name: CentralSystem
+    build:
+        context: ./microservices/centralized/CentralSystem
+        dockerfile: Dockerfile
+    environment:
+        - MONGO_DB=mongodb://mongo:27017/centralsystem
+    volumes:
+        - ./microservices/centralized/CentralSystem/src:/usr/src/app/src
+    networks:
+        - shared-warehouses
+    depends_on:
+        - nats
+        - mongodb
+        - resgate
+
+#==========================================================================#
+#                         Infrastructure Microservices                     #
+#==========================================================================#
+
+  resgate:
+    image: resgateio/resgate
+    container_name: resgate
+    ports:
+      - "8080:8080"
+    depends_on:
+      - nats
+    #volumes:
+    #  - ./microservizi/resgate/resgate-config.json:/app/config.json
+    command: 
+      - "-n"
+      - "nats://nats:4222"
+      - "-DV"
+      - "--headauth"
+      - "auth.jwtHeader"
+    networks:
+      - shared-warehouses
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    networks:
+      - shared-warehouses
+    #volumes:
+    #  - ./microservizi/mongo_db:/docker-entrypoint-initdb.d
+
+  nats:
+     container_name: nats
+     image: nats:latest
+     ports:
+       - "4222:4222"
+     command:
+       - "--jetstream"
+       - "--debug"
+       - "--trace"
+     networks:
+       - shared-warehouses
+
+networks:
+  shared-warehouses:
+    driver: bridge

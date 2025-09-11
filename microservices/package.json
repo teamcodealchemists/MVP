@@ -1,0 +1,34 @@
+{
+  "name": "microservices",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "npm-run-all test:centralSystem test:authentication test:invCloud test:inventario test:ordini",
+    "test:inventario": "cd warehouse/inventory && npm test",
+    "test:ordini": "cd warehouse/orders && npm test",
+    "test:centralSystem": "cd centralized/CentralSystem && npm test",
+    "test:authentication": "cd centralized/authentication && npm test",
+    "test:invCloud": "cd cloud/inventory-aggregated && npm test",
+    "test:cov": "npm-run-all test:cov:centralSystem test:cov:authentication test:cov:invCloud test:cov:inventario test:cov:ordini ",
+    "test:cov:inventario": "cd warehouse/inventory && npm run test:cov",
+    "test:cov:ordini": "cd warehouse/orders && npm run test:cov",
+    "test:cov:centralSystem": "cd centralized/CentralSystem && npm run test:cov",
+    "test:cov:authentication": "cd centralized/authentication && npm run test:cov",
+    "test:cov:invCloud": "cd cloud/inventory-aggregated && npm run test:cov",
+    "test:debug": "npm-run-all test:debug:inventario test:debug:ordini",
+    "test:debug:inventario": "cd warehouse/inventory && npm run test:debug",
+    "test:debug:ordini": "cd warehouse/orders && npm run test:debug || exit 0",
+    "test:debug:centralSystem": "cd centralized/CentralSystem && npm run test:debug",
+    "test:e2e": "npm-run-all test:e2e:inventario test:e2e:ordini",
+    "test:e2e:inventario": "cd warehouse/inventory && npm run  test:e2e",
+    "test:e2e:ordini": "cd warehouse/orders && npm run  test:e2e || exit 0"
+  },
+  "devDependencies": {
+    "npm-run-all": "^4.1.5"
+  },
+  "dependencies": {
+    "@nestjs/microservices": "^11.1.6",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.2"
+  }
+}
