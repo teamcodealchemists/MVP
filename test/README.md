@@ -162,7 +162,7 @@ Template: newman run https://www.postman.com/collections/
 - **TdA-19:**  ``newman run https://www.postman.com/collections/48219992-9544daf6-cd43-4b37-bfd3-06aa62a63a2e``
 - **TdA-20:**  ``newman run https://www.postman.com/collections/48219992-bc457ed4-a383-48e4-a874-c188801bf08f``
 - **TdA-21:**  ``newman run https://www.postman.com/collections/46314242-3124d581-f801-41bb-91c6-c6f17a723441``
-- **TdA-22:**  ``newman run https://www.postman.com/collections/``
-- **TdA-23:**  ``newman run https://www.postman.com/collections/``
-- **TdA-24:**  ``newman run https://www.postman.com/collections/``
+- **TdA-22:**  ``newman run https://www.postman.com/collections/48219992-0dc600df-28c7-4287-9c05-a863c28953c7``
+- **TdA-23:**  ``newman run https://www.postman.com/collections/48219992-aa8a02ea-8028-4b6d-bc1a-4e70a1eb9d4e``
+- **TdA-24:**  ``newman run https://www.postman.com/collections/48219992-0863d874-d052-4e2e-97ef-bba6663e6b33``
 - **TdA-25:**  ``newman run https://www.postman.com/collections/46314414-b592467c-b6a6-4557-9634-b4764a25d63e``
