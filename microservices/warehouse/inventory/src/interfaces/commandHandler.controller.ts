@@ -62,7 +62,7 @@ export class CommandHandler {
     }
   }
 
-  @MessagePattern(`warehouse.${process.env.WAREHOUSE_ID}.stock.*.set`)
+  @MessagePattern(`call.warehouse.${process.env.WAREHOUSE_ID}.stock.*.set`)
   async handleEditStock(@Payload('params') payload: any, @Ctx() context: any): Promise<string> {
 
     const subjectParts = context.getSubject().split('.');
