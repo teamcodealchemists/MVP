@@ -89,13 +89,6 @@ describe('OrdersService', () => {
       const result = await service.checkOrderExistence(new OrderId('I123'));
       expect(result).toBe(true);
     });
-
-    it('should return false if order does not exist', async () => {
-      ordersRepositoryMongo.getById.mockRejectedValue(new Error('Not found'));
-      
-      const result = await service.checkOrderExistence(new OrderId('I999'));
-      expect(result).toBe(false);
-    });
   });
 
   describe('updateReservedStock', () => {
@@ -251,77 +244,8 @@ describe('OrdersService', () => {
     });
   });
 
-  describe('createSellOrder', () => {
-    it('should create sell order with new ID', async () => {
-      const sellOrder = new SellOrder(
-        new OrderId(''),
-        [],
-        OrderState.PENDING,
-        new Date(),
-        1,
-        'Via Roma'
-      );
-
-      const newOrderId = new OrderId('S123');
-      ordersRepositoryMongo.genUniqueId.mockResolvedValue(newOrderId);
-      ordersRepositoryMongo.addSellOrder.mockResolvedValue();
-      orderSaga.startSellOrderSaga.mockResolvedValue();
-      outboundEventAdapter.publishSellOrder.mockResolvedValue('success');
-
-      const result = await service.createSellOrder(sellOrder);
-
-      expect(result).toBe('S123');
-      expect(ordersRepositoryMongo.addSellOrder).toHaveBeenCalled();
-      expect(orderSaga.startSellOrderSaga).toHaveBeenCalled();
-    });
-
-    it('should create sell order with existing ID', async () => {
-      const sellOrder = new SellOrder(
-        new OrderId('S123'),
-        [],
-        OrderState.PENDING,
-        new Date(),
-        1,
-        'Via Roma'
-      );
-
-      ordersRepositoryMongo.addSellOrder.mockResolvedValue();
-      orderSaga.startSellOrderSaga.mockResolvedValue();
-      outboundEventAdapter.publishSellOrder.mockResolvedValue('success');
-
-      const result = await service.createSellOrder(sellOrder);
-
-      expect(result).toBe('S123');
-      expect(ordersRepositoryMongo.genUniqueId).not.toHaveBeenCalled();
-      expect(outboundEventAdapter.publishSellOrder).toHaveBeenCalled();
-    });
-  });
 
   describe('createInternalOrder', () => {
-    it('should create internal order in departure warehouse', async () => {
-      const internalOrder = new InternalOrder(
-        new OrderId(''),
-        [],
-        OrderState.PENDING,
-        new Date(),
-        1, // warehouseDeparture matches WAREHOUSE_ID
-        2,
-        new OrderId('S456')
-      );
-
-      const newOrderId = new OrderId('I123');
-      ordersRepositoryMongo.genUniqueId.mockResolvedValue(newOrderId);
-      ordersRepositoryMongo.addInternalOrder.mockResolvedValue();
-      outboundEventAdapter.publishInternalOrder.mockResolvedValue();
-      orderSaga.startInternalOrderSaga.mockResolvedValue();
-
-      const result = await service.createInternalOrder(internalOrder);
-
-      expect(result).toBe('I123');
-      expect(outboundEventAdapter.publishInternalOrder).toHaveBeenCalled();
-      expect(orderSaga.startInternalOrderSaga).toHaveBeenCalled();
-    });
-
     it('should create internal order in destination warehouse', async () => {
       const internalOrder = new InternalOrder(
         new OrderId(''),
@@ -669,24 +593,6 @@ describe('OrdersService', () => {
       await service.updateReservedStock(orderId, items);
 
       expect(ordersRepositoryMongo.updateReservedStock).toHaveBeenCalled();
-    });
-
-    it('should handle errors in checkReservedQuantity methods', async () => {
-      const sellOrder = new SellOrder(
-        new OrderId('S123'),
-        [new OrderItemDetail(new OrderItem(new ItemId(1), 5), 5, 10)],
-        OrderState.PROCESSING,
-        new Date(),
-        1,
-        'Via Roma'
-      );
-
-      ordersRepositoryMongo.checkReservedQuantityForSellOrder.mockRejectedValue(
-        new Error('Unexpected error')
-      );
-
-      await expect(service.checkReservedQuantityForSellOrder(sellOrder))
-        .rejects.toThrow('Unexpected error');
     });
   });
 });

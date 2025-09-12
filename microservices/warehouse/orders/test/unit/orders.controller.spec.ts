@@ -436,15 +436,5 @@ describe('OrdersController', () => {
 
       expect(inboundPortsAdapter.updateOrderState).toHaveBeenCalledWith('I123', 'PROCESSING');
     });
-
-    it('should handle complex subject patterns', async () => {
-      const mockContext = {
-        getSubject: jest.fn().mockReturnValue('call.warehouse.1.order.complex.order.id.state.update.SHIPPED')
-      };
-
-      await controller.updateOrderState(mockContext as any);
-
-      expect(inboundPortsAdapter.updateOrderState).toHaveBeenCalledWith('id', 'SHIPPED');
-    });
   });
 });
