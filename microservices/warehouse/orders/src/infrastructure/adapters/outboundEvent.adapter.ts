@@ -113,11 +113,6 @@ export class OutboundEventAdapter implements InternalOrderEventPublisher, OrderS
     this.natsService.emit(`event.warehouse.${destination.toString()}.inventory.receiveShipment`, JSON.stringify({ orderIdDTO, itemsDTO }));
   }
 
-  /* async orderUpdated(order: Order) {
-      await this.natsService.publish('orders.updated', order);
-    } 
-  */
-
   async orderStateUpdated(orderId: OrderId, orderState: OrderState, context: { destination: 'aggregate' | 'warehouse', warehouseId?: number }) {
     try {
       const orderIdStr = orderId.getId();
@@ -182,7 +177,7 @@ export class OutboundEventAdapter implements InternalOrderEventPublisher, OrderS
     }
   }
 
-
+  // La destination è sempre aggregate
   async publishSellOrder(sellOrder: SellOrder, context: { destination: 'aggregate' | 'warehouse', warehouseId?: number }): Promise<string> {
     console.log("[outbound] Manda SellOrder,", JSON.stringify(sellOrder, null, 2));
     const sellOrderDTO = await this.dataMapper.sellOrderToDTO(sellOrder);
