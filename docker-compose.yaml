@@ -236,6 +236,7 @@ services:
       - "auth.jwtHeader"
     networks:
       - shared-warehouses
+    platform: linux/amd64
 
   mongodb:
     image: mongo:latest
