@@ -158,7 +158,10 @@ services:
     build:
       context: ./microservices/centralized/authentication
       dockerfile: Dockerfile
+    ports:
+      - "3510:3510"
     environment:
+      - PORT=3510
       - MONGO_DB=mongodb://mongo:27017/authentication
       - JWT_SECRET=IREALLYLOVEM31!!!!!!!!!!!!!!!!!!
     volumes:

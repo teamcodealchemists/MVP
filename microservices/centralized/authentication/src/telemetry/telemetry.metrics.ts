@@ -1,7 +1,7 @@
-import { Counter } from 'prom-client';
+import { makeCounterProvider } from '@willsoto/nestjs-prometheus';
 
-export const loginAttemptsCounter = new Counter({
+export const loginAttemptsCounterProvider = makeCounterProvider({
   name: 'login_attempts_total',
-  help: 'Numero totale di tentativi di login per email',
-  labelNames: ['email'], // Occhio alla cardinalità!
+  help: 'Numero di tentativi di login',
+  labelNames: ['email'], // ⚠️ vedi cardinalità
 });
