@@ -24,15 +24,13 @@ describe('StateController', () => {
   });
 
   it('should call getSyncedState with object input', async () => {
-    const data = { warehouseId: { id: 5 }, state: 'ACTIVE' };
-
+    const data = { warehouseId: 5, state: 'ACTIVE' };
     await controller.getSyncedState(data);
-
     expect(inboundAdapter.getSyncedState).toHaveBeenCalledWith({ id: 5 });
   });
 
   it('should call getSyncedState with string input', async () => {
-    const dataStr = JSON.stringify({ warehouseId: { id: 10 }, state: 'ACTIVE' });
+    const dataStr = JSON.stringify({ warehouseId:10, state: 'ACTIVE' });
 
     await controller.getSyncedState(dataStr);
 

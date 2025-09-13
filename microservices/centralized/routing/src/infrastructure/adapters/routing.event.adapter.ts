@@ -1,7 +1,7 @@
-import { OutboundService } from 'src/interfaces/outbound.service';
+import { OutboundService } from '../../interfaces/outbound.service';
 import { Injectable } from '@nestjs/common';
 
-import { WarehouseAddress } from 'src/domain/warehouseAddress.entity';
+import { WarehouseAddress } from '../../domain/warehouseAddress.entity';
 import { DataMapper } from '../../interfaces/data.mapper';
 import { WarehouseAddressDTO } from '../../interfaces/dto/warehouseAddress.dto';
 import { WarehouseAddressPublisher } from '../../domain/outbound-ports/warehouseAddress.publisher';

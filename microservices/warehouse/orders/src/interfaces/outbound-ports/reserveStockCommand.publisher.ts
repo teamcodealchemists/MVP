@@ -5,6 +5,9 @@ export interface ReserveStockCommandPublisher {
 
 publishReserveStock(OrderId, items: OrderItem[]): Promise<void>;
 
+publishUpdatedReservedStock(OrderId, items: OrderItem[]): Promise<void>;
+
 unreserveStock(OrderId, items: OrderItem[]): Promise<void>;
+
 
 }

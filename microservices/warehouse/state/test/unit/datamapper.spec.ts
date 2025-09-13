@@ -26,7 +26,7 @@ describe('DataMapper', () => {
 
   it('should map HeartbeatDTO to Heartbeat domain', () => {
     const now = new Date();
-    const dto: HeartbeatDTO = { heartbeatMsg: 'ALIVE', timestamp: now, warehouseId: 1 };
+    const dto: HeartbeatDTO = { warehouseId: 1 , heartbeatMsg: 'ALIVE', timestamp: now};
     const entity = DataMapper.toDomainHeartbeat(dto);
 
     expect(entity).toBeInstanceOf(Heartbeat);
@@ -53,7 +53,7 @@ describe('DataMapper', () => {
 
   it('should map Heartbeat domain to HeartbeatDTO', () => {
     const wId = new WarehouseId(7);
-    const entity = new Heartbeat('ALIVE', new Date(), wId);
+    const entity = new Heartbeat( wId,'ALIVE', new Date());
     const dto = DataMapper.toDTOHeartbeat(entity);
 
     expect(dto).toBeInstanceOf(HeartbeatDTO);

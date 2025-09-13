@@ -39,7 +39,7 @@ describe('OutboundPortsAdapter', () => {
 
   it('should publish heartbeat with DTO', async () => {
     const warehouseId = new WarehouseId(2);
-    const heartbeat = new Heartbeat('ALIVE', new Date(), warehouseId);
+    const heartbeat = new Heartbeat(warehouseId,'ALIVE', new Date());
 
     // Spy su DataMapper
     jest.spyOn(DataMapper, 'toDTOHeartbeat');
@@ -70,7 +70,7 @@ describe('OutboundPortsAdapter', () => {
 
   it('should log error when publishHeartbeat fails', async () => {
     const warehouseId = new WarehouseId(1);
-    const heartbeat = new Heartbeat('ALIVE', new Date(), warehouseId);
+    const heartbeat = new Heartbeat(warehouseId,'ALIVE', new Date());
 
     (stateEvent.publishHeartbeat as jest.Mock).mockRejectedValueOnce(new Error('fail'));
 

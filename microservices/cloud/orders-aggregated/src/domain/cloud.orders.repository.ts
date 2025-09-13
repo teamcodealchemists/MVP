@@ -15,7 +15,8 @@ export interface CloudOrdersRepository {
     syncAddInternalOrder(order: SyncInternalOrder): Promise<void>;
     syncRemoveById(id: SyncOrderId): Promise<boolean>;
     syncUpdateOrderState(id: SyncOrderId, state: SyncOrderState): Promise<SyncInternalOrder | SyncSellOrder>;
-    syncUpdateReservedStock(id: SyncOrderId, items: SyncOrderItem[]): Promise<SyncInternalOrder | SyncSellOrder> 
+    syncUpdateReservedStock(id: SyncOrderId, items: SyncOrderItem[]): Promise<void> 
+    syncUnreservedStock(id: SyncOrderId): Promise<void> 
 }
 
 export const CloudOrdersRepository = Symbol("CLOUDORDERSREPOSITORY");

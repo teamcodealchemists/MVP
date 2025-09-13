@@ -5,7 +5,7 @@ import { WarehouseState } from '../../src/domain/warehouse-state.entity';
 describe('Entities', () => {
   it('should create a Heartbeat entity', () => {
     const warehouseId = new WarehouseId(1);
-    const heartbeat = new Heartbeat('ALIVE', new Date(), warehouseId);
+    const heartbeat = new Heartbeat(warehouseId, 'ALIVE', new Date());
 
     expect(heartbeat.getHeartbeatMsg()).toBe('ALIVE');
     expect(heartbeat.getId()).toBe(1);

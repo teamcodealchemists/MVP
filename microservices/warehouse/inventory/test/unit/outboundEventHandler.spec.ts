@@ -12,6 +12,7 @@ describe('OutboundEventHandler', () => {
   let natsClient: jest.Mocked<ClientProxy>;
 
   beforeEach(async () => {
+    process.env.WAREHOUSE_ID = '1';
     const mockClient = {
       connect: jest.fn(),
       emit: jest.fn(),
@@ -67,24 +68,18 @@ describe('OutboundEventHandler', () => {
   it('should emit sufficientProductAvailability event', async () => {
     const orderId: OrderIdDTO = { id: 'order1' };
     await handler.handlerSufficientProductAvailability(orderId);
-    expect(natsClient.emit).toHaveBeenCalledWith('inventory.sufficientAvailability', JSON.stringify({orderId}));
+    expect(natsClient.emit).toHaveBeenCalledWith('warehouse.1.order.sufficientAvailability', JSON.stringify({orderId}));
   });
 
   it('should emit reservetionQuantities event', async () => {
     const productQty: ProductQuantityArrayDto = { id: { id: 'order1' }, productQuantityArray: [{ productId: { id: 'p1' }, quantity: 5 }] };
     await handler.handlerReservetionQuantities(productQty);
-    expect(natsClient.emit).toHaveBeenCalledWith('inventory.reservetionQuantities', JSON.stringify({product : productQty}));
+    expect(natsClient.emit).toHaveBeenCalledWith('call.warehouse.1.order.order1.replenishment.received', JSON.stringify({product : productQty}));
   });
 
   it('should emit stockShipped event', async () => {
     const orderId: OrderIdDTO = { id: 'order2' };
     await handler.handlerStockShipped(orderId);
-    expect(natsClient.emit).toHaveBeenCalledWith('inventory.stockShipped', JSON.stringify({orderId}));
-  });
-
-  it('should emit stockReceived event', async () => {
-    const orderId: OrderIdDTO = { id: 'order3' };
-    await handler.handlerStockReceived(orderId);
-    expect(natsClient.emit).toHaveBeenCalledWith('inventory.stockReceived', JSON.stringify({orderId}));
+    expect(natsClient.emit).toHaveBeenCalledWith('warehouse.1.order.order2.stockShipped', JSON.stringify({orderId}));
   });
 });

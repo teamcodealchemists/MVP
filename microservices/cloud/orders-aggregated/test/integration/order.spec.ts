@@ -1,17 +1,17 @@
-import { Order } from '../../src/domain/syncOrder.entity';
-import { OrderId } from '../../src/domain/syncOrderId.entity';
-import { ItemId } from '../../src/domain/syncItemId.entity';
-import { OrderItem } from '../../src/domain/syncOrderItem.entity';
-import { OrderItemDetail } from '../../src/domain/syncOrderItemDetail.entity';
+import { SyncOrder } from '../../src/domain/syncOrder.entity';
+import { SyncOrderId } from '../../src/domain/syncOrderId.entity';
+import { SyncItemId } from '../../src/domain/syncItemId.entity';
+import { SyncOrderItem } from '../../src/domain/syncOrderItem.entity';
+import { SyncOrderItemDetail } from '../../src/domain/syncOrderItemDetail.entity';
 
-enum OrderState { PENDING = 'PENDING', SHIPPED = 'SHIPPED' }
+enum SyncOrderState { PENDING = 'PENDING', SHIPPED = 'SHIPPED' }
 
 // Implementazione concreta per test (Order è astratta)
-class TestOrder extends Order {
+class TestOrder extends SyncOrder {
   constructor(
-    orderId: OrderId,
-    items: OrderItemDetail[],
-    orderState: OrderState,
+    orderId: SyncOrderId,
+    items: SyncOrderItemDetail[],
+    orderState: SyncOrderState,
     creationDate: Date,
     warehouseDeparture: number,
   ) {
@@ -21,12 +21,12 @@ class TestOrder extends Order {
 
 describe('Integration test tra classi Order, OrderItemDetail e OrderItem', () => {
   it('verifica consistenza tra Order e i suoi item', () => {
-    const orderId = new OrderId('S-001');
-    const itemId = new ItemId(2);
-    const item = new OrderItem(itemId, 100);
-    const detail = new OrderItemDetail(item, 20, 10);
+    const orderId = new SyncOrderId('S-001');
+    const itemId = new SyncItemId(2);
+    const item = new SyncOrderItem(itemId, 100);
+    const detail = new SyncOrderItemDetail(item, 20, 10);
 
-    const order = new TestOrder(orderId, [detail], OrderState.PENDING, new Date(), 3);
+    const order = new TestOrder(orderId, [detail], SyncOrderState.PENDING, new Date(), 3);
     
     // Testiamo la catena di integrazione
     // Per testare i get
@@ -39,7 +39,7 @@ describe('Integration test tra classi Order, OrderItemDetail e OrderItem', () =>
     // Per testare i set
     order.getItemsDetail()[0].setQuantityReserved(30);
     order.getItemsDetail()[0].setUnitPrice(23);
-    order.setOrderState(OrderState.SHIPPED);
+    order.setOrderState(SyncOrderState.SHIPPED);
 
     expect(order.getItemsDetail()[0].getQuantityReserved()).toBe(30);
     expect(order.getItemsDetail()[0].getUnitPrice()).toBe(23);

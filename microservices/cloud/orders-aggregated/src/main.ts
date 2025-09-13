@@ -7,7 +7,7 @@ import { OutboundResponseSerializer } from './interfaces/nats/natsMessagesFormat
 import { InboundResponseDeserializer } from './interfaces/nats/natsMessagesFormatters/inbound-response.deserializer';
 
 
-async function bootstrap() {
+export async function bootstrap() {
     const logger = new Logger('Bootstrap');
 
   const app = await NestFactory.createMicroservice(CloudOrdersModule, {

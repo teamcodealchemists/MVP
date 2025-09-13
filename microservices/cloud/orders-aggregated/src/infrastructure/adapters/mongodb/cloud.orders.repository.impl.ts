@@ -1,4 +1,4 @@
-import { Injectable, Inject, NotFoundException } from "@nestjs/common";
+import { Injectable, Inject, NotFoundException, Logger } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 
 import { CloudDataMapper } from "src/infrastructure/mappers/cloud.data.mapper";
@@ -19,6 +19,9 @@ import { SyncSellOrder } from "src/domain/syncSellOrder.entity";
 
 @Injectable()
 export class CloudOrdersRepositoryMongo implements CloudOrdersRepository {
+
+  private readonly logger = new Logger(CloudOrdersRepositoryMongo.name);
+
   constructor(
     @InjectModel("SyncInternalOrder") private readonly syncInternalOrderModel: SyncInternalOrderModel,
     @InjectModel("SyncSellOrder") private readonly syncSellOrderModel: SyncSellOrderModel,
@@ -80,7 +83,7 @@ export class CloudOrdersRepositoryMongo implements CloudOrdersRepository {
             // Fallback        
             throw new Error(`Ordine con ID ${id.getId()} non trovato`);
         } catch (error) {
-            console.error("Errore durante la ricerca dell'ordine per ID:", error);
+            this.logger.error("Errore durante la ricerca dell'ordine per ID:", error);
             throw error;
         }
     }
@@ -99,7 +102,7 @@ export class CloudOrdersRepositoryMongo implements CloudOrdersRepository {
 
             throw new Error(`Stato per l'ordine ${id.getId()} non trovato`);
         } catch (error) {
-            console.error("Errore durante la ricerca dello stato dell'ordine:", error);
+            this.logger.error("Errore durante la ricerca dello stato dell'ordine:", error);
             throw error;
         }
     }
@@ -107,24 +110,24 @@ export class CloudOrdersRepositoryMongo implements CloudOrdersRepository {
     // NB: A differenza di getAllOrders, qui prende solo gli ordini PENDING o PROCESSING (per il s.c.)
     async getAllFilteredOrders(): Promise<SyncOrders> {
         try {
-            console.log('[Repository] Recupero internalDocs da filtrare...');
+            this.logger.log('[Repository] Recupero internalDocs da filtrare...');
             const internalDocs = await this.syncInternalOrderModel.find().lean().exec() as any[];
-            console.log('[Repository] InternalDocs trovati:', internalDocs.length);
+            this.logger.log('[Repository] InternalDocs trovati:', internalDocs.length);
             
-            console.log('[Repository] Recupero sellDocs da filtrare...');
+            this.logger.log('[Repository] Recupero sellDocs da filtrare...');
             const sellDocs = await this.syncSellOrderModel.find().lean().exec() as any[];
-            console.log('[Repository] SellDocs trovati:', sellDocs.length);
+            this.logger.log('[Repository] SellDocs trovati:', sellDocs.length);
 
             // Conversione da documento a dominio con filtro
             const internalOrders = internalDocs
                 .filter(doc => {
                     const isValid = doc.orderState === SyncOrderState.PENDING || doc.orderState === SyncOrderState.PROCESSING;
-                    console.log(`[Repository] InternalOrder ${doc.orderId?.id} - Stato: ${doc.orderState}, Valido: ${isValid}`);
+                    this.logger.log(`[Repository] InternalOrder ${doc.orderId?.id} - Stato: ${doc.orderState}, Valido: ${isValid}`);
                     return isValid;
                 })
                 .map(doc => {
                     try {
-                        console.log(`[Repository] Conversione InternalOrder: ${doc.orderId?.id}`);
+                        this.logger.log(`[Repository] Conversione InternalOrder: ${doc.orderId?.id}`);
                         return new SyncInternalOrder(
                             new SyncOrderId(doc.orderId.id),
                             (doc.items || []).map(item => 
@@ -144,8 +147,8 @@ export class CloudOrdersRepositoryMongo implements CloudOrdersRepository {
                             new SyncOrderId(doc.sellOrderReference.id)
                         );
                     } catch (error) {
-                        console.error('[Repository] Errore conversione internalDoc:', error);
-                        console.error('[Repository] Doc che causa errore:', JSON.stringify(doc, null, 2));
+                        this.logger.error('[Repository] Errore conversione internalDoc:', error);
+                        this.logger.error('[Repository] Doc che causa errore:', JSON.stringify(doc, null, 2));
                         throw new Error(`Errore conversione internalDoc: ${error.message}`);
                     }
                 });
@@ -154,12 +157,12 @@ export class CloudOrdersRepositoryMongo implements CloudOrdersRepository {
             const sellOrders = sellDocs
                 .filter(doc => {
                     const isValid = doc.orderState === SyncOrderState.PENDING || doc.orderState === SyncOrderState.PROCESSING;
-                    console.log(`[Repository] SellOrder ${doc.orderId?.id} - Stato: ${doc.orderState}, Valido: ${isValid}`);
+                    this.logger.log(`[Repository] SellOrder ${doc.orderId?.id} - Stato: ${doc.orderState}, Valido: ${isValid}`);
                     return isValid;
                 })
                 .map(doc => {
                     try {
-                        console.log(`[Repository] Conversione SellOrder: ${doc.orderId?.id}`);
+                        this.logger.log(`[Repository] Conversione SellOrder: ${doc.orderId?.id}`);
                         return new SyncSellOrder(
                             new SyncOrderId(doc.orderId.id),
                             (doc.items || []).map(item => 
@@ -178,36 +181,36 @@ export class CloudOrdersRepositoryMongo implements CloudOrdersRepository {
                             doc.destinationAddress
                         );
                     } catch (error) {
-                        console.error('[Repository] Errore conversione sellDoc:', error);
-                        console.error('[Repository] Doc che causa errore:', JSON.stringify(doc, null, 2));
+                        this.logger.error('[Repository] Errore conversione sellDoc:', error);
+                        this.logger.error('[Repository] Doc che causa errore:', JSON.stringify(doc, null, 2));
                         throw new Error(`Errore conversione sellDoc: ${error.message}`);
                     }
                 });
 
-            console.log(`[Repository] Conversione completata: ${internalOrders.length} internal, ${sellOrders.length} sell`);
+            this.logger.log(`[Repository] Conversione completata: ${internalOrders.length} internal, ${sellOrders.length} sell`);
             return new SyncOrders(sellOrders, internalOrders);
             
         } catch (error) {
-            console.error('[Repository] Errore durante il recupero di tutti gli ordini filtrati:', error);
-            console.error('[Repository] Stack trace:', error.stack);
+            this.logger.error('[Repository] Errore durante il recupero di tutti gli ordini filtrati:', error);
+            this.logger.error('[Repository] Stack trace:', error.stack);
             throw new Error(`Errore durante il recupero di tutti gli ordini filtrati: ${error.message}`);
         }
     }
 
     async getAllOrders(): Promise<SyncOrders> {
         try {
-            console.log('[Repository] Recupero internalDocs...');
+            this.logger.log('[Repository] Recupero internalDocs...');
             const internalDocs = await this.syncInternalOrderModel.find().lean().exec() as any[];
-            console.log('[Repository] InternalDocs trovati:', internalDocs.length);
+            this.logger.log('[Repository] InternalDocs trovati:', internalDocs.length);
             
-            console.log('[Repository] Recupero sellDocs...');
+            this.logger.log('[Repository] Recupero sellDocs...');
             const sellDocs = await this.syncSellOrderModel.find().lean().exec() as any[];
-            console.log('[Repository] SellDocs trovati:', sellDocs.length);
+            this.logger.log('[Repository] SellDocs trovati:', sellDocs.length);
 
             // Conversione da documento a dominio (senza filtro)
             const internalOrders = internalDocs.map(doc => {
                     try {
-                        console.log(`[Repository] Conversione InternalOrder: ${doc.orderId?.id}`);
+                        this.logger.log(`[Repository] Conversione InternalOrder: ${doc.orderId?.id}`);
                         return new SyncInternalOrder(
                             new SyncOrderId(doc.orderId.id),
                             (doc.items || []).map(item => 
@@ -227,8 +230,8 @@ export class CloudOrdersRepositoryMongo implements CloudOrdersRepository {
                             new SyncOrderId(doc.sellOrderReference.id)
                         );
                     } catch (error) {
-                        console.error('[Repository] Errore conversione internalDoc:', error);
-                        console.error('[Repository] Doc che causa errore:', JSON.stringify(doc, null, 2));
+                        this.logger.error('[Repository] Errore conversione internalDoc:', error);
+                        this.logger.error('[Repository] Doc che causa errore:', JSON.stringify(doc, null, 2));
                         throw new Error(`Errore conversione internalDoc: ${error.message}`);
                     }
                 });
@@ -236,7 +239,7 @@ export class CloudOrdersRepositoryMongo implements CloudOrdersRepository {
             // Conversione da documento a dominio (senza filtro)
             const sellOrders = sellDocs.map(doc => {
                     try {
-                        console.log(`[Repository] Conversione SellOrder: ${doc.orderId?.id}`);
+                        this.logger.log(`[Repository] Conversione SellOrder: ${doc.orderId?.id}`);
                         return new SyncSellOrder(
                             new SyncOrderId(doc.orderId.id),
                             (doc.items || []).map(item => 
@@ -255,18 +258,18 @@ export class CloudOrdersRepositoryMongo implements CloudOrdersRepository {
                             doc.destinationAddress
                         );
                     } catch (error) {
-                        console.error('[Repository] Errore conversione sellDoc:', error);
-                        console.error('[Repository] Doc che causa errore:', JSON.stringify(doc, null, 2));
+                        this.logger.error('[Repository] Errore conversione sellDoc:', error);
+                        this.logger.error('[Repository] Doc che causa errore:', JSON.stringify(doc, null, 2));
                         throw new Error(`Errore conversione sellDoc: ${error.message}`);
                     }
                 });
 
-            console.log(`[Repository] Conversione completata: ${internalOrders.length} internal, ${sellOrders.length} sell`);
+            this.logger.log(`[Repository] Conversione completata: ${internalOrders.length} internal, ${sellOrders.length} sell`);
             return new SyncOrders(sellOrders, internalOrders);
             
         } catch (error) {
-            console.error('[Repository] Errore durante il recupero di tutti gli ordini:', error);
-            console.error('[Repository] Stack trace:', error.stack);
+            this.logger.error('[Repository] Errore durante il recupero di tutti gli ordini:', error);
+            this.logger.error('[Repository] Stack trace:', error.stack);
             throw new Error(`Errore durante il recupero di tutti gli ordini: ${error.message}`);
         }
     }
@@ -307,10 +310,10 @@ export class CloudOrdersRepositoryMongo implements CloudOrdersRepository {
             const createdOrder = new this.syncSellOrderModel(orderData);
             await createdOrder.save();
             
-            console.log('Aggiunto con successo il SellOrder con ID:', newOrder.getOrderId());
+            this.logger.log('Aggiunto con successo il SellOrder con ID:', newOrder.getOrderId());
             
         } catch (error) {
-            console.error("Errore durante l'aggiunta del SellOrder:", error);
+            this.logger.error("Errore durante l'aggiunta del SellOrder:", error);
             throw error;
         }
     }
@@ -350,10 +353,10 @@ export class CloudOrdersRepositoryMongo implements CloudOrdersRepository {
 
             const createdOrder = new this.syncInternalOrderModel(orderData);
             await createdOrder.save();
-            console.log('[AggregateO] Sincronizzato il nuovo InternalOrder con ID:', newOrder.getOrderId());
+            this.logger.log('[AggregateO] Sincronizzato il nuovo InternalOrder con ID:', newOrder.getOrderId());
                         
         } catch (error) {
-            console.error("Errore durante l'aggiunta dell'InternalOrder:", error);
+            this.logger.error("Errore durante l'aggiunta dell'InternalOrder:", error);
             throw error;
         }
     }
@@ -427,18 +430,116 @@ export class CloudOrdersRepositoryMongo implements CloudOrdersRepository {
                     sellDoc.destinationAddress
                 );
             }
-            console.log("[AggregateO] Aggiornato lo stato dell'ordine ", id.getId(), " a ", state );
+            this.logger.log("[AggregateO] Aggiornato lo stato dell'ordine ", id.getId(), " a ", state );
 
             // Fallback
             throw new Error(`Impossibile aggiornare lo stato: ordine con ID ${id.getId()} non trovato`);
         } catch (error) {
-            console.error("Errore durante l'aggiornamento dello stato dell'ordine:", error);
+            this.logger.error("Errore durante l'aggiornamento dello stato dell'ordine:", error);
             throw error;
         }
     }
  
 
-    async syncUpdateReservedStock(id: SyncOrderId, items: SyncOrderItem[]): Promise<SyncInternalOrder | SyncSellOrder> {
+    async syncUpdateReservedStock(id: SyncOrderId, items: SyncOrderItem[]): Promise<void> {
+        this.logger.log("Inizio update QtyReserved nella repository");
+        try {
+            // Trova tipo di ordine e documento
+            const internalDoc = await this.syncInternalOrderModel.findOne({ 
+                "orderId.id": id.getId() 
+            }).lean().exec() as any;
+
+            let model: any;
+            let mapper: (doc: any) => Promise<SyncInternalOrder | SyncSellOrder>;
+            let currentDoc: any;
+
+            if (internalDoc) {
+                model = this.syncInternalOrderModel;
+                currentDoc = internalDoc;
+                mapper = async (doc) => {
+                    const internalOrderDTO = {
+                        orderId: doc.orderId,
+                        items: doc.items,
+                        orderState: doc.orderState,
+                        creationDate: doc.creationDate,
+                        warehouseDeparture: doc.warehouseDeparture,
+                        warehouseDestination: doc.warehouseDestination,
+                        sellOrderReference: doc.SellOrderReference
+                    };
+                    return this.mapper.syncInternalOrderToDomain(internalOrderDTO);
+                };
+            } else {
+                const sellDoc = await this.syncSellOrderModel.findOne({ 
+                "orderId.id": id.getId() 
+                }).lean().exec() as any;
+
+                model = this.syncSellOrderModel;
+                currentDoc = sellDoc;
+
+                mapper = async (doc) => {
+                    const sellOrderDTO = {
+                        orderId: doc.orderId,
+                        items: doc.items,
+                        orderState: doc.orderState,
+                        creationDate: doc.creationDate,
+                        warehouseDeparture: doc.warehouseDeparture,
+                        destinationAddress: doc.destinationAddress
+                    };
+                    return this.mapper.syncSellOrderToDomain(sellOrderDTO);
+                };
+            }
+
+        // Prepara e esegui gli aggiornamenti
+        const updateOperations = items.map(item => {
+            // Trova l'item corrispondente nel documento corrente
+            const currentItem = currentDoc.items.find((docItem: any) => 
+                docItem.item.itemId.id === item.getItemId().getId()
+            );
+
+            if (!currentItem) {
+                throw new Error(`Item con ID ${item.getItemId().getId()} non trovato nell'ordine`);
+            }
+
+            const currentQuantity = currentItem.item.quantity; // Quantity tot. richiesta
+            const newReservedQuantity = currentQuantity - item.getQuantity(); // Calcolo (qtyRes = qty tot. richiesta - qty ancora da riservare)
+
+            return {
+                updateOne: {
+                    filter: { 
+                        "orderId.id": id.getId(),
+                        "items.item.itemId.id": item.getItemId().getId()
+                    },
+                    update: {
+                        $set: { 
+                            "items.$.quantityReserved": newReservedQuantity
+                        }
+                    }
+                }
+            };
+        });            
+        
+        if (updateOperations.length > 0) {
+                await model.bulkWrite(updateOperations);
+            }
+            
+            // Recupera il documento aggiornato
+            const updatedDoc = await model.findOne({ 
+                "orderId.id": id.getId() 
+            }).lean().exec();
+            
+            if (!updatedDoc) {
+                throw new Error(`Ordine con ID ${id.getId()} non trovato dopo l'aggiornamento`);
+            }
+
+            this.logger.log("Update QtyReserved nella repository riuscito!");
+                        
+        } catch (error) {
+            this.logger.error("Errore durante l'aggiornamento della quantità riservata:", error);
+            throw new Error(`Impossibile trovare l'ordine con ID ${id.getId()}`);
+        }
+    }
+
+    async syncUnreservedStock(id: SyncOrderId): Promise<void> {
         try {
             // Trova tipo di ordine e documento
             const internalDoc = await this.syncInternalOrderModel.findOne({ 
@@ -478,23 +579,20 @@ export class CloudOrdersRepositoryMongo implements CloudOrdersRepository {
             }
 
             // Prepara e esegui gli aggiornamenti
-            const updateOperations = items.map(item => ({
+            const updateOperations = {
                 updateOne: {
                     filter: { 
-                        "orderId.id": id.getId(),
-                        "items.item.itemId.id": item.getItemId().getId()
+                    "orderId.id": id.getId() 
                     },
                     update: {
                         $set: { 
-                            "items.$.quantityReserved": item.getQuantity()
+                            "items.$[].quantityReserved": 0   // aggiorna tutti gli elementi dell'array
                         }
                     }
                 }
-            }));
+            };
 
-            if (updateOperations.length > 0) {
-                await model.bulkWrite(updateOperations);
-            }
+            await model.bulkWrite(updateOperations);
             
             // Recupera il documento aggiornato
             const updatedDoc = await model.findOne({ 
@@ -504,10 +602,7 @@ export class CloudOrdersRepositoryMongo implements CloudOrdersRepository {
             if (!updatedDoc) {
                 throw new Error(`Ordine con ID ${id.getId()} non trovato dopo l'aggiornamento`);
             }
-            
-            // Converti a dominio e restituisci il documento aggiornato
-            return await mapper(updatedDoc as any);
-            
+                        
         } catch (error) {
             console.error("Errore durante l'aggiornamento della quantità riservata:", error);
             throw new Error(`Impossibile trovare l'ordine con ID ${id.getId()}`);
