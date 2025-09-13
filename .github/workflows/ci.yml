@@ -166,6 +166,23 @@ jobs:
           flags: CloudState
           files: MVP/coverage/centralized/state-aggregate/coverage-summary.json
           name: Cloud State
+
+      # Orders Cloud
+      - name: Install Orders Cloud
+        working-directory: microservices/cloud/orders-aggregated
+        run: npm install || echo "No tests forOrders Cloud"
+
+      - name: Run Orders Cloud tests
+        working-directory: microservices/cloud/orders-aggregated
+        run: npm run test:cov || echo "No tests for Orders Cloud"
+
+      - name: Upload Orders Cloud coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: OrdersCloud
+          files: MVP/coverage/cloud/orders-aggregated/coverage-summary.json
+          name: Orders Cloud
       # Commit updated README
       - name: Commit updated README
         run: |
