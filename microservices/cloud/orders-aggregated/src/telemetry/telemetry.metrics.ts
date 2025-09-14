@@ -1,7 +1,7 @@
 import { makeGaugeProvider } from '@willsoto/nestjs-prometheus';
 
-export const ActiveOrdersGaugeProvider = makeGaugeProvider({
-  name: 'active_orders_gauge',
-  help: 'Numero di ordini attivi nel magazzino',
+export const InsertedOrdersGaugeProvider = makeGaugeProvider({
+  name: 'inserted_orders_gauge',
+  help: 'Numero di ordini inseriti nei magazzini al minuto',
   labelNames: ['warehouse'],
 });

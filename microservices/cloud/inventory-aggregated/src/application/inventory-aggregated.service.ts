@@ -5,24 +5,29 @@ import { CloudDataMapper } from '../infrastructure/mappers/cloud-data.mapper';
 import { InventoryAggregated } from 'src/domain/inventory-aggregated.entity';
 import { ProductId } from 'src/domain/productId.entity';
 import { WarehouseId } from 'src/domain/warehouseId.entity';
+import { TelemetryService } from 'src/telemetry/telemetry.service';
 
 
 @Injectable()
 export class InventoryAggregatedService {
   constructor(
     @Inject('INVENTORYREPOSITORY')
-    private readonly repository: InventoryAggregatedRepository
+    private readonly repository: InventoryAggregatedRepository,
+    private readonly telemetryService: TelemetryService,
   ) {}
 
   async addProduct(product: Product): Promise<void> {
+    this.telemetryService.setInventoryProductsTotal(product.getWarehouseId().getId(), product.getId().getId(), product.getQuantity());
     return await this.repository.addProduct(product);
   }
 
   async updateProduct(product: Product): Promise<void> {
+    this.telemetryService.setInventoryProductsTotal(product.getWarehouseId().getId(), product.getId().getId(), product.getQuantity());
     return await this.repository.updateProduct(product);
   }
 
   async removeProduct(id: ProductId, warehouseId: WarehouseId): Promise<void> {
+    this.telemetryService.setInventoryProductsTotal(warehouseId.getId(), id.getId(), 0);
     return await this.repository.removeProduct(id, warehouseId);
   }
 

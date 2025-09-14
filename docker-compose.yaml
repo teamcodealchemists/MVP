@@ -118,9 +118,12 @@ services:
       context: ./microservices/cloud/inventory-aggregated
       dockerfile: Dockerfile
     container_name: inventory-aggregated
+    ports:
+      - "3110:3110"
     environment:
       - MONGO_URI=mongodb://mongo:27017/inventory-aggregated
       - NATS_URL=nats://nats:4222
+      - PORT=3110
     volumes:
       - ./microservices/cloud/inventory-aggregated/src:/usr/src/app/src
     networks:

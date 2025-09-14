@@ -1,4 +1,3 @@
-
 /*
 import { Injectable } from '@nestjs/common';
 import { InjectMetric } from '@willsoto/nestjs-prometheus';
@@ -18,20 +17,19 @@ export class TelemetryService {
 
 */
 
-import { Injectable } from '@nestjs/common';
 import { InjectMetric } from '@willsoto/nestjs-prometheus';
 import { Gauge } from 'prom-client';
+import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class TelemetryService {
   constructor(
-    @InjectMetric('inserted_orders_gauge')
-    private readonly insertedOrdersGauge: Gauge<string>,
+    @InjectMetric('inventory_products_total')
+    private readonly inventoryProductsTotal: Gauge<string>,
   ) {}
 
-  // Imposta il valore della metrica
-  setInsertedOrders(count: number, warehouse: number) {
-    this.insertedOrdersGauge.inc({ warehouse: warehouse.toString() }, count);
+  setInventoryProductsTotal(warehouse: number, productId: string, value: number) {
+    this.inventoryProductsTotal.set({ warehouse: warehouse.toString(), productId }, value);
   }
-
 }
+  

@@ -36,18 +36,17 @@ export class AuthService {
 
       if (!user) {
         //If it doesn't return anything the mail doesn't exist
+        this.telemetryService.failedLoginAttempt();
         throw new Error('Email does not exist');
       }
       if (
         user.getAuthentication().getPassword() !== authentication.getPassword()
       ) {
         //Check password
+        this.telemetryService.failedLoginAttempt();
         throw new Error(`Password is not valid`);
       }
       // Both email and password are correct
-
-      // Telemetry tracking test
-      this.telemetryService.trackLoginAttempt(authentication.getEmail());
 
       const id = await this.authRepository.getIdByEmail(
         user.getAuthentication().getEmail(),

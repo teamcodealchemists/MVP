@@ -9,6 +9,7 @@ import { SyncInternalOrder } from 'src/domain/syncInternalOrder.entity';
 import { SyncSellOrder } from 'src/domain/syncSellOrder.entity';
 import { CloudOrdersRepositoryMongo } from '../infrastructure/adapters/mongodb/cloud.orders.repository.impl';
 import { CloudOutboundEventAdapter } from '../infrastructure/adapters/cloudOutboundEvent.adapter';
+import { TelemetryService } from 'src/telemetry/telemetry.service';
 
 @Injectable()
 export class CloudOrdersService {
@@ -16,6 +17,7 @@ export class CloudOrdersService {
     @Inject('CLOUDORDERSREPOSITORY')
     private readonly cloudOrdersRepositoryMongo: CloudOrdersRepositoryMongo,
     private readonly cloudOutboundEventAdapter: CloudOutboundEventAdapter,
+    private readonly telemetryService: TelemetryService,
   ) {}
 
   async syncUpdateOrderState(
@@ -47,6 +49,9 @@ export class CloudOrdersService {
       '[Aggregate] Creato SellOrder:',
       JSON.stringify(orderWithUniqueId, null, 2),
     );
+
+    this.telemetryService.setInsertedOrders(1, order.getWarehouseDeparture());
+
     await this.cloudOrdersRepositoryMongo.syncAddSellOrder(orderWithUniqueId);
   }
 
@@ -65,6 +70,8 @@ export class CloudOrdersService {
       '[Aggregate] Creato InternalOrder:',
       JSON.stringify(orderWithUniqueId, null, 2),
     );
+
+    this.telemetryService.setInsertedOrders(1, order.getWarehouseDeparture());
 
     await this.cloudOrdersRepositoryMongo.syncAddInternalOrder(
       orderWithUniqueId,

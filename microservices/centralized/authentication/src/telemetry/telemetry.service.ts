@@ -28,7 +28,7 @@ export class TelemetryService {
     private readonly loginAttemptsCounter: Counter<string>,
   ) {}
 
-  trackLoginAttempt(email: string) {
-    this.loginAttemptsCounter.inc({ email });
+  failedLoginAttempt() {
+    this.loginAttemptsCounter.inc();
   }
 }
