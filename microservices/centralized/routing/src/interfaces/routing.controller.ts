@@ -1,6 +1,6 @@
 import { Controller, Post } from '@nestjs/common';
 import { Ctx, MessagePattern, Payload } from '@nestjs/microservices';
-import { RoutingService } from '../../src/application/routing.service';
+import { RoutingService } from '../application/routing.service';
 
 import { WarehouseIdDTO } from './dto/warehouseId.dto';
 import { WarehouseAddressDTO } from './dto/warehouseAddress.dto';

@@ -3,7 +3,6 @@ import { ClientProxy } from '@nestjs/microservices';
 
 import { InternalOrderEventPublisher } from '../../interfaces/outbound-ports/internalOrderEvent.publisher';
 import { OrderStatusEventPublisher } from '../../interfaces/outbound-ports/orderStatusEvent.publisher';
-/* import { OrderUpdateEventPublisher } from '../../interfaces/outbound-ports/orderUpdateEvent.publisher'; */
 import { RequestStockReplenishmentPublisher } from '../../interfaces/outbound-ports/requestStockReplenishment.publisher';
 import { ReserveStockCommandPublisher } from '../../interfaces/outbound-ports/reserveStockCommand.publisher';
 import { SellOrderEventPublisher } from '../../interfaces/outbound-ports/sellOrderEvent.publisher';
@@ -28,14 +27,9 @@ export class OutboundEventAdapter implements InternalOrderEventPublisher, OrderS
     private readonly dataMapper: DataMapper
   ) { }
 
-  waitingForStock(orderId: OrderId, warehouseDepartureId: string): Promise<void> {
-    this.natsService.emit(`event.warehouse.${warehouseDepartureId}.order.${orderId.getId()}.waitingStock`, "{}");
-    this.logger.debug(`[2] Published waiting for stock event for order ${orderId.getId()} with warehouseDepartureId ${warehouseDepartureId}`);
-    return Promise.resolve();
-  }
-
+  
   private readonly logger = new Logger(OutboundEventAdapter.name);
-
+  
   async onModuleInit() {
     try {
       await this.natsService.connect();
@@ -44,7 +38,13 @@ export class OutboundEventAdapter implements InternalOrderEventPublisher, OrderS
       this.logger.error('Error connecting to NATS service', error);
     }
   }
-
+  
+  async waitingForStock(orderId: OrderId, warehouseDepartureId: string): Promise<void> {
+    this.natsService.emit(`event.warehouse.${warehouseDepartureId}.order.${orderId.getId()}.waitingStock`, "{}");
+    this.logger.debug(`[2] Published waiting for stock event for order ${orderId.getId()} with warehouseDepartureId ${warehouseDepartureId}`);
+    return Promise.resolve();
+  }
+  
   // (Deduco) Corrisponde in PUB a STOCKRESERVED
   async publishReserveStock(orderId: OrderId, items: OrderItem[]) {
     const orderIdDTO = await this.dataMapper.orderIdToDTO(orderId);
@@ -53,6 +53,18 @@ export class OutboundEventAdapter implements InternalOrderEventPublisher, OrderS
     // Invia alla porta handleOrderRequest in Inventory del magazzino stesso
     this.natsService.emit(`event.warehouse.${process.env.WAREHOUSE_ID}.order.request`, JSON.stringify({ orderIdDTO, itemsDTO }));
     this.logger.log(`Published reserve stock event for order ${orderId.getId()} with items: ${JSON.stringify(itemsDTO)}`);
+  
+  }
+
+  async publishUpdatedReservedStock(orderId: OrderId, items: OrderItem[]) {
+    const orderIdDTO = await this.dataMapper.orderIdToDTO(orderId);
+    const itemsDTO = await Promise.all(items.map(item => this.dataMapper.orderItemToDTO(item)));
+
+    // Invia alla porta stockReserved nell'aggregato Orders mandandogli le quantità che mancano da riservare
+    // (L'aggregato salverà che qtyReserved = qty tot. richiesta - quantità che mancano da riservare)
+    this.natsService.emit(`event.aggregate.orders.stock.reserved`, JSON.stringify({ orderIdDTO, itemsDTO }));
+    this.logger.log(`Published sync of reserved stock event for order ${orderId.getId()} with items to still be reserved: ${JSON.stringify(itemsDTO)}`);
+
   }
 
   async unreserveStock(orderId: OrderId, items: OrderItem[]): Promise<void> {
@@ -62,6 +74,11 @@ export class OutboundEventAdapter implements InternalOrderEventPublisher, OrderS
     // Invia alla porta unreserveStock in Inventory del magazzino stesso
     this.natsService.emit(`event.warehouse.${process.env.WAREHOUSE_ID}.inventory.unreserveStock`, JSON.stringify({ orderIdDTO, itemsDTO }));
     this.logger.log(`Published UNRESERVE STOCK event for order ${orderId.getId()} with items: ${JSON.stringify(itemsDTO)}`);
+
+    // Invia alla porta unreserveStock nell'aggregato Orders mandandogli l'OrderId che contiene gli item a cui azzerare la qtyReserved
+    this.natsService.emit(`event.aggregate.orders.stock.unreserve`, JSON.stringify({ orderIdDTO }));
+    this.logger.log(`Published sync of UNRESERVE STOCK event for order ${orderId.getId()}`);
+
   }
 
 
@@ -95,11 +112,6 @@ export class OutboundEventAdapter implements InternalOrderEventPublisher, OrderS
     const itemsDTO = await Promise.all(items.map(item => this.dataMapper.orderItemToDTO(item)));
     this.natsService.emit(`event.warehouse.${destination.toString()}.inventory.receiveShipment`, JSON.stringify({ orderIdDTO, itemsDTO }));
   }
-
-  /* async orderUpdated(order: Order) {
-      await this.natsService.publish('orders.updated', order);
-    } 
-  */
 
   async orderStateUpdated(orderId: OrderId, orderState: OrderState, context: { destination: 'aggregate' | 'warehouse', warehouseId?: number }) {
     try {
@@ -165,7 +177,7 @@ export class OutboundEventAdapter implements InternalOrderEventPublisher, OrderS
     }
   }
 
-
+  // La destination è sempre aggregate
   async publishSellOrder(sellOrder: SellOrder, context: { destination: 'aggregate' | 'warehouse', warehouseId?: number }): Promise<string> {
     console.log("[outbound] Manda SellOrder,", JSON.stringify(sellOrder, null, 2));
     const sellOrderDTO = await this.dataMapper.sellOrderToDTO(sellOrder);

@@ -8,7 +8,7 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 
 const logger = new Logger('OrdersMicroservice');
 
-async function bootstrap() {
+export async function bootstrap() {
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(
     OrdersModule, {
     transport: Transport.NATS,

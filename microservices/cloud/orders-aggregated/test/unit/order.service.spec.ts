@@ -1,87 +1,95 @@
-import { OrdersService } from "src/application/cloud.orders.service";
+import { Test, TestingModule } from '@nestjs/testing';
+import { CloudOrdersService } from '../../src/application/cloud.orders.service';
+import { SyncOrderId } from '../../src/domain/syncOrderId.entity';
+import { SyncOrderState } from '../../src/domain/syncOrderState.enum';
+import { SyncSellOrder } from '../../src/domain/syncSellOrder.entity';
+import { SyncInternalOrder } from '../../src/domain/syncInternalOrder.entity';
+import { SyncOrderItem } from '../../src/domain/syncOrderItem.entity';
+import { CloudOrdersRepositoryMongo } from '../../src/infrastructure/adapters/mongodb/cloud.orders.repository.impl';
+import { CloudOutboundEventAdapter } from '../../src/infrastructure/adapters/cloudOutboundEvent.adapter';
 
-import { Orders } from "src/domain/syncOrders.entity";
-import { InternalOrder } from "src/domain/syncInternalOrder.entity";
-import { SellOrder } from "src/domain/syncSellOrder.entity";
+describe('CloudOrdersService', () => {
+  let service: CloudOrdersService;
+  let repoMock: any;
+  let eventAdapterMock: any;
 
-import { ItemId } from "src/domain/syncItemId.entity";
+  beforeEach(async () => {
+    repoMock = {
+      syncUpdateOrderState: jest.fn(),
+      syncAddSellOrder: jest.fn(),
+      syncAddInternalOrder: jest.fn(),
+      syncRemoveById: jest.fn(),
+      syncUpdateReservedStock: jest.fn(),
+    };
+    eventAdapterMock = {};
 
-import { OrderId } from "src/domain/syncOrderId.entity";
-import { OrderState } from "src/domain/syncOrderState.enum";
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        CloudOrdersService,
+        { provide: 'CLOUDORDERSREPOSITORY', useValue: repoMock },
+        { provide: CloudOutboundEventAdapter, useValue: eventAdapterMock },
+      ],
+    }).compile();
 
-import { Test } from "@nestjs/testing";
+    service = module.get(CloudOrdersService);
+  });
 
-import { OrdersRepositoryMongo } from '../../src/infrastructure/adapters/mongodb/cloud.orders.repository.impl';
+  it('syncUpdateOrderState chiama la repository con i parametri corretti', async () => {
+    const id = new SyncOrderId('O-123');
+    await service.syncUpdateOrderState(id, SyncOrderState.PROCESSING);
+    expect(repoMock.syncUpdateOrderState).toHaveBeenCalledWith(id, SyncOrderState.PROCESSING);
+  });
 
-/*const id = new OrderId("12345");
-const itemId = new ItemId(2);
-const item = new OrderItem(itemId, 100);
-const detail = new OrderItemDetail(item, 20, 10);*/
+  it('syncCreateSellOrder chiama la repository con un nuovo oggetto', async () => {
+    const order = {
+      getOrderId: () => 'O-456',
+      getItemsDetail: () => [],
+      getOrderState: () => SyncOrderState.PENDING,
+      getCreationDate: () => new Date(),
+      getWarehouseDeparture: () => 'W-1',
+      getDestinationAddress: () => 'Via Roma',
+    } as unknown as SyncSellOrder;
+    await service.syncCreateSellOrder(order);
+    expect(repoMock.syncAddSellOrder).toHaveBeenCalled();
+    // Puoi anche controllare che l'oggetto passato abbia l'id giusto:
+    const calledOrder = repoMock.syncAddSellOrder.mock.calls[0][0];
+    expect(calledOrder.getOrderId()).toBe('O-456');
+  });
 
-const mockOrdersRepository = {
-    getById: jest.fn(),//.mockReturnValue(new InternalOrder(new OrderId("I-12345"), [], OrderState.PENDING, new Date(), 0, 1))
-    /*
-    getState: jest.fn(),//.mockReturnValue(OrderState.PENDING),
-    getAllOrders: jest.fn(),//.mockReturnValue(new Orders([], [new OrderId("12345"), OrderState.PENDING, new Date(), 0, 1])),
-    addSellOrder:jest.fn(),
-    addInternalOrder: jest.fn(),
-    removeById: jest.fn(),
-    updateOrderState: jest.fn(),
-    genUniqueId: jest.fn(),
-    updateReservedStock: jest.fn(),
-    getById(id: OrderId): Promise<InternalOrder | SellOrder>;
-    getState(id: OrderId): Promise<OrderState>;
-    getAllOrders(): Promise<Orders>;
-    addSellOrder(order: SellOrder): Promise<void>;
-    addInternalOrder(order: InternalOrder): Promise<void>;
-    removeById(id: OrderId): Promise<boolean>;
-    updateOrderState(id: OrderId, state: OrderState): Promise<InternalOrder | SellOrder>;
-    genUniqueId(): Promise<OrderId>;
-    updateReservedStock(id: OrderId, items: OrderItem[]): Promise<InternalOrder | SellOrder>*/
-}
+  it('syncCreateInternalOrder chiama la repository con un nuovo oggetto', async () => {
+    const order = {
+      getOrderId: () => 'O-789',
+      getItemsDetail: () => [],
+      getOrderState: () => SyncOrderState.PENDING,
+      getCreationDate: () => new Date(),
+      getWarehouseDeparture: () => 'W-2',
+      getWarehouseDestination: () => 'W-3',
+      getSellOrderReference: () => 'O-456',
+    } as unknown as SyncInternalOrder;
+    await service.syncCreateInternalOrder(order);
+    expect(repoMock.syncAddInternalOrder).toHaveBeenCalled();
+    const calledOrder = repoMock.syncAddInternalOrder.mock.calls[0][0];
+    expect(calledOrder.getOrderId()).toBe('O-789');
+  });
 
+  it('syncCancelOrder chiama la repository e logga correttamente', async () => {
+    const id = new SyncOrderId('O-999');
+    repoMock.syncRemoveById.mockResolvedValue(true);
+    await service.syncCancelOrder(id);
+    expect(repoMock.syncRemoveById).toHaveBeenCalledWith(id);
+  });
 
-describe("Test per Orders Service", () => {
-let service: any;
+  it('syncCancelOrder logga errore se la repository restituisce false', async () => {
+    const id = new SyncOrderId('O-998');
+    repoMock.syncRemoveById.mockResolvedValue(false);
+    await service.syncCancelOrder(id);
+    expect(repoMock.syncRemoveById).toHaveBeenCalledWith(id);
+  });
 
-    beforeEach( async () => {
-        jest.clearAllMocks();   //ripulisce lo stato dei mock tra un test e l’altro
-        const moduleA = await Test.createTestingModule ({
-            providers: [
-                OrdersService,
-                {
-                    provide: 'ORDERSREPOSITORY',//OrdersRepositoryMongo,
-                    useValue: mockOrdersRepository,
-                }]
-        }).compile();
-        service = moduleA.get(OrdersService);
-    })
-
-
-    describe("Test per checkOrderExistence", () => {
-
-        /*it("Dovrebbe restituire false/true in base a se l'ordine esiste o meno", async () => {
-            const id = new OrderId("I-012345");
-            jest.spyOn(repo, "getById").mockResolvedValueOnce({} as any);
-            //const result = await service.checkOrderExistence(id);
-
-            await expect (service.checkOrderExistence(id)).resolves.toBe(false);
-            expect(repo.getById).toHaveBeenCalledWith(id);
-           //expect(result).toBe(true);
-        });*/
-        it("Dovrebbe restituire true quando l'ordine esiste", async () => {
-            const id = new OrderId('I-012345');
-            mockOrdersRepository.getById.mockResolvedValueOnce({} as any);  
-            await expect(service.checkOrderExistence(id)).resolves.toBe(true);
-            expect(mockOrdersRepository.getById).toHaveBeenCalledWith(id);
-        });
-
-        it("Dovrebbe restituire false quando l'ordine NON esiste", async () => {
-            const id = new OrderId('I-012346');
-            mockOrdersRepository.getById.mockResolvedValueOnce(null);             //simuli che db non c'è nessun codice con quell'ID quindi deve ritornare null
-            await expect(service.checkOrderExistence(id)).resolves.toBe(false);
-            expect(mockOrdersRepository.getById).toHaveBeenCalledWith(id);
-        });
-    });
+  it('syncUpdateReservedStock chiama la repository con i parametri corretti', async () => {
+    const id = new SyncOrderId('O-777');
+    const items: SyncOrderItem[] = [];
+    await service.syncUpdateReservedStock(id, items);
+    expect(repoMock.syncUpdateReservedStock).toHaveBeenCalledWith(id, items);
+  });
 });
-

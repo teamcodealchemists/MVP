@@ -5,13 +5,13 @@ import { InternalOrder } from 'src/domain/internalOrder.entity';
 import { Inventory } from 'src/domain/inventory.entity';
 import { Orders } from 'src/domain/orders.entity';
 import { WarehouseId } from 'src/domain/warehouseId.entity';
-import { WarehouseState } from 'src/domain/warehouseState.entity';
 import { DataMapper } from 'src/infrastructure/mappers/dataMapper';
 import { OrderId } from 'src/domain/orderId.entity';
 import { OrderItemDetail } from 'src/domain/orderItemDetail.entity';
 import { OrderItem } from 'src/domain/orderItem.entity';
 import { ItemId } from 'src/domain/itemId.entity';
 import { OrderState } from 'src/domain/orderState.enum';
+import { ProductId } from 'src/domain/productId.entity';
 
 describe('OutboundPortsAdapter', () => {
   let adapter: OutboundPortsAdapter;
@@ -29,7 +29,8 @@ describe('OutboundPortsAdapter', () => {
             handleCloudInventoryRequest: jest.fn(),
             handleCloudOrdersRequest: jest.fn(),
             handleWarehouseDistance: jest.fn(),
-            handleWarehouseState: jest.fn(),
+            handleRequestOrdResult: jest.fn(),
+            handleRequestInvResult: jest.fn(),
           },
         },
       ],
@@ -49,12 +50,20 @@ describe('OutboundPortsAdapter', () => {
 
   describe('createInternalOrder', () => {
     it('should convert InternalOrder to DTO and call handleOrder', async () => {
-      const order = new InternalOrder(new OrderId('I1'),[new OrderItemDetail(new OrderItem(new ItemId(2), 3),0,0),new OrderItemDetail(new OrderItem(new ItemId(4), 21),0,0)],OrderState.PROCESSING,new Date(),2,1);
+      const order = new InternalOrder(
+        new OrderId('I1'),
+        [new OrderItemDetail(new OrderItem(new ItemId(2), 3), 0, 0)],
+        OrderState.PROCESSING,
+        new Date(),
+        2,
+        1
+      );
+      const sellOrderId = new OrderId('S1');
       jest.spyOn(DataMapper, 'internalOrderToDTO').mockResolvedValue({} as any);
 
-      await adapter.createInternalOrder(order);
+      await adapter.createInternalOrder(order, sellOrderId);
 
-      expect(DataMapper.internalOrderToDTO).toHaveBeenCalledWith(order);
+      expect(DataMapper.internalOrderToDTO).toHaveBeenCalledWith(order, sellOrderId);
       expect(handler.handleOrder).toHaveBeenCalled();
     });
   });
@@ -85,20 +94,50 @@ describe('OutboundPortsAdapter', () => {
       expect(DataMapper.ordersToDTO).toHaveBeenCalledWith(orders);
       expect(result).toBeDefined();
     });
+
+    it('should return null if handler returns null', async () => {
+      jest.spyOn(handler, 'handleCloudOrdersRequest').mockResolvedValue(null);
+
+      const result = await adapter.CloudOrderRequest();
+
+      expect(handler.handleCloudOrdersRequest).toHaveBeenCalled();
+      expect(result).toBeNull();
+    });
   });
 
   describe('RequestDistanceWarehouse', () => {
     it('should call handler, map to DTO, and return DTO array', async () => {
       const whId = new WarehouseId(1);
-      const domainStates = [new WarehouseState('ACTIVE', whId)];
-      jest.spyOn(handler, 'handleWarehouseDistance').mockResolvedValue(domainStates);
-      jest.spyOn(DataMapper, 'warehouseStatetoDto').mockReturnValue({} as any);
-      jest.spyOn(DataMapper, 'warehouseIdToDto').mockReturnValue({} as any);
+      const domainIds = [new WarehouseId(1), new WarehouseId(2)];
+      jest.spyOn(DataMapper, 'warehouseIdToDto').mockImplementation((id) => ({ warehouseId: id.getId() }));
+      jest.spyOn(handler, 'handleWarehouseDistance').mockResolvedValue(domainIds);
 
       const result = await adapter.RequestDistanceWarehouse(whId);
 
       expect(handler.handleWarehouseDistance).toHaveBeenCalled();
-      expect(result.length).toBe(domainStates.length);
+      expect(result.length).toBe(domainIds.length);
+      expect(result[0]).toHaveProperty('warehouseId', 1);
+      expect(result[1]).toHaveProperty('warehouseId', 2);
+    });
+  });
+
+  describe('sendOrder', () => {
+    it('should call handleRequestOrdResult', async () => {
+      const message = 'CANCELORDER';
+      const orderId = new OrderId('O1');
+      const warehouseId = new WarehouseId(1);
+      await adapter.sendOrder(message, orderId, warehouseId);
+      expect(handler.handleRequestOrdResult).toHaveBeenCalledWith(message, orderId, warehouseId);
+    });
+  });
+
+  describe('sendInventory', () => {
+    it('should call handleRequestInvResult', async () => {
+      const message = 'MIN - Non disponibile';
+      const productId = new ProductId('P1');
+      const warehouseId = new WarehouseId(1);
+      await adapter.sendInventory(message, productId, warehouseId);
+      expect(handler.handleRequestInvResult).toHaveBeenCalledWith(message, productId, warehouseId);
     });
   });
 });

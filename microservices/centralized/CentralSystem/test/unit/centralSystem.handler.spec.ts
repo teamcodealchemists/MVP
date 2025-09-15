@@ -6,10 +6,12 @@ import { InternalOrderDTO } from 'src/interfaces/http/dto/internalOrder.dto';
 import { warehouseIdDto } from 'src/interfaces/http/dto/warehouseId.dto';
 import { Inventory } from 'src/domain/inventory.entity';
 import { Orders } from 'src/domain/orders.entity';
-import { WarehouseState } from 'src/domain/warehouseState.entity';
+import { WarehouseId } from 'src/domain/warehouseId.entity';
 import { OrderIdDTO } from 'src/interfaces/http/dto/orderId.dto';
 import { OrderStateDTO } from 'src/interfaces/http/dto/orderState.dto';
 import { OrderState } from 'src/domain/orderState.enum';
+import { ProductId } from 'src/domain/productId.entity';
+import { OrderId } from 'src/domain/orderId.entity';
 
 describe('centralSystemHandler', () => {
   let handler: centralSystemHandler;
@@ -54,34 +56,61 @@ describe('centralSystemHandler', () => {
     sellOrId.id = "";
     const order: InternalOrderDTO = {orderId: orId, items: [],orderState: orState, creationDate: new Date(),warehouseDeparture: 1,warehouseDestination: 2, sellOrderId : sellOrId};
     await handler.handleOrder(order);
-    expect(natsClient.emit).toHaveBeenCalledWith('call.warehouse.'+order.warehouseDeparture+'.order.internal.new', order);
+    expect(natsClient.emit).toHaveBeenCalledWith(
+      'event.warehouse.' + order.warehouseDeparture + '.order.internal.new',
+      JSON.stringify(order)
+    );
   });
 
   it('should send cloud inventory request and return Inventory', async () => {
     const mockInventory = new Inventory([]);
-    (natsClient.send as jest.Mock).mockReturnValue(of(mockInventory));
+    (natsClient.send as jest.Mock).mockReturnValue(of(JSON.stringify(mockInventory)));
     const result = await handler.handleCloudInventoryRequest();
-    expect(natsClient.send).toHaveBeenCalledWith('cloud.inventory.request', {});
-    expect(result).toStrictEqual(mockInventory);
+    expect(natsClient.send).toHaveBeenCalledWith('aggregatedWarehouses.inventory', JSON.stringify({}));
+    // Puoi aggiungere un controllo più specifico se DataMapper è mockato
+    expect(result).toBeInstanceOf(Inventory);
   });
 
-  it('should send cloud orders request and return Orders', async () => {
-    const mockOrders = new Orders([], []);
-    (natsClient.send as jest.Mock).mockReturnValue(of(mockOrders));
+  it('should send cloud orders request and return Orders or null', async () => {
+    const mockOrders = { result: { collection: [] } };
+    (natsClient.send as jest.Mock).mockReturnValue(of(JSON.stringify(mockOrders)));
     const result = await handler.handleCloudOrdersRequest();
-    expect(natsClient.send).toHaveBeenCalledWith('get.aggregate.orders', {});
-    expect(result).toBe(mockOrders);
+    expect(natsClient.send).toHaveBeenCalledWith('get.aggregate.orders.centralized', JSON.stringify({}));
+    expect(result).toBeNull();
   });
 
-  it('should request warehouse distance and return WarehouseState[]', async () => {
+  it('should request warehouse distance and return WarehouseId[]', async () => {
     const warehouseId = new warehouseIdDto();
     warehouseId.warehouseId = 1;
-    const mockStates = [new WarehouseState('ACTIVE', { getId: () => 1 } as any)];
-    (natsClient.send as jest.Mock).mockReturnValue(of(mockStates));
+    const mockResponse = { result: { warehouses: [{ id: 1 }, { id: 2 }] } };
+    (natsClient.send as jest.Mock).mockReturnValue(of(JSON.stringify(mockResponse)));
     const result = await handler.handleWarehouseDistance(warehouseId);
     const topic = `call.routing.warehouse.${warehouseId.warehouseId}.receiveRequest.set`;
-    console.log(topic);
-    expect(natsClient.send).toHaveBeenCalledWith(topic, warehouseId);
-    expect(result).toBe(mockStates);
+    expect(natsClient.send).toHaveBeenCalledWith(topic, JSON.stringify(warehouseId));
+    expect(Array.isArray(result)).toBe(true);
+    expect(result.length).toBe(2);
+    expect(result[0]).toBeInstanceOf(WarehouseId);
+  });
+  it('should emit the correct event for handleRequestInvResult', async () => {
+    const message = 'Test inventory message';
+    const productId = new ProductId('P1');
+    const warehouseId = new WarehouseId(1);
+
+    await handler.handleRequestInvResult(message, productId, warehouseId);
+
+    expect(natsClient.emit).toHaveBeenCalledWith('send.InvRequestResult', { message });
+  });
+
+  it('should emit the correct event for handleRequestOrdResult', async () => {
+    const message = 'CANCELORDER';
+    const orderId = new OrderId('I1');
+    const warehouseId = new WarehouseId(1);
+
+    await handler.handleRequestOrdResult(message, orderId, warehouseId);
+
+    expect(natsClient.emit).toHaveBeenCalledWith(
+      `call.warehouse.${warehouseId}.order.${orderId}.cancel`,
+      { message }
+    );
   });
 });

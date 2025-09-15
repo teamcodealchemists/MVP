@@ -5,8 +5,6 @@ import { SyncOrderItemDTO } from './syncOrderItem.dto';
 
 export class SyncOrderQuantityDTO {
     @IsNotEmpty()
-    @IsInt()
-    @Min(0)
     id: SyncOrderIdDTO;
 
     @IsNotEmpty()
