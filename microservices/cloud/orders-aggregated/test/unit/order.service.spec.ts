@@ -72,7 +72,7 @@ describe('CloudOrdersService', () => {
     const calledOrder = repoMock.syncAddInternalOrder.mock.calls[0][0];
     expect(calledOrder.getOrderId()).toBe('O-789');
     expect(telemetryMock.setInsertedOrders).toHaveBeenCalledWith(1, 2); 
-
+  });
   it('syncCancelOrder chiama la repository e logga correttamente', async () => {
     const id = new SyncOrderId('O-999');
     repoMock.syncRemoveById.mockResolvedValue(true);
