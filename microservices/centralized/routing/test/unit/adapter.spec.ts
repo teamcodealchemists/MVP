@@ -29,6 +29,25 @@ describe('RoutingEventAdapter', () => {
       })
     );
   });
+  it('deve chiamare outboundService.sendWarehouseAndState con il DTO corretto', () => {
+    const mockOutboundService = {
+      sendWarehouseAndState: jest.fn(),
+    } as unknown as OutboundService;
+
+    const adapter = new RoutingEventAdapter(mockOutboundService);
+
+    const warehouseId = { warehouseId: 42 }; // esempio di WarehouseIdDTO
+    const state: 'ONLINE' | 'OFFLINE' = 'ONLINE';
+
+    adapter.sendWarehouseAndState(warehouseId, state);
+
+    expect(mockOutboundService.sendWarehouseAndState).toHaveBeenCalledWith(
+      expect.objectContaining({
+        warehouseId,
+        state,
+      })
+    );
+  });
 });
 
 import { RoutingRepositoryMongo } from '../../src/infrastructure/adapters/mongodb/routing.repository.impl';
