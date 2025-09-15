@@ -9,16 +9,23 @@ import { CloudInboundPortsAdapter } from 'src/infrastructure/adapters/cloudInbou
 import { CloudOutboundEventAdapter } from 'src/infrastructure/adapters/cloudOutboundEvent.adapter';
 import { AccessController } from 'src/interfaces/access.controller';
 
+import { TelemetryModule } from '../telemetry/telemetry.module';
+
 @Module({
   imports: [
-    MongooseModule.forRoot(process.env.MONGODB_URI || 'mongodb://mongo:27017/orders-aggregated'),
-    NatsModule, 
-    CloudOrdersRepositoryModule],
+    MongooseModule.forRoot(
+      process.env.MONGODB_URI || 'mongodb://mongo:27017/orders-aggregated',
+    ),
+    NatsModule,
+    CloudOrdersRepositoryModule,
+    TelemetryModule,
+  ],
   controllers: [CloudOrdersController, AccessController],
-  providers: [CloudInboundPortsAdapter, 
-              CloudOrdersService, 
-              CloudDataMapper, 
-              CloudOutboundEventAdapter]
+  providers: [
+    CloudInboundPortsAdapter,
+    CloudOrdersService,
+    CloudDataMapper,
+    CloudOutboundEventAdapter,
+  ],
 })
 export class CloudOrdersModule {}
-    

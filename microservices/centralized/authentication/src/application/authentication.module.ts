@@ -22,6 +22,9 @@ import { AuthEventHandler } from 'src/interfaces/authEvent.handler';
 
 import { MongooseModule } from '@nestjs/mongoose';
 
+// Telemetry
+import { TelemetryModule } from 'src/telemetry/telemetry.module';
+
 @Module({
   imports: [
     JwtModule.register({
@@ -29,10 +32,15 @@ import { MongooseModule } from '@nestjs/mongoose';
       signOptions: { expiresIn: '1h' }, // Corrisponde a Max-Age=3600
     }),
     NatsClientModule,
-    AuthRepositoryModule
+    TelemetryModule,
+    AuthRepositoryModule,
   ],
   controllers: [AuthController, JwtController, AccessControlController],
-  providers: [AuthService, InboundPortsAdapter, AuthEventHandler, OutboundPortsAdapter,
+  providers: [
+    AuthService,
+    InboundPortsAdapter,
+    AuthEventHandler,
+    OutboundPortsAdapter,
   ],
 })
 export class AuthModule {}

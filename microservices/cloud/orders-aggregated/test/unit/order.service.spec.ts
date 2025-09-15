@@ -5,13 +5,11 @@ import { SyncOrderState } from '../../src/domain/syncOrderState.enum';
 import { SyncSellOrder } from '../../src/domain/syncSellOrder.entity';
 import { SyncInternalOrder } from '../../src/domain/syncInternalOrder.entity';
 import { SyncOrderItem } from '../../src/domain/syncOrderItem.entity';
-import { CloudOrdersRepositoryMongo } from '../../src/infrastructure/adapters/mongodb/cloud.orders.repository.impl';
-import { CloudOutboundEventAdapter } from '../../src/infrastructure/adapters/cloudOutboundEvent.adapter';
 
 describe('CloudOrdersService', () => {
   let service: CloudOrdersService;
   let repoMock: any;
-  let eventAdapterMock: any;
+  let telemetryMock: any;
 
   beforeEach(async () => {
     repoMock = {
@@ -20,14 +18,17 @@ describe('CloudOrdersService', () => {
       syncAddInternalOrder: jest.fn(),
       syncRemoveById: jest.fn(),
       syncUpdateReservedStock: jest.fn(),
+      syncUnreservedStock: jest.fn(),
     };
-    eventAdapterMock = {};
+    telemetryMock = {
+      setInsertedOrders: jest.fn(),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         CloudOrdersService,
         { provide: 'CLOUDORDERSREPOSITORY', useValue: repoMock },
-        { provide: CloudOutboundEventAdapter, useValue: eventAdapterMock },
+        { provide: 'TelemetryService', useValue: telemetryMock },
       ],
     }).compile();
 
@@ -40,37 +41,37 @@ describe('CloudOrdersService', () => {
     expect(repoMock.syncUpdateOrderState).toHaveBeenCalledWith(id, SyncOrderState.PROCESSING);
   });
 
-  it('syncCreateSellOrder chiama la repository con un nuovo oggetto', async () => {
-    const order = {
-      getOrderId: () => 'O-456',
-      getItemsDetail: () => [],
-      getOrderState: () => SyncOrderState.PENDING,
-      getCreationDate: () => new Date(),
-      getWarehouseDeparture: () => 'W-1',
-      getDestinationAddress: () => 'Via Roma',
-    } as unknown as SyncSellOrder;
+  it('syncCreateSellOrder chiama la repository e TelemetryService con un nuovo oggetto', async () => {
+    const order = new SyncSellOrder(
+      new SyncOrderId('O-456'),
+      [],
+      SyncOrderState.PENDING,
+      new Date(),
+      1, 
+      'Via Roma'
+    );
     await service.syncCreateSellOrder(order);
     expect(repoMock.syncAddSellOrder).toHaveBeenCalled();
-    // Puoi anche controllare che l'oggetto passato abbia l'id giusto:
     const calledOrder = repoMock.syncAddSellOrder.mock.calls[0][0];
     expect(calledOrder.getOrderId()).toBe('O-456');
+    expect(telemetryMock.setInsertedOrders).toHaveBeenCalledWith(1, 1); 
   });
 
-  it('syncCreateInternalOrder chiama la repository con un nuovo oggetto', async () => {
-    const order = {
-      getOrderId: () => 'O-789',
-      getItemsDetail: () => [],
-      getOrderState: () => SyncOrderState.PENDING,
-      getCreationDate: () => new Date(),
-      getWarehouseDeparture: () => 'W-2',
-      getWarehouseDestination: () => 'W-3',
-      getSellOrderReference: () => 'O-456',
-    } as unknown as SyncInternalOrder;
+  it('syncCreateInternalOrder chiama la repository e TelemetryService con un nuovo oggetto', async () => {
+    const order = new SyncInternalOrder(
+      new SyncOrderId('O-789'),
+      [],
+      SyncOrderState.PENDING,
+      new Date(),
+      2, 
+      3, 
+      'O-456'
+    );
     await service.syncCreateInternalOrder(order);
     expect(repoMock.syncAddInternalOrder).toHaveBeenCalled();
     const calledOrder = repoMock.syncAddInternalOrder.mock.calls[0][0];
     expect(calledOrder.getOrderId()).toBe('O-789');
-  });
+    expect(telemetryMock.setInsertedOrders).toHaveBeenCalledWith(1, 2); 
 
   it('syncCancelOrder chiama la repository e logga correttamente', async () => {
     const id = new SyncOrderId('O-999');
@@ -91,5 +92,11 @@ describe('CloudOrdersService', () => {
     const items: SyncOrderItem[] = [];
     await service.syncUpdateReservedStock(id, items);
     expect(repoMock.syncUpdateReservedStock).toHaveBeenCalledWith(id, items);
+  });
+
+  it('syncUnreserveStock chiama la repository con i parametri corretti', async () => {
+    const id = new SyncOrderId('O-888');
+    await service.syncUnreserveStock(id);
+    expect(repoMock.syncUnreservedStock).toHaveBeenCalledWith(id);
   });
 });

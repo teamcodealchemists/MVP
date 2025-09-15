@@ -10,6 +10,8 @@ import { WarehouseId } from 'src/domain/warehouseId.entity';
 import { OrderIdDTO } from 'src/interfaces/http/dto/orderId.dto';
 import { OrderStateDTO } from 'src/interfaces/http/dto/orderState.dto';
 import { OrderState } from 'src/domain/orderState.enum';
+import { ProductId } from 'src/domain/productId.entity';
+import { OrderId } from 'src/domain/orderId.entity';
 
 describe('centralSystemHandler', () => {
   let handler: centralSystemHandler;
@@ -88,5 +90,27 @@ describe('centralSystemHandler', () => {
     expect(Array.isArray(result)).toBe(true);
     expect(result.length).toBe(2);
     expect(result[0]).toBeInstanceOf(WarehouseId);
+  });
+  it('should emit the correct event for handleRequestInvResult', async () => {
+    const message = 'Test inventory message';
+    const productId = new ProductId('P1');
+    const warehouseId = new WarehouseId(1);
+
+    await handler.handleRequestInvResult(message, productId, warehouseId);
+
+    expect(natsClient.emit).toHaveBeenCalledWith('send.InvRequestResult', { message });
+  });
+
+  it('should emit the correct event for handleRequestOrdResult', async () => {
+    const message = 'CANCELORDER';
+    const orderId = new OrderId('I1');
+    const warehouseId = new WarehouseId(1);
+
+    await handler.handleRequestOrdResult(message, orderId, warehouseId);
+
+    expect(natsClient.emit).toHaveBeenCalledWith(
+      `call.warehouse.${warehouseId}.order.${orderId}.cancel`,
+      { message }
+    );
   });
 });

@@ -1,8 +1,7 @@
 services:
-
-#==========================================================================#
-#                         Warehouse Microservices                          #
-#==========================================================================#
+  #==========================================================================#
+  #                         Warehouse Microservices                          #
+  #==========================================================================#
   inventory-1:
     build:
       context: ./microservices/warehouse/inventory
@@ -53,9 +52,9 @@ services:
     networks:
       - shared-warehouses
     depends_on:
-      - nats    
+      - nats
       - mongodb
-      - resgate 
+      - resgate
 
   orders-2:
     build:
@@ -71,10 +70,9 @@ services:
     networks:
       - shared-warehouses
     depends_on:
-      - nats    
+      - nats
       - mongodb
-      - resgate 
-
+      - resgate
 
   state-1:
     build:
@@ -83,7 +81,7 @@ services:
     container_name: state-1
     environment:
       - WAREHOUSE_ID=1
-      - MONGO_URI=mongodb://mongo:27017/state-1 
+      - MONGO_URI=mongodb://mongo:27017/state-1
       - NATS_URL=nats://nats:4222
     volumes:
       - ./microservices/warehouse/state/src:/usr/src/app/src
@@ -111,18 +109,21 @@ services:
       - nats
       - mongodb
       - resgate
-#==========================================================================#
-#                         Cloud Microservices                              #
-#==========================================================================#
+  #==========================================================================#
+  #                         Cloud Microservices                              #
+  #==========================================================================#
 
   inventory-aggregated:
     build:
       context: ./microservices/cloud/inventory-aggregated
       dockerfile: Dockerfile
     container_name: inventory-aggregated
+    ports:
+      - "3110:3110"
     environment:
       - MONGO_URI=mongodb://mongo:27017/inventory-aggregated
       - NATS_URL=nats://nats:4222
+      - PORT=3110
     volumes:
       - ./microservices/cloud/inventory-aggregated/src:/usr/src/app/src
     networks:
@@ -136,7 +137,10 @@ services:
     build:
       context: ./microservices/cloud/orders-aggregated
       dockerfile: Dockerfile
+    ports:
+      - "3010:3010"
     environment:
+      - PORT=3010
       - MONGODB_URI=mongodb://mongodb:27017/orders-aggregated
       - NATS_URL=nats://nats:4222
     volumes:
@@ -148,16 +152,19 @@ services:
       - mongodb
       - resgate
 
-#==========================================================================#
-#                 Centralized System Microservices                         #
-#==========================================================================#
+  #==========================================================================#
+  #                 Centralized System Microservices                         #
+  #==========================================================================#
 
   authentication:
     container_name: authentication
     build:
       context: ./microservices/centralized/authentication
       dockerfile: Dockerfile
+    ports:
+      - "3510:3510"
     environment:
+      - PORT=3510
       - MONGO_DB=mongodb://mongo:27017/authentication
       - JWT_SECRET=IREALLYLOVEM31!!!!!!!!!!!!!!!!!!
     volumes:
@@ -202,22 +209,22 @@ services:
   centralsystem:
     container_name: CentralSystem
     build:
-        context: ./microservices/centralized/CentralSystem
-        dockerfile: Dockerfile
+      context: ./microservices/centralized/CentralSystem
+      dockerfile: Dockerfile
     environment:
-        - MONGO_DB=mongodb://mongo:27017/centralsystem
+      - MONGO_DB=mongodb://mongo:27017/centralsystem
     volumes:
-        - ./microservices/centralized/CentralSystem/src:/usr/src/app/src
+      - ./microservices/centralized/CentralSystem/src:/usr/src/app/src
     networks:
-        - shared-warehouses
+      - shared-warehouses
     depends_on:
-        - nats
-        - mongodb
-        - resgate
+      - nats
+      - mongodb
+      - resgate
 
-#==========================================================================#
-#                         Infrastructure Microservices                     #
-#==========================================================================#
+  #==========================================================================#
+  #                         Infrastructure Microservices                     #
+  #==========================================================================#
 
   resgate:
     image: resgateio/resgate
@@ -228,7 +235,7 @@ services:
       - nats
     #volumes:
     #  - ./microservizi/resgate/resgate-config.json:/app/config.json
-    command: 
+    command:
       - "-n"
       - "nats://nats:4222"
       - "-DV"
@@ -236,6 +243,7 @@ services:
       - "auth.jwtHeader"
     networks:
       - shared-warehouses
+    platform: linux/amd64
 
   mongodb:
     image: mongo:latest
@@ -248,16 +256,57 @@ services:
     #  - ./microservizi/mongo_db:/docker-entrypoint-initdb.d
 
   nats:
-     container_name: nats
-     image: nats:latest
-     ports:
-       - "4222:4222"
-     command:
-       - "--jetstream"
-       - "--debug"
-       - "--trace"
-     networks:
-       - shared-warehouses
+    container_name: nats
+    image: nats:latest
+    ports:
+      - "4222:4222"
+    command:
+      - "--jetstream"
+      - "--debug"
+      - "--trace"
+    networks:
+      - shared-warehouses
+
+  #==========================================================================#
+  #                         Infrastructure Telemetry                         #
+  #==========================================================================#
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./microservices/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - shared-warehouses
+    restart: unless-stopped
+    depends_on:
+      - orders-aggregated
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3210:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./microservices/grafana/provisioning:/etc/grafana/provisioning
+      - ./microservices/grafana/dashboards:/var/lib/grafana/dashboards
+    networks:
+      - shared-warehouses
+    depends_on:
+      - prometheus
+      - orders-aggregated
+
+volumes:
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
 
 networks:
   shared-warehouses:

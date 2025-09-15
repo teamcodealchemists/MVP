@@ -8,11 +8,13 @@ import { CloudDataMapper } from '../infrastructure/mappers/cloud-data.mapper';
 import { CommandHandler } from 'src/interfaces/commandHandler.controller';
 import { CloudInventoryEventAdapter } from 'src/infrastructure/adapters/inventory-aggregated-event.adapter';
 import { AccessController } from 'src/interfaces/access.controller';
+import { TelemetryModule } from 'src/telemetry/telemetry.module';
 
 @Module({
   imports: [
     MongooseModule.forRoot(process.env.MONGO_URI!),
     MongooseModule.forFeature([{ name: SyncProduct.name, schema: SyncProductSchema }]),
+    TelemetryModule
   ],
   providers: [
     InventoryAggregatedService,

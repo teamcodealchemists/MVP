@@ -9,9 +9,8 @@ import { OutboundResponseSerializer } from './interfaces/nats/natsMessagesFormat
 const logger = new Logger('InventoryAggregatedMicroservice');
 
 export async function bootstrap() {
-  const app = await NestFactory.createMicroservice<MicroserviceOptions>(
-    InventoryAggregatedModule,
-    {
+  const app = await NestFactory.create(InventoryAggregatedModule);
+  const microserviceNats = app.connectMicroservice<MicroserviceOptions>({
       transport: Transport.NATS,
       options: {
         servers: ['nats://nats:4222'],
@@ -21,7 +20,10 @@ export async function bootstrap() {
     },
   );
   app.useGlobalPipes(new ValidationPipe({ exceptionFactory: (errors) => new RpcException(errors) }));
-  await app.listen();
+  
+  await app.startAllMicroservices();
+  await app.listen(process.env.PORT ?? 3110);
+
   logger.log(
     `Inventory-Aggregated NATS microservice running on ${process.env.NATS_URL || 'nats://nats:4222'}`
   );
