@@ -4,11 +4,11 @@ import { Product } from '../../src/domain/product.entity';
 import { ProductId } from 'src/domain/productId.entity';
 import { WarehouseId } from 'src/domain/warehouseId.entity';
 import { InventoryAggregated } from 'src/domain/inventory-aggregated.entity';
-
+import { TelemetryService } from '../../src/telemetry/telemetry.service';
 describe('InventoryAggregatedService', () => {
   let service: InventoryAggregatedService;
   let repository: jest.Mocked<InventoryAggregatedRepository>;
-
+  let telemetryService: jest.Mocked<TelemetryService>;
   beforeEach(() => {
     repository = {
       addProduct: jest.fn(),
@@ -19,28 +19,47 @@ describe('InventoryAggregatedService', () => {
       getProduct: jest.fn(),
       getProductAggregated: jest.fn(),
     } as unknown as jest.Mocked<InventoryAggregatedRepository>;
-
-    service = new InventoryAggregatedService(repository);
+    const telemetryService = {
+      setInventoryProductsTotal: jest.fn(),
+      inventoryProductsTotal: {} as any, // serve solo per TS
+    } as unknown as TelemetryService;
+  
+    service = new InventoryAggregatedService(repository, telemetryService);
   });
 
   it('should add a product', async () => {
-    const product = {} as Product;
+    const product = {
+      getWarehouseId: jest.fn().mockReturnValue({ getId: jest.fn().mockReturnValue('warehouse-1') }),
+      getId: jest.fn().mockReturnValue({ getId: jest.fn().mockReturnValue('product-1') }),
+      getQuantity: jest.fn().mockReturnValue(10),
+    } as unknown as Product;
+
     await service.addProduct(product);
+
     expect(repository.addProduct).toHaveBeenCalledWith(product);
   });
 
   it('should update a product', async () => {
-    const product = {} as Product;
+    const product = {
+      getWarehouseId: jest.fn().mockReturnValue({ getId: jest.fn().mockReturnValue('warehouse-1') }),
+      getId: jest.fn().mockReturnValue({ getId: jest.fn().mockReturnValue('product-1') }),
+      getQuantity: jest.fn().mockReturnValue(5),
+    } as unknown as Product;
+
     await service.updateProduct(product);
+
     expect(repository.updateProduct).toHaveBeenCalledWith(product);
   });
 
   it('should remove a product', async () => {
-    const id = {} as ProductId;
-    const warehouseId = {} as WarehouseId;
+    const id = { getId: jest.fn().mockReturnValue('product-1') } as unknown as ProductId;
+    const warehouseId = { getId: jest.fn().mockReturnValue('warehouse-1') } as unknown as WarehouseId;
+
     await service.removeProduct(id, warehouseId);
+
     expect(repository.removeProduct).toHaveBeenCalledWith(id, warehouseId);
   });
+
 
   it('should return all products', async () => {
     const mockAggregated = {} as InventoryAggregated;
