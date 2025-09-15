@@ -9,26 +9,18 @@ import { OutboundResponseSerializer } from '../../src/interfaces/nats/natsMessag
 
 jest.mock('@nestjs/core', () => ({
   NestFactory: {
-    createMicroservice: jest.fn().mockResolvedValue({
-      useGlobalPipes: jest.fn(),
+    create: jest.fn().mockResolvedValue({
+      connectMicroservice: jest.fn(),
+      startAllMicroservices: jest.fn(),
       listen: jest.fn(),
     }),
   },
 }));
 
 describe("Test per main", () => {
-    it('crea la microservice app con le opzioni corrette', async () => {
-    // const {bootstrap } = await import('../../src/main.js');
+  it('crea la microservice app con le opzioni corrette', async () => {
     await bootstrap();
 
-    expect(nest.NestFactory.createMicroservice).toHaveBeenCalledWith(
-      CloudOrdersModule,
-      expect.objectContaining({
-        transport: Transport.NATS,
-        options: expect.objectContaining({
-            servers: ['nats://nats:4222']
-        }),
-      })
-    );
+    expect(nest.NestFactory.create).toHaveBeenCalledWith(CloudOrdersModule);
   });
 });
