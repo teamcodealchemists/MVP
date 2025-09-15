@@ -44,6 +44,18 @@ describe('CommandHandler', () => {
   // -------------------------------
   //      EventPattern Tests
   // -------------------------------
+  it('should return internalError JSON for generic error', async () => {
+  const genericError = new Error('Something went wrong');
+
+  // @ts-ignore per bypassare la visibilità privata
+    const result = await handler['errorHandler'](genericError);
+
+    const parsed = JSON.parse(result);
+    expect(parsed.error.code).toBe('system.internalError');
+    expect(parsed.error.message).toBe('Something went wrong');
+    expect(parsed.meta.status).toBe(404);
+  });
+
 
   it('should sync added stock', async () => {
     const payload = {
